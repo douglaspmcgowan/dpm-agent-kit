@@ -1,0 +1,13 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+.vscode/
+.idea/
+
+# Vercel
+.vercel/
+
+# Node (none vendored, but just in case)
+node_modules/

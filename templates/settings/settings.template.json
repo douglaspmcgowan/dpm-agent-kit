@@ -1,0 +1,116 @@
+{
+  "_comment": "dpm-agent-kit settings template. The installer replaces __NODE__ with your Node.js binary (or just 'node' if it's on PATH) and __CLAUDE_DIR__ with the absolute path to your .claude directory (e.g. C:/Users/you/.claude or /home/you/.claude). Merge the 'permissions' and 'hooks' blocks into your existing settings.json rather than overwriting wholesale.",
+
+  "env": {
+    "DISABLE_TELEMETRY": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
+
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(*)",
+      "WebFetch",
+      "WebSearch",
+      "Agent",
+      "ToolSearch",
+      "TaskCreate",
+      "TaskUpdate",
+      "TaskList",
+      "TaskGet"
+    ],
+    "_comment_permissions": "Add your own MCP tool permissions here (e.g. read-only connectors). Keep write/destructive MCP tools OUT of the allow-list so they prompt."
+  },
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/check-secret-exposure.js", "timeout": 5 },
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/block-dangerous-bash.js", "timeout": 5 },
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/block-egress-exfil.js", "timeout": 5 },
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/protect-security-config.js", "timeout": 5 }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/protect-firmware.js", "timeout": 5 },
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/protect-security-config.js", "timeout": 5 },
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/scan-write-for-secrets.js", "timeout": 5 }
+        ]
+      },
+      {
+        "matcher": "Read|Grep|Glob",
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/block-secret-file.js", "timeout": 5 },
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/block-sensitive-file-read.js", "timeout": 5 }
+        ]
+      },
+      {
+        "matcher": "WebFetch|WebSearch",
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/block-web-egress-in-protected-dir.js", "timeout": 5 }
+        ]
+      },
+      {
+        "_comment": "Bind block-vault-delete to whatever MCP server reaches your notes vault (example: mcp__obsidian__). Remove this block if you don't use one.",
+        "matcher": "mcp__obsidian__",
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/block-vault-delete.js", "timeout": 5 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/scan-output-for-secrets.js", "timeout": 5 },
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/audit-bash-log.js", "timeout": 5 }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/format-on-edit.js", "timeout": 30 }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/log-agent-dispatch.js", "timeout": 5 }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/task-state-reminder.js", "timeout": 5 }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/session-primer.js", "timeout": 10 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/stop-toast-gate.js", "timeout": 5 },
+          { "type": "command", "command": "__NODE__ __CLAUDE_DIR__/hooks/check-session-size.js", "timeout": 5 }
+        ]
+      }
+    ]
+  },
+
+  "autoUpdatesChannel": "latest",
+  "theme": "dark"
+}

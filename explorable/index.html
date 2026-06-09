@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="tokyo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dpm-agent-kit — start here</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root,[data-theme="tokyo"]{
+    --bg:#15161e; --panel:#1b1d29; --panel2:#191b25; --text:#c8d0f0; --muted:#6b73a0;
+    --line:#262a40; --accent:#9ece6a; --accent2:#7aa2f7; --cyan:#7dcfff; --magenta:#bb9af7;
+    --warn:#e0af68; --danger:#f7768e; --body:#aeb6df;
+    --disp:'Sora',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,monospace; --r:8px;
+  }
+  [data-theme="brutalist"]{
+    --bg:#fafafa; --panel:#ffffff; --panel2:#f2f2f2; --text:#0d0d0d; --muted:#5a5a5a;
+    --line:#0d0d0d; --accent:#c81e00; --accent2:#0a58ff; --cyan:#0a58ff; --magenta:#7a3cff;
+    --warn:#9a5a00; --danger:#c81e00; --body:#2a2a2a;
+    --disp:'Space Mono',monospace; --mono:'Space Mono',monospace; --r:0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.6;min-height:100vh}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;
+          padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .topbar .mid{font-family:var(--disp);font-weight:700;letter-spacing:-.01em;font-size:15px}
+  .topbar .mid b{color:var(--accent)}
+  .theme-pill{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);
+       border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text);cursor:pointer}
+  .theme-pill:hover{border-color:var(--accent)}
+  .theme-pill .sw{width:11px;height:11px;border-radius:50%;background:var(--accent)}
+  .wrap{max-width:980px;margin:0 auto;padding:54px 24px 64px}
+  .hero{text-align:center;max-width:760px;margin:0 auto 44px}
+  .hero .kick{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+  h1{font-family:var(--disp);font-size:clamp(28px,4.4vw,46px);margin:0 0 18px;font-weight:800;
+     letter-spacing:-.015em;line-height:1.08}
+  h1 .c{color:var(--cyan)} h1 .g{color:var(--accent)}
+  .hero p{color:var(--body);font-size:clamp(15px,2vw,18px);margin:0}
+  .choose{font-size:13px;letter-spacing:.04em;color:var(--muted);text-align:center;margin:0 0 18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  a.card{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--r);padding:22px;transition:border-color .18s,transform .18s,box-shadow .18s}
+  a.card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 14px 34px rgba(0,0,0,.4)}
+  a.card.primary{grid-column:1 / -1;border-color:var(--accent);background:var(--panel)}
+  a.card.primary .n{color:var(--accent)}
+  .card .n{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .card h2{font-family:var(--disp);font-size:20px;margin:8px 0 8px}
+  .card p{font-size:13.5px;color:var(--body);margin:0}
+  .card .go{margin-top:14px;font-size:12px;color:var(--cyan)}
+  .bonus{display:flex;justify-content:center;margin-top:22px}
+  .bonus a{color:var(--magenta);text-decoration:none;font-size:13px;border:1px solid var(--line);
+    border-radius:999px;padding:7px 16px}
+  .bonus a:hover{border-color:var(--magenta)}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:34px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="mid">dpm-<b>agent</b>-kit</span>
+  <button class="theme-pill" id="themeBtn" title="switch theme"><span class="sw"></span><span id="theme-label">tokyo</span></button>
+</div>
+<div class="wrap">
+  <div class="hero">
+    <div class="kick">an agentic coding setup</div>
+    <h1>You hired an assistant with <span class="c">no memory</span> and <span class="g">infinite willingness to act</span>.</h1>
+    <p>That one fact drives this whole kit. An AI agent like that needs standing rules, guardrails, a way to
+    remember, reusable know-how, and a rhythm for driving it. Start with the walkthrough to see why, then play
+    with the interactive views.</p>
+  </div>
+  <p class="choose">Pick a way in:</p>
+  <div class="grid">
+    <a class="card primary" href="option-2-scrollytelling.html">
+      <div class="n">Start here</div><h2>The walkthrough</h2>
+      <p>A short, plain-language tour of why an agent needs each of the five parts. Built for someone who has
+      never worked with a coding agent before. It ends by handing you off to the three interactive views.</p>
+      <span class="go">begin the walkthrough →</span>
+    </a>
+    <a class="card" href="option-1-node-map.html">
+      <div class="n">Explore</div><h2>Component map</h2>
+      <p>The setup as a clickable graph. Click a node, follow its links, open any piece on its own page.</p>
+      <span class="go">open the map →</span>
+    </a>
+    <a class="card" href="option-3-terminal.html">
+      <div class="n">Try it</div><h2>Interactive terminal</h2>
+      <p>A simulated agent shell. Type commands, run the tour, watch the hooks and skills react.</p>
+      <span class="go">open the terminal →</span>
+    </a>
+    <a class="card" href="option-4-dashboard.html">
+      <div class="n">Browse</div><h2>Control panel</h2>
+      <p>A dashboard of every part. Click any tile to expand the full detail behind it.</p>
+      <span class="go">open the panel →</span>
+    </a>
+  </div>
+  <div class="bonus"><a href="aesthetic-options.html">Bonus: aesthetic options gallery →</a></div>
+  <footer>self-contained HTML · web fonts only · best in a desktop browser</footer>
+</div>
+<script>
+const THEMES=['tokyo','brutalist'];
+let ti=Math.max(0,THEMES.indexOf(localStorage.getItem('dpmkit-theme')));
+function applyTheme(){document.documentElement.dataset.theme=THEMES[ti];
+  localStorage.setItem('dpmkit-theme',THEMES[ti]);
+  const l=document.getElementById('theme-label');if(l)l.textContent=THEMES[ti];}
+document.getElementById('themeBtn').onclick=()=>{ti=(ti+1)%THEMES.length;applyTheme();};
+applyTheme();
+</script>
+</body>
+</html>

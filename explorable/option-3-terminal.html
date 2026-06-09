@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="tokyo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dpm-agent-kit — Interactive Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== shared theme tokens (whole-site toggle target) ===== */
+  :root,[data-theme="tokyo"]{
+    --bg:#15161e; --panel:#1b1d29; --panel2:#191b25; --term:#191b25; --text:#c8d0f0; --muted:#6b73a0;
+    --line:#262a40; --accent:#9ece6a; --accent2:#7aa2f7; --cyan:#7dcfff; --magenta:#bb9af7;
+    --danger:#f7768e; --warn:#e0af68;
+    --disp:'Sora',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
+    --r:6px;
+  }
+  [data-theme="brutalist"]{--bg:#fafafa;--panel:#ffffff;--panel2:#f2f2f2;--term:#0d0d0d;--text:#0d0d0d;--muted:#5a5a5a;--line:#0d0d0d;--accent:#c81e00;--accent2:#0d0d0d;--cyan:#0a58ff;--magenta:#7a3cff;--danger:#c81e00;--warn:#9a5a00;--disp:'Space Mono',monospace;--mono:'Space Mono',monospace;--r:0;}
+  /* add future themes here as [data-theme="blueprint"]{...} etc. */
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;
+       line-height:1.55;min-height:100vh;display:flex;flex-direction:column}
+  /* ---- top bar (shared chrome) ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;
+          padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .topbar a.back{color:var(--muted);text-decoration:none;font-size:13px}
+  .topbar a.back:hover{color:var(--cyan)}
+  .xnav{display:flex;gap:14px;flex-wrap:wrap}
+  .xnav a{color:var(--muted);text-decoration:none;font-size:13px}
+  .xnav a:hover,.xnav a.on{color:var(--accent)}
+  .theme-pill{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);
+       border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text);cursor:pointer}
+  .theme-pill:hover{border-color:var(--accent)}
+  .theme-pill .sw{width:11px;height:11px;border-radius:50%;background:var(--accent)}
+  /* ---- page body ---- */
+  .wrap{width:100%;max-width:900px;margin:0 auto;padding:24px;flex:1}
+  h1{font-family:var(--disp);font-size:24px;font-weight:800;letter-spacing:-.01em;margin:0 0 4px}
+  h1 .lead{color:var(--accent)}
+  .sub{color:var(--muted);margin:0 0 16px;font-size:13px}
+  .term{background:var(--term);border:1px solid var(--line);border-radius:12px;overflow:hidden;
+        color:var(--text);box-shadow:0 18px 50px rgba(0,0,0,.4)}
+  .bar{background:var(--term);padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .bar i{width:12px;height:12px;border-radius:50%;display:inline-block}
+  .bar .r{background:var(--danger)}.bar .y{background:var(--warn)}.bar .g{background:var(--accent)}
+  .bar .ttl{margin-left:10px;color:var(--muted);font-size:12px}
+  #out{padding:16px;height:60vh;min-height:360px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;background:var(--term)}
+  .line{margin:2px 0}
+  .prompt{color:var(--accent)}.path{color:var(--accent2)}.cmd{color:var(--text)}
+  .ok{color:var(--accent)}.err{color:var(--danger)}.warn{color:var(--warn)}.dim{color:var(--muted)}
+  .key{color:var(--cyan)}.mag{color:var(--magenta)}.green{color:var(--accent)}.cyan{color:var(--cyan)}
+  .inrow{display:flex;align-items:center;padding:10px 16px;border-top:1px solid var(--line);background:var(--term)}
+  .inrow .prompt{margin-right:8px}
+  #in{flex:1;background:transparent;border:none;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;caret-color:var(--accent)}
+  /* brutalist: the terminal window stays dark, so re-scope its interior palette
+     back to light-on-dark values — every descendant span inherits readable color */
+  [data-theme="brutalist"] .term{
+    --text:#e8e8e8; --muted:#9aa0b5; --accent:#9ece6a; --accent2:#7aa2f7;
+    --cyan:#7dcfff; --magenta:#bb9af7; --warn:#e0af68; --danger:#f7768e;
+  }
+  [data-theme="brutalist"] .term #in{color:#e8e8e8;caret-color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:6px 13px;font-size:12px;
+        cursor:pointer;color:var(--cyan);transition:.15s}
+  .chip:hover{background:var(--panel2);border-color:var(--cyan)}
+  .hintbar{color:var(--muted);font-size:12px;margin-top:10px}
+  .hintbar .key{cursor:default}
+</style>
+</head>
+<body>
+<div class="topbar"><a class="back" href="index.html">← intro</a><nav class="xnav"><a href="option-2-scrollytelling.html">walkthrough</a><a href="option-1-node-map.html">map</a><a class="on" href="option-3-terminal.html">terminal</a><a href="option-4-dashboard.html">panel</a></nav><button class="theme-pill" id="themeBtn"><span class="sw"></span><span id="theme-label">tokyo</span></button></div>
+<div class="wrap">
+  <h1>dpm-agent-kit <span class="lead">// try the setup</span></h1>
+  <p class="sub">A simulated agent shell. Type a command (or click a chip) and watch the hooks, skills, and memory react. Start with <span class="key">help</span>, or run <span class="key">tour</span> to watch the whole story.</p>
+  <div class="term">
+    <div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span class="ttl">agent@dpm-agent-kit — ~/project</span></div>
+    <div id="out"></div>
+    <div class="inrow"><span class="prompt">➜</span><input id="in" autocomplete="off" spellcheck="false" placeholder="type a command… (Tab completes)"></div>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="hintbar"><span class="key">Tab</span> completes · <span class="key">↑/↓</span> history · <span class="key">Ctrl+L</span> clears · press any key to skip streaming · everything runs locally in your browser</div>
+</div>
+<script>
+/* ---------- theme toggle (scaffold: add more themes to THEMES + a [data-theme] block) ---------- */
+const THEMES=['tokyo','brutalist'];
+let ti=Math.max(0,THEMES.indexOf(localStorage.getItem('dpmkit-theme')));
+function applyTheme(){document.documentElement.dataset.theme=THEMES[ti];
+  localStorage.setItem('dpmkit-theme',THEMES[ti]);
+  const l=document.getElementById('theme-label');if(l)l.textContent=THEMES[ti];}
+document.getElementById('themeBtn').onclick=()=>{ti=(ti+1)%THEMES.length;applyTheme();};
+applyTheme();
+
+/* ---------- terminal state ---------- */
+const out=document.getElementById('out'), inp=document.getElementById('in'), chipsEl=document.getElementById('chips');
+const hist=[]; let hi=0;
+let streaming=false, skipStream=false;   // typewriter control
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function print(html){const d=document.createElement('div');d.className='line';d.innerHTML=html;out.appendChild(d);out.scrollTop=out.scrollHeight;return d;}
+function echo(cmd){print(`<span class="prompt">➜</span> <span class="path">~/project</span> <span class="cmd">${esc(cmd)}</span>`);}
+
+/* stream an array of pre-rendered HTML lines one at a time; resolves when done */
+function streamLines(lines){
+  return new Promise(resolve=>{
+    streaming=true; skipStream=false; let i=0;
+    const tick=()=>{
+      if(skipStream){ while(i<lines.length){print(lines[i++]);} streaming=false; resolve(); return; }
+      if(i>=lines.length){ streaming=false; resolve(); return; }
+      print(lines[i++]);
+      setTimeout(tick, 28);
+    };
+    tick();
+  });
+}
+
+/* ---------- command table ---------- */
+const TREE=[
+  'dpm-agent-kit/',
+  '├─ <span class="green">README.md</span>          what this is + quickstart',
+  '├─ <span class="green">INSTALL.md</span>         point an agent here, or run install.{ps1,sh}',
+  '├─ install.ps1 / install.sh',
+  '├─ <span class="cyan">templates/</span>',
+  '│  ├─ claude-md/        CLAUDE.md + CLAUDE-delegation.md (the contract)',
+  '│  ├─ hooks/            check-secret-exposure.js, block-egress-exfil.js, …',
+  '│  ├─ memory/           MEMORY-SYSTEM.md + the four memory types',
+  '│  └─ profile/          blank bio/stories skeleton (anti-fabrication backstop)',
+  '├─ <span class="cyan">docs/</span>             DETAILED-GUIDE.md, HANDLING-SECRETS.md',
+  '├─ <span class="cyan">explorable/</span>       these interactive pages',
+  '├─ <span class="cyan">obsidian/</span>         vault-side notes',
+  '└─ CURRENT-TASK.md     the live handoff file (deleted when done)',
+];
+
+/* file previews for `cat` — short, realistic, drawn from the kit */
+const FILES={
+  'readme':['<span class="green"># dpm-agent-kit</span>',
+    'A drop-in agentic coding setup: skills, hooks, memory, the CLAUDE.md contract,',
+    'and a daily workflow. Point an agent at INSTALL.md, or run install.{ps1,sh}.',
+    'Five pillars: <span class="cyan">Skills · Hooks · Memory · CLAUDE.md · Workflow</span>.',
+    '<span class="dim">(trimmed preview — open the real README.md)</span>'],
+  'install':['<span class="green"># INSTALL.md</span>',
+    'Fastest path: hand this file to an agent and say "set me up from this".',
+    'Manual: run <span class="key">install.ps1</span> (Windows) or <span class="key">install.sh</span> (mac/linux).',
+    'It copies templates/ into ~/.claude, wires settings.json → hooks, and leaves',
+    'your own secrets untouched. Re-runnable; it diffs before it overwrites.',
+    '<span class="dim">(trimmed preview)</span>'],
+  'claude.md':['<span class="green"># CLAUDE.md — the always-loaded contract</span>',
+    '## Voice — read voice.md before any prose you publish or send.',
+    '   HARD RULE: never the "X / Y" antithesis. State the positive and stop.',
+    '## Never fabricate — if it is not in the source, say so and ask.',
+    '## File safety — back up the original, write a NEW file, never overwrite.',
+    '## Autonomy — proceed, do not ask; batch real questions into one message.',
+    '## Plan means plan — "plan" produces a written plan only, nothing run.',
+    '<span class="dim">(deep detail lives in sibling CLAUDE-*.md, read on demand)</span>'],
+  'check-secret-exposure.js':['<span class="green">// templates/hooks/check-secret-exposure.js  (PreToolUse · Bash)</span>',
+    'export default function(input){',
+    '  // blocks printenv / env / echo $TOKEN style env-var dumps',
+    '  if(isEnvDump(input.command))',
+    '    return {decision:"block", reason:"would print secret values into the transcript"};',
+    '  // safer alternative suggested in the reason string: length-only checks',
+    '}',
+    '<span class="dim">(trimmed — real file also covers PowerShell + redaction)</span>'],
+  'brainstorming':['<span class="green"># skills/brainstorming/SKILL.md</span>',
+    'description: design-first gate. Use before ANY creative or build work.',
+    '---',
+    'Ask one question at a time. Propose 2–3 approaches. Write a design doc.',
+    '<span class="warn">HARD GATE:</span> no implementation until the user approves a design.',
+    '<span class="dim">(trimmed preview)</span>'],
+};
+
+/* skill descriptions — grounded in the kit's templates/skills/ + superpowers framework.
+   ("a skill" = a markdown playbook the agent loads on demand, giving it a procedure for one
+    kind of task, so you do not have to re-explain it every time.) */
+const SKILLS={
+  /* ---- the superpowers framework (composable workflow skills) ---- */
+  'superpowers':['<span class="mag">▶ skill framework: superpowers</span>  <span class="dim">github.com/obra/superpowers</span>',
+    "  Jesse Vincent's 14 composable workflow skills: brainstorm → plan → execute → verify.",
+    '  Flagship is brainstorming, which hard-gates code until a design is approved.',
+    '  The backbone the custom skills hang off.'],
+  'using-superpowers':['<span class="mag">▶ skill: using-superpowers</span>',
+    '  The entry point. Teaches the agent to look for a matching skill before doing any',
+    '  task, so it reaches for a proven procedure instead of improvising.'],
+  'brainstorming':['<span class="mag">▶ skill: brainstorming</span>',
+    '  Design-first gate. One question at a time, 2–3 proposed approaches, a design doc.',
+    '  No code gets written until you say yes — even for "simple" tasks.'],
+  'writing-plans':['<span class="mag">▶ skill: writing-plans</span>',
+    '  Turns an approved design into a step-by-step implementation plan a separate',
+    '  session can execute without re-deciding anything.'],
+  'executing-plans':['<span class="mag">▶ skill: executing-plans</span>',
+    '  Runs a written plan with review checkpoints, so a long build stays on the rails',
+    '  and you can sign off stage by stage.'],
+  'test-driven-development':['<span class="mag">▶ skill: test-driven-development</span>',
+    '  Write the failing test first, then the code that makes it pass. Locks behaviour',
+    '  in before the implementation can drift.'],
+  'systematic-debugging':['<span class="mag">▶ skill: systematic-debugging</span>',
+    '  A fixed routine for any bug: reproduce, isolate, form a hypothesis, test it.',
+    '  Stops the agent from guessing at fixes before it understands the cause.'],
+  'verification-before-completion':['<span class="mag">▶ skill: verification-before-completion</span>',
+    '  Before the agent claims something is done, it runs the check and shows the output.',
+    '  Evidence before assertions, every time.'],
+  'subagent-driven-development':['<span class="mag">▶ skill: subagent-driven-development</span>',
+    '  Hands independent slices of a plan to fresh sub-agents in the same session, each',
+    '  with a clean context window.'],
+  'requesting-code-review':['<span class="mag">▶ skill: requesting-code-review</span>',
+    '  Packages a finished change for review against the original requirements before',
+    '  it gets merged.'],
+  'receiving-code-review':['<span class="mag">▶ skill: receiving-code-review</span>',
+    '  How to take review feedback: verify each point technically before implementing,',
+    '  instead of agreeing reflexively.'],
+  'finishing-a-development-branch':['<span class="mag">▶ skill: finishing-a-development-branch</span>',
+    '  Once work is done and tests pass, lays out the merge / PR / cleanup options so the',
+    '  branch lands cleanly.'],
+  'using-git-worktrees':['<span class="mag">▶ skill: using-git-worktrees</span>',
+    '  Spins up an isolated workspace for feature work, so an experiment never disturbs',
+    '  your current checkout.'],
+  'dispatching-parallel-agents':['<span class="mag">▶ skill: dispatching-parallel-agents</span>',
+    '  When 2+ tasks share no state, fans them out to run at once instead of in series.'],
+  'writing-skills':['<span class="mag">▶ skill: writing-skills</span>',
+    '  The meta-skill: how to author, edit, and verify a new skill so it triggers',
+    '  reliably and reads cleanly.'],
+  /* ---- custom skills (templates/skills/) ---- */
+  'grill-me':['<span class="cyan">▶ skill: grill-me</span>',
+    '  Relentless one-question-at-a-time interrogation of a plan. Walks the whole',
+    '  decision tree, recommends an answer each time. Expect 16–50 questions for a',
+    '  fuzzy idea. Reach for it to find the holes before any code gets written.'],
+  'deep-search':['<span class="cyan">▶ skill: deep-search</span>',
+    '  Multi-step web research with fan-out and inline citations. Plans sub-questions,',
+    '  dispatches parallel searches, returns a sourced synthesis.'],
+  'make-playbook':['<span class="cyan">▶ skill: make-playbook</span>',
+    '  After a task worth repeating, captures it as a reusable playbook so the next',
+    '  run is faster. The way the setup compounds over time.'],
+  'parallelize':['<span class="cyan">▶ skill: parallelize</span>',
+    '  Decomposes work into independent parts and dispatches them as parallel',
+    '  sub-agents in one message. Needs 3+ independent parts, no shared file writes.'],
+  'rollover':['<span class="cyan">▶ skill: rollover</span>',
+    '  End-of-session handoff ritual. See the <span class="key">rollover</span> command for a live run.'],
+  'bridge-status':['<span class="cyan">▶ skill: bridge-status</span>',
+    '  Inspects the local Codex research bridge and reports pending requests, review',
+    '  drafts, and released results.'],
+  'build-graph-explorer':['<span class="cyan">▶ skill: build-graph-explorer</span>',
+    '  Builds a force-directed knowledge-graph explorer (survey → cluster → detail zoom)',
+    '  from a corpus of nodes and edges.'],
+  'build-tracker':['<span class="cyan">▶ skill: build-tracker</span>',
+    '  Generates a personal deadline / application tracker (calendar, cards, table, map)',
+    '  for any domain from a reference implementation.'],
+  'capability-report':['<span class="cyan">▶ skill: capability-report</span>',
+    '  Builds a "state of a technical capability" research report in Obsidian with an',
+    '  embedded pipeline canvas, maturity landscape, and readiness gates.'],
+  'codex-brief':['<span class="cyan">▶ skill: codex-brief</span>',
+    '  Drafts and dispatches a brief to Codex (a second AI model), enforcing a',
+    '  two-question test and a verification protocol before sending.'],
+  'daily-activity':['<span class="cyan">▶ skill: daily-activity</span>',
+    '  Walks yesterday\'s sessions and touched files, groups them into themes, and writes',
+    '  a prose "what got made" report.'],
+  'daily-review':['<span class="cyan">▶ skill: daily-review</span>',
+    '  Daily pass over all repos and sessions to spot debugging patterns and automation',
+    '  candidates, and edit playbooks it can improve.'],
+  'fellowship-review':['<span class="cyan">▶ skill: fellowship-review</span>',
+    '  Reviews a fellowship or scholarship draft against type-specific rubrics and',
+    '  common winning patterns.'],
+  'groq-transcribe':['<span class="cyan">▶ skill: groq-transcribe</span>',
+    '  Pulls the latest audio file, transcribes it with Whisper, auto-formats, and trims',
+    '  once the speaker shifts to personal notes.'],
+  'hue':['<span class="cyan">▶ skill: hue</span>',
+    '  A meta-skill that generates new design-language skills from a prompt, a',
+    '  screenshot, or an existing skill to remix.'],
+  'json-generator':['<span class="cyan">▶ skill: json-generator</span>',
+    '  Drafts or repairs a structured payload JSON for a text-to-structure workflow',
+    '  against its schema.'],
+  'map-field':['<span class="cyan">▶ skill: map-field</span>',
+    '  Maps a domain into a "schools of thought" site from a corpus of newsletters,',
+    '  papers, or discourse.'],
+  'context-update':['<span class="cyan">▶ skill: context-update</span>',
+    '  Scans a context dropbox for new files, researches each, writes notes, updates the',
+    '  map, and archives the raw material.'],
+  'process-linkedin-inbox':['<span class="cyan">▶ skill: process-linkedin-inbox</span>',
+    '  Processes pasted posts in an inbox folder, categorises them, extracts links, and',
+    '  proposes edits to a field-map site.'],
+};
+
+/* hook descriptions — grounded in the kit's DETAILS map; each notes block vs warn */
+const HOOKS={
+  'check-secret-exposure':['<span class="err">▶ hook: check-secret-exposure</span>  <span class="dim">PreToolUse · Bash · BLOCKS</span>',
+    '  Blocks shell commands that would print env values or secrets into context',
+    '  (printenv, env, echoing a token). Once a secret lands in the transcript the',
+    '  only safe fix is rotation, so the kit keeps it out up front.',
+    '  <span class="dim">templates/hooks/check-secret-exposure.js</span>'],
+  'block-egress-exfil':['<span class="err">▶ hook: block-egress-exfil</span>  <span class="dim">PreToolUse · Bash · BLOCKS</span>',
+    '  Cuts off uploads to non-whitelisted hosts, plus curl | bash and netcat-style',
+    '  egress. Configure ALLOWED_UPLOAD_HOSTS at the top of the file. The defense',
+    '  against the lethal trifecta: private data + untrusted content + a way out.',
+    '  <span class="dim">templates/hooks/block-egress-exfil.js</span>'],
+  'block-dangerous-bash':['<span class="err">▶ hook: block-dangerous-bash</span>  <span class="dim">PreToolUse · Bash · BLOCKS</span>',
+    '  Stops the handful of commands that are hard to walk back: rm -rf ~,',
+    '  git push --force, git reset --hard, git clean -f, live DROP/TRUNCATE.',
+    '  Everything reversible runs freely.',
+    '  <span class="dim">templates/hooks/block-dangerous-bash.js</span>'],
+  'session-primer':['<span class="ok">▶ hook: session-primer</span>  <span class="dim">SessionStart · injects context</span>',
+    '  Injects CURRENT-TASK.md and the memory index as boot context, so a new chat',
+    '  resumes where the last one left off. The first half of the handoff loop.',
+    '  <span class="dim">templates/hooks/session-primer.js</span>'],
+  'protect-security-config':['<span class="warn">▶ hook: protect-security-config</span>  <span class="dim">PreToolUse · WARNS</span>',
+    '  Warns when an action targets the guards themselves (hooks, settings.json).',
+    '  It does not hard-block, since you sometimes need to edit them; it makes sure',
+    '  the edit is deliberate.',
+    '  <span class="dim">templates/hooks/protect-security-config.js</span>'],
+};
+
+/* CLAUDE.md rule rationales — grounded in the kit's DETAILS map */
+const WHY={
+  'voice':['<span class="mag">▶ why: voice</span>',
+    '  Before drafting anything you publish or send, the agent reads voice.md so the',
+    '  writing sounds like you. Headline ban: the "X / Y" antithesis, the single most',
+    '  AI-sounding construction. State the positive claim and stop.'],
+  'no-fabrication':['<span class="mag">▶ why: never fabricate</span>',
+    '  If it is not in the source, the agent says so and asks rather than filling the',
+    '  gap with a plausible guess. It also names which source a fact came from. A',
+    '  made-up number is worse than an admitted gap.'],
+  'backup+new-file':['<span class="mag">▶ why: backup + new file</span>',
+    '  When editing a file you authored, the agent saves a timestamped backup first',
+    '  and writes output to a new versioned file. It never overwrites in place,',
+    '  because an in-place save once destroyed unsaved edits.'],
+  'proceed-dont-ask':['<span class="mag">▶ why: proceed, don\'t ask</span>',
+    '  State one line of assumptions and run the whole multi-step task, reporting',
+    '  once at the end. Batch real questions into a single message. Stop only for a',
+    '  hard blocker or a costly wrong guess.'],
+  'plan-means-plan':['<span class="mag">▶ why: plan means plan</span>',
+    '  When you say "plan", the only output is a written plan. Nothing created,',
+    '  edited, or run until you reply with an explicit action verb (do it, build,',
+    '  implement).'],
+};
+
+/* newcomer explainers — assume the reader has never used a coding agent.
+   each leads with the why, then defines the term in plain words. */
+const EXPLAIN={
+  'agent':['<span class="cyan">▶ what is "the agent"?</span>',
+    '  "The agent" is the AI assistant you are talking to — it can read and write files,',
+    '  run commands, and search the web on your behalf, then report back. This shell is a',
+    '  pretend version of that agent so you can poke at how it behaves before trusting it',
+    '  with real work.'],
+  'hooks':['<span class="cyan">▶ what is a hook?</span>',
+    '  Left alone, an agent will run almost anything you ask. A <span class="key">hook</span> is a tiny script the',
+    '  setup runs automatically just before (or after) the agent acts, and it can step in',
+    '  and stop a dangerous move — say, a command that would print a password, or a',
+    '  "delete everything" command. You never call a hook; it watches in the background.',
+    '  <span class="dim">try:</span> <span class="key">hooks</span> <span class="dim">to list them, or</span> <span class="key">printenv</span> <span class="dim">to watch one block an action.</span>'],
+  'memory':['<span class="cyan">▶ what is a memory file?</span>',
+    '  A fresh chat starts knowing nothing about you. A <span class="key">memory file</span> is a small note the',
+    '  agent keeps on disk — who you are, how you like to work, where things live — and',
+    '  reloads at the start of every session. So a correction you give today still holds',
+    '  next week, without you repeating it.',
+    '  <span class="dim">try:</span> <span class="key">memory</span> <span class="dim">to see the index, or</span> <span class="key">remember keep answers short</span><span class="dim">.</span>'],
+  'skills':['<span class="cyan">▶ what is a skill?</span>',
+    '  A <span class="key">skill</span> is a short playbook the agent loads only when it is relevant — a written',
+    '  procedure for one kind of task (research the web, debug a failure, build a tracker).',
+    '  Instead of re-explaining how you want something done, you install the skill once and',
+    '  the agent follows it every time.',
+    '  <span class="dim">try:</span> <span class="key">skills</span> <span class="dim">for the grouped list, or</span> <span class="key">skills all</span> <span class="dim">for every one.</span>'],
+  'workflow':['<span class="cyan">▶ what is the daily workflow?</span>',
+    '  The pieces add up to a loop. You start a chat and the setup loads your memory and',
+    '  the current task. You design before you build (brainstorming), the guards (hooks)',
+    '  keep risky moves out, and at the end <span class="key">rollover</span> writes a handoff file so tomorrow\'s',
+    '  session resumes cleanly. Gate, guard, remember, hand off — then repeat.',
+    '  <span class="dim">try:</span> <span class="key">tour</span> <span class="dim">to watch the whole loop run hands-off.</span>'],
+};
+
+const CMDS={
+  help(){return [
+    'A guided demo of an agentic coding setup, running entirely in your browser.',
+    '<span class="dim">New here? Start with</span> <span class="key">explain hooks</span> <span class="dim">and</span> <span class="key">tour</span><span class="dim">.</span>',
+    '',
+    '<span class="dim">— learn the ideas (plain-English explainers) —</span>',
+    '  <span class="key">explain agent</span>     what "the agent" even is',
+    '  <span class="key">explain hooks</span>     the guards that block risky moves',
+    '  <span class="key">explain memory</span>    how the setup remembers you across chats',
+    '  <span class="key">explain skills</span>    on-demand playbooks for a kind of task',
+    '  <span class="key">explain workflow</span>  how the pieces form a daily loop',
+    '',
+    '<span class="dim">— watch it run —</span>',
+    '  <span class="key">tour</span>              auto-run the whole story, hands-off',
+    '  <span class="key">adversarial</span>       a skeptical critique of this setup (alias: review)',
+    '  <span class="key">/brainstorming</span>    run the design-first skill',
+    '  <span class="key">/grill-me</span>         get interrogated about a plan',
+    '',
+    '<span class="dim">— inspect the parts —</span>',
+    '  <span class="key">skills</span>            grouped summary of installed skills',
+    '  <span class="key">skills all</span>        list every single skill',
+    '  <span class="key">skill &lt;name&gt;</span>      describe one skill',
+    '  <span class="key">hooks</span>             list the active guards',
+    '  <span class="key">hook &lt;name&gt;</span>       describe one guard (block / warn)',
+    '  <span class="key">why &lt;rule&gt;</span>        the rationale behind a CLAUDE.md rule',
+    '  <span class="key">memory</span>            show the memory index',
+    '  <span class="key">tree</span>              the kit folder layout',
+    '  <span class="key">cat &lt;file&gt;</span>        preview README · INSTALL · CLAUDE.md · a hook · a skill',
+    '',
+    '<span class="dim">— try an action (a hook will react) —</span>',
+    '  <span class="key">printenv</span>  ·  <span class="key">rm -rf ~</span>  ·  <span class="key">git commit</span>  ·  <span class="key">remember &lt;note&gt;</span>',
+    '',
+    '<span class="dim">— shell —</span>',
+    '  <span class="key">themes</span>            list / switch the colour theme',
+    '  <span class="key">whoami</span> · <span class="key">ls</span> · <span class="key">clear</span>  <span class="dim">(Tab completes · ↑/↓ history · Ctrl+L clears)</span>',
+  ];},
+  skills(){return [
+    '<span class="dim">~/.claude/skills/  — a skill is a playbook the agent loads on demand.</span>',
+    '',
+    '<span class="mag">superpowers/</span>  <span class="dim">14 workflow skills — brainstorm → plan → execute → verify</span>',
+    '  <span class="mag">using-superpowers · brainstorming · writing-plans · executing-plans</span>',
+    '  <span class="mag">test-driven-development · systematic-debugging · verification-before-completion</span>',
+    '  <span class="mag">subagent-driven-development · requesting/receiving-code-review · …</span>',
+    '',
+    '<span class="cyan">custom/</span>  <span class="dim">18 of your own — the work you do most, captured once</span>',
+    '  <span class="cyan">grill-me · deep-search · make-playbook · parallelize · rollover</span>',
+    '  <span class="cyan">build-tracker · build-graph-explorer · capability-report · map-field</span>',
+    '  <span class="cyan">daily-activity · daily-review · codex-brief · bridge-status</span>',
+    '  <span class="cyan">fellowship-review · groq-transcribe · hue · json-generator · …</span>',
+    '',
+    '<span class="dim">type</span> <span class="key">skills all</span> <span class="dim">to list every skill, or</span> <span class="key">skill brainstorming</span> <span class="dim">to read one.</span>',
+  ];},
+  'skills all'(){
+    const sup=['using-superpowers','brainstorming','writing-plans','executing-plans',
+      'test-driven-development','systematic-debugging','verification-before-completion',
+      'subagent-driven-development','requesting-code-review','receiving-code-review',
+      'finishing-a-development-branch','using-git-worktrees','dispatching-parallel-agents',
+      'writing-skills'];
+    const custom=['bridge-status','build-graph-explorer','build-tracker','capability-report',
+      'codex-brief','daily-activity','daily-review','deep-search','fellowship-review',
+      'groq-transcribe','grill-me','hue','json-generator','make-playbook','map-field',
+      'context-update','parallelize','process-linkedin-inbox','rollover'];
+    const oneLine=k=>{ const d=SKILLS[k]; const txt=(d&&d[1]?d[1].trim():''); return txt; };
+    const lines=['<span class="dim">~/.claude/skills/  — every installed skill (read one with</span> <span class="key">skill &lt;name&gt;</span><span class="dim">)</span>',''];
+    lines.push(`<span class="mag">superpowers/  (${sup.length})</span>`);
+    sup.forEach(k=>lines.push(`  <span class="mag">${k}</span>`));
+    lines.push('');
+    lines.push(`<span class="cyan">custom/  (${custom.length})</span>`);
+    custom.forEach(k=>lines.push(`  <span class="cyan">${k}</span>`));
+    lines.push('');
+    lines.push(`<span class="dim">${sup.length+custom.length} skills total. try</span> <span class="key">skill deep-search</span> <span class="dim">or</span> <span class="key">explain skills</span><span class="dim">.</span>`);
+    return lines;
+  },
+  themes(){return [
+    '<span class="dim">colour themes (click the pill, top-right, to cycle — your choice is remembered):</span>',
+    '  <span class="key">tokyo</span>       dark, calm, neon-on-midnight (the default)',
+    '  <span class="key">brutalist</span>   bright paper, hard black rules, one red accent, mono everywhere',
+    '',
+    '<span class="dim">the terminal window stays dark in both so the output keeps its glow.</span>',
+  ];},
+  whoami(){return [
+    'agent@dpm-agent-kit',
+    '<span class="dim">You are talking to the agent — an AI that reads/writes files, runs commands, and</span>',
+    '<span class="dim">searches the web for you. This shell is a safe, scripted stand-in for it.</span>',
+    '<span class="dim">try:</span> <span class="key">explain agent</span> <span class="dim">for the longer answer.</span>',
+  ];},
+  '/brainstorming'(){return [
+    '<span class="mag">▶ skill: brainstorming</span> <span class="dim">(auto-gates implementation until you approve a design)</span>',
+    '',
+    '  <span class="ok">?</span> What problem does this solve, and for whom?',
+    '  <span class="dim">› (it asks one question at a time, proposes 2–3 approaches, then writes a</span>',
+    '  <span class="dim">   design doc — no code is written until you say yes.)</span>',
+    '',
+    '<span class="warn">⛔ HARD GATE:</span> no implementation until a design is approved. Even for "simple" tasks.',
+  ];},
+  '/grill-me'(){return [
+    '<span class="cyan">▶ skill: grill-me</span>',
+    '  Q1/∞: "You said \'a tracker\' — single-user or shared? (I\'d recommend single-user',
+    '         to start.) ›"',
+    '  <span class="dim">It walks the whole decision tree, one sharp question at a time, with a</span>',
+    '  <span class="dim">recommended answer each time. Expect 16–50 questions for a fuzzy idea.</span>',
+  ];},
+  hooks(){return [
+    '<span class="dim">active guardrails (settings.json → hooks):</span>',
+    '  PreToolUse·Bash    <span class="err">check-secret-exposure</span> <span class="err">block-dangerous-bash</span> <span class="err">block-egress-exfil</span>',
+    '  PreToolUse·Write   <span class="err">scan-write-for-secrets</span> <span class="warn">protect-security-config</span> protect-firmware',
+    '  PreToolUse·Read    <span class="err">block-secret-file</span> <span class="warn">block-sensitive-file-read</span>',
+    '  PostToolUse·Bash   <span class="err">scan-output-for-secrets</span> audit-bash-log',
+    '  SessionStart       <span class="ok">session-primer</span>   UserPromptSubmit  task-state-reminder',
+    '  Stop               check-session-size  stop-toast-gate   Agent  log-agent-dispatch',
+    '',
+    '<span class="dim">try:</span> <span class="key">hook block-egress-exfil</span> <span class="dim">for one in detail.</span>',
+  ];},
+  printenv(){return [
+    '<span class="err">⛔ BLOCKED by check-secret-exposure hook (kind: shell-env-dump).</span>',
+    '   WHY: this would print env-var values (incl. secrets) into the agent\'s context',
+    '   and the on-disk transcript. Once a secret is in the transcript, the only safe',
+    '   fix is rotation.',
+    '   <span class="dim">safer: </span><span class="key">[Environment]::GetEnvironmentVariable("VAR","User").Length</span><span class="dim"> (length only)</span>',
+  ];},
+  'rm -rf ~'(){return [
+    '<span class="err">⛔ Blocked dangerous command (rm -rf on root/home).</span>',
+    '   Confirm explicitly to proceed. block-dangerous-bash also stops: git push --force,',
+    '   git reset --hard, git clean -f, live DROP/TRUNCATE SQL.',
+  ];},
+  'git commit'(){return [
+    '<span class="ok">✓ allowed.</span> Normal, reversible actions run freely — the guards are high-precision,',
+    'so only genuinely dangerous commands get blocked. (PostToolUse logs a redacted record',
+    'to ~/.claude/logs/bash-audit.log.)',
+  ];},
+  memory(){return [
+    '<span class="dim">~/.claude/memory/MEMORY.md  (the always-loaded index)</span>',
+    '  - [user] who you are → tailors explanations to your level',
+    '  - [feedback] how you like to work → corrections AND confirmed-good approaches',
+    '  - [project] who/why/when → decays fast, uses absolute dates',
+    '  - [reference] where things live in other systems',
+    '<span class="dim">bodies live in per-fact files; only this index is loaded each session.</span>',
+    '<span class="dim">try:</span> <span class="key">remember keep responses terse</span>',
+  ];},
+  rollover(){return [
+    '<span class="mag">▶ skill: rollover</span>',
+    '  • gathered diagnostics (CURRENT-TASK.md, memory dir, files changed 48h, git status)',
+    '  • wrote the handoff → <span class="ok">CURRENT-TASK.md updated</span>',
+    '  • seeded memory with this session\'s lessons',
+    '  <span class="dim">next session: session-primer injects CURRENT-TASK.md at boot. Clean baton pass.</span>',
+  ];},
+  tree(){return TREE.slice();},
+  ls(){return ['README.md  INSTALL.md  install.ps1  install.sh  docs/  templates/  explorable/  obsidian/  CURRENT-TASK.md'];},
+  adversarial(){return [
+    '<span class="mag">▶ adversarial review</span> <span class="dim">— a skeptical pass, the way Codex would push back</span>',
+    '',
+    '  <span class="warn">1.</span> Hooks are high-precision, so they block known-bad patterns. A novel',
+    '     exfil path the regex never anticipated can still slip through. Treat them',
+    '     as one layer, with network and credential isolation underneath.',
+    '  <span class="warn">2.</span> Procedural memory rots. A feedback note saved in March can be wrong by',
+    '     June and still load every session. Nothing here re-checks it; you have to.',
+    '  <span class="warn">3.</span> One long thread ridden through compaction risks context bloat and quiet',
+    '     summary drift. The handoff file helps, but a botched compaction can still',
+    '     drop the detail that mattered.',
+    '  <span class="warn">4.</span> The guards bias toward caution. Saving mostly corrections teaches the',
+    '     agent to over-ask. That is why feedback memory stores confirmed-good',
+    '     approaches too — but only if you remember to add them.',
+    '  <span class="warn">5.</span> This demo is fully scripted in the browser. A real shell has no narrator',
+    '     deciding what to show; the failure modes there are messier than any chip row.',
+    '  <span class="warn">6.</span> A drop-in kit is a starting contract. Borrowed rules you never hit in',
+    '     practice are dead weight; prune what does not earn its place.',
+    '',
+    '  <span class="dim">none of this sinks the setup. It is the honest cost of running it.</span>',
+  ];},
+  clear(){out.innerHTML='';return null;},
+};
+/* alias */
+CMDS['review']=CMDS.adversarial;
+
+/* ---------- arg-command handlers (prefix match) ---------- */
+function argCommand(cmd){
+  const lc=cmd.toLowerCase();
+  if(lc.startsWith('remember ')){
+    const note=cmd.slice(9).trim();
+    return [
+      `<span class="ok">✓ saved feedback memory</span> <span class="dim">→ ~/.claude/memory/feedback_${note.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,24)||'note'}.md</span>`,
+      `  rule: "${esc(note)}"  <span class="dim">+ a one-line pointer added to MEMORY.md</span>`,
+      `  <span class="dim">future sessions will load this. (corrections AND confirmations both belong here.)</span>`,
+    ];
+  }
+  if(lc.startsWith('cat ')){
+    let f=cmd.slice(4).trim().toLowerCase().replace(/^\.\//,'');
+    const map={'readme':'readme','readme.md':'readme','install':'install','install.md':'install',
+      'claude.md':'claude.md','claude':'claude.md','templates/claude-md/claude.md':'claude.md',
+      'check-secret-exposure.js':'check-secret-exposure.js','check-secret-exposure':'check-secret-exposure.js',
+      'templates/hooks/check-secret-exposure.js':'check-secret-exposure.js',
+      'brainstorming':'brainstorming','skill.md':'brainstorming'};
+    const key=map[f];
+    if(key&&FILES[key])return FILES[key].slice();
+    return [`<span class="err">cat: ${esc(cmd.slice(4).trim())}: no preview</span> <span class="dim">— try: cat README · INSTALL · CLAUDE.md · check-secret-exposure.js · brainstorming</span>`];
+  }
+  if(lc.startsWith('explain ')){
+    const name=cmd.slice(8).trim().toLowerCase();
+    if(EXPLAIN[name])return EXPLAIN[name].slice();
+    return [`<span class="err">explain: ${esc(cmd.slice(8).trim())}: no explainer</span> <span class="dim">— try: ${Object.keys(EXPLAIN).join(' · ')}</span>`];
+  }
+  if(lc==='skills all'){return CMDS['skills all']();}
+  if(lc.startsWith('skill ')){
+    const name=cmd.slice(6).trim().toLowerCase();
+    if(SKILLS[name])return SKILLS[name].slice();
+    const names=Object.keys(SKILLS).filter(k=>k!=='superpowers');
+    return [`<span class="err">skill: ${esc(cmd.slice(6).trim())}: unknown</span>`,
+      `<span class="dim">— try one of: ${names.join(' · ')}</span>`,
+      `<span class="dim">or</span> <span class="key">skills all</span> <span class="dim">to list them grouped.</span>`];
+  }
+  if(lc.startsWith('hook ')){
+    const name=cmd.slice(5).trim().toLowerCase();
+    if(HOOKS[name])return HOOKS[name].slice();
+    return [`<span class="err">hook: ${esc(cmd.slice(5).trim())}: unknown</span> <span class="dim">— try: ${Object.keys(HOOKS).join(' · ')}</span>`];
+  }
+  if(lc.startsWith('why ')){
+    const name=cmd.slice(4).trim().toLowerCase();
+    if(WHY[name])return WHY[name].slice();
+    return [`<span class="err">why: ${esc(cmd.slice(4).trim())}: unknown rule</span> <span class="dim">— try: ${Object.keys(WHY).join(' · ')}</span>`];
+  }
+  return null; // not an arg-command
+}
+
+/* ---------- known command list for tab-completion ---------- */
+const COMPLETIONS=[
+  'help','tour','adversarial','review','skills','skills all','skill ','/brainstorming','/grill-me',
+  'hooks','hook ','why ','explain ','explain agent','explain hooks','explain memory','explain skills',
+  'explain workflow','printenv','rm -rf ~','git commit','memory','remember ',
+  'rollover','tree','cat ','cat INSTALL.md','themes','whoami','ls','clear',
+];
+
+/* ---------- run a command (async so tour can await streaming) ---------- */
+async function run(raw, {echoIt=true}={}){
+  const cmd=raw.trim(); if(!cmd)return;
+  if(echoIt)echo(cmd);
+  hist.push(cmd); hi=hist.length;
+  const argRes=argCommand(cmd);
+  if(argRes!==null){ await streamLines(argRes); return; }
+  const fn=CMDS[cmd]||CMDS[cmd.toLowerCase()];
+  if(fn){ const r=fn(); if(r!==null) await streamLines(r); }
+  else print(`<span class="dim">command not found: ${esc(cmd)} — type </span><span class="key">help</span>`);
+}
+
+/* ---------- tour: auto-typed guided session ---------- */
+const TOUR=['help','skills','/brainstorming','printenv','git commit','remember keep responses terse','rollover'];
+let touring=false;
+async function typeInto(text){
+  inp.value='';
+  for(const ch of text){ inp.value+=ch; await sleep(34); }
+  await sleep(260);
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+async function runTour(){
+  if(touring)return; touring=true; inp.disabled=true;
+  print('<span class="dim">— tour: watch the whole story. type anything to take back over. —</span>');
+  print('');
+  for(const step of TOUR){
+    await typeInto(step);
+    echo(step); inp.value='';
+    const argRes=argCommand(step);
+    if(argRes!==null){ await streamLines(argRes); }
+    else { const fn=CMDS[step]||CMDS[step.toLowerCase()]; if(fn){const r=fn();if(r!==null)await streamLines(r);} }
+    print('');
+    await sleep(520);
+  }
+  print('<span class="ok">— tour complete.</span> <span class="dim">that is the loop: gate, guard, remember, hand off. try</span> <span class="key">adversarial</span> <span class="dim">for the skeptical take.</span>');
+  print('');
+  touring=false; inp.disabled=false; inp.focus();
+}
+CMDS['tour']=function(){ runTour(); return null; };
+
+/* ---------- chips ---------- */
+const CHIPS=['tour','explain hooks','skills all','themes','adversarial','hook block-egress-exfil','why voice','cat INSTALL.md','clear'];
+CHIPS.forEach(c=>{const e=document.createElement('span');e.className='chip';e.textContent=c;
+  e.onclick=()=>{ if(touring||streaming)return; run(c);inp.focus(); };chipsEl.appendChild(e);});
+
+/* ---------- tab completion ---------- */
+let lastTab='';
+function complete(){
+  const v=inp.value;
+  const matches=COMPLETIONS.filter(c=>c.startsWith(v)&&c!==v);
+  if(matches.length===1){ inp.value=matches[0]; lastTab=''; return; }
+  if(matches.length>1){
+    // longest common prefix
+    let lcp=matches[0];
+    for(const m of matches){ let i=0; while(i<lcp.length&&i<m.length&&lcp[i]===m[i])i++; lcp=lcp.slice(0,i); }
+    if(lcp.length>v.length){ inp.value=lcp; }
+    if(lastTab===v){ print(`<span class="dim">candidates:</span> ${matches.map(m=>`<span class="key">${esc(m.trim())}</span>`).join('  ')}`); }
+    lastTab=v;
+  }
+}
+
+/* ---------- input handling ---------- */
+inp.addEventListener('keydown',async e=>{
+  if(e.key==='Tab'){ e.preventDefault(); complete(); return; }
+  if(e.key!=='Tab')lastTab='';
+  if(e.ctrlKey&&(e.key==='l'||e.key==='L')){ e.preventDefault(); out.innerHTML=''; return; }
+  if(streaming){ skipStream=true; if(e.key.length===1||e.key==='Enter'){ /* let the key register, dump rest */ } return; }
+  if(e.key==='Enter'){ const v=inp.value; inp.value=''; await run(v); }
+  else if(e.key==='ArrowUp'){ if(hi>0){hi--;inp.value=hist[hi]||'';} e.preventDefault(); }
+  else if(e.key==='ArrowDown'){ if(hi<hist.length){hi++;inp.value=hist[hi]||'';} e.preventDefault(); }
+});
+/* any keypress while streaming skips the rest */
+document.addEventListener('keydown',e=>{ if(streaming)skipStream=true; });
+document.body.addEventListener('click',e=>{ if(!touring) inp.focus(); });
+
+/* ---------- intro ---------- */
+print('<span class="ok">●</span> session started — <span class="dim">session-primer loaded CURRENT-TASK.md + the memory index.</span>');
+print('');
+print('<span class="cyan">Welcome.</span> This is a fake shell that shows how an agentic coding setup reacts —');
+print('the guards that block risky moves, the skills it can run, the notes it remembers.');
+print('<span class="dim">Nothing here touches your machine; every command is scripted and runs in your browser.</span>');
+print('');
+print('<span class="dim">Never used a coding agent? Start with</span> <span class="key">explain hooks</span><span class="dim">. Then type</span> <span class="key">help</span><span class="dim">, run</span> <span class="key">tour</span>');
+print('<span class="dim">to watch the whole story hands-off, or click a chip below.</span>');
+print('');
+inp.focus();
+</script>
+</body>
+</html>
