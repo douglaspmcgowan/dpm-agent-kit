@@ -22,6 +22,7 @@ add your own sensitive bits back.
 | `templates/claude-md/` | A lean, reusable `CLAUDE.md` + `CLAUDE-delegation.md`, and the modular pattern behind them. |
 | `templates/memory/` | The append-only auto-memory system (index + four memory types + how-to). |
 | `templates/skills/` | Vendored custom skills (scrubbed) + docs/install-prompts for web-installed skills (superpowers, grill-me). |
+| `templates/repo-map.md` | A starter "which local path → which GitHub repo" map, so the agent never commits/pushes to the wrong remote. |
 | `docs/DETAILED-GUIDE.md` | How the whole thing works, end to end — the deep read. |
 | `docs/HANDLING-SECRETS.md` | Where and how to add your real paths/keys/policy back, safely. |
 | `explorable/` | Four self-contained interactive HTML explainers (node-map, scrollytelling, terminal, dashboard). Open any in a browser. |

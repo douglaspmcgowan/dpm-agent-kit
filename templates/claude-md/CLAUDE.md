@@ -81,6 +81,13 @@ servers/connectors (`mcp__*` tools), (3) plugins. If something fits, name it and
 Read `CLAUDE-delegation.md` before any non-trivial task for the two-question test, model-tier
 policy, and sub-agent/parallelization rules.
 
+## Repo map (once you juggle several repos)
+
+Keep a `repo-map.md` that maps each local path to its GitHub repo and the nicknames you use, and tell
+the agent to read it before any `git commit` / `git push` and whenever you name a repo informally
+("my fork", "the tracker"). It stops the agent from acting on the wrong remote. A starter lives in
+`templates/repo-map.md`.
+
 ## Task state (CURRENT-TASK.md)
 
 For multi-step tasks (5+ items) or when context compaction is likely, maintain `CURRENT-TASK.md` in
