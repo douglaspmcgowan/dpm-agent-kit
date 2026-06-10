@@ -1,5 +1,10 @@
 # dpm-agent-kit
 
+[![Live demo](https://img.shields.io/badge/live%20demo-dpm--agent--kit.vercel.app-9ece6a?style=flat-square)](https://dpm-agent-kit.vercel.app)
+[![License: MIT](https://img.shields.io/badge/license-MIT-7aa2f7?style=flat-square)](LICENSE)
+
+![dpm-agent-kit intro screen](explorable/preview.png)
+
 A drop-in kit that captures a complete, opinionated **agentic coding setup** for Claude Code —
 skills, security hooks, the memory system, the `CLAUDE.md` behavioral contract, and the daily
 workflow — so you (or anyone) can stand the whole thing up in one move.
@@ -25,7 +30,8 @@ add your own sensitive bits back.
 | `templates/repo-map.md` | A starter "which local path → which GitHub repo" map, so the agent never commits/pushes to the wrong remote. |
 | `docs/DETAILED-GUIDE.md` | How the whole thing works, end to end — the deep read. |
 | `docs/HANDLING-SECRETS.md` | Where and how to add your real paths/keys/policy back, safely. |
-| `explorable/` | Four self-contained interactive HTML explainers (node-map, scrollytelling, terminal, dashboard). Open any in a browser. |
+| `docs/SETUP-PREFLIGHT.md` | Pre-install checklist: Node, Claude Code, gh, git identity, Vercel CLI. |
+| `explorable/` | Five interactive HTML explorables (intro hub, walkthrough, node-map, terminal, control panel) + an aesthetic-options gallery. Open any in a browser or visit the [live site](https://dpm-agent-kit.vercel.app). |
 | `obsidian/` | A Superpowers skills guide formatted for an Obsidian vault. |
 
 ---
