@@ -86,6 +86,47 @@ What stays OUT: anything re-derivable (code, paths, git history) and ephemeral t
 > Memory is a *snapshot in time*. Before acting on a memory that names a file or flag, the agent
 > verifies it still exists — present reality beats a stale note.
 
+### Building a voice profile
+
+One of the highest-value reference memories is a synthesized voice guide. Feed the agent a set of
+your real writing — emails, essays, application answers, README files, anything with a distinctive
+register. The broader the sample (formal submissions + casual messages + technical docs) the richer
+the output. Prompt:
+
+> "Read all of these. Extract a reusable voice guide: sentence rhythm, vocabulary level, paragraph
+> length, constructions to use, constructions to avoid."
+
+The model produces a `voice.md` (core rules) and optionally a `voice-detail.md` (sentence-level
+calibration). Drop both in `~/.claude/` so they're accessible in any project session. Then add a
+memory entry that simply says *read voice.md before any publishable prose* — and separately, a
+feedback memory that broadens "publishable" to cover READMEs, setup guides, and HTML site copy too,
+not just explicit essays or emails.
+
+### Anchoring research facts
+
+For any project with primary research (a paper, a dataset, an analysis), create a `reference`
+memory that stores every verified number anchored to its exact source location. Without this, the
+agent re-searches the same figures each session and introduces small inconsistencies that compound —
+a dataset quoted as "~8,000" one day and "7,864" the next. The memory file also carries a
+**NOT-IN-PAPER list**: numbers the agent might plausibly fabricate from context but that were never
+actually published. See `_example-reference-project-facts.md` for the full pattern.
+
+### Starter examples in `../templates/memory/`
+
+The kit ships seven annotated example files covering the most common patterns:
+
+| File | Type | What it shows |
+|---|---|---|
+| `_example-feedback.md` | feedback | Minimal format demo — terse responses |
+| `_example-reference-voice.md` | reference | Voice profile: how to build it from documents |
+| `_example-feedback-publishable-prose.md` | feedback | Extend "publishable" to docs/READMEs |
+| `_example-feedback-headless-testing.md` | feedback | Playwright `.cjs` + `file://` fallback pattern |
+| `_example-feedback-hook-precision.md` | feedback | High-precision security hooks; why recall loses |
+| `_example-reference-project-facts.md` | reference | Anchoring research numbers to source |
+| `_example-reference-repo-contacts.md` | reference | Repo map + contact addresses in one place |
+
+Delete them as you replace them with your own.
+
 ---
 
 ## 4. CLAUDE.md — the behavioral contract

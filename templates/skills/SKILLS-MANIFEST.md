@@ -27,6 +27,7 @@ setup before relying on it.
 | `map-field` | Map a field/domain corpus into a structured "schools of thought" site | ADAPTED |
 | `context-update` | Process a context-dropbox folder into researched notes, a map, and an archive | ADAPTED |
 | `process-linkedin-inbox` | Categorize pasted social posts and propose site edits | ADAPTED |
+| `environment-preflight` | Pre-deploy audit (Phase 1) + full static HTML→GitHub→Vercel ship workflow (Phase 2) | GENERAL |
 
 ## Web-installed skills (install from source — see `WEB-INSTALLED-SKILLS.md`)
 

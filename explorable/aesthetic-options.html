@@ -362,6 +362,30 @@
 
   footer{max-width:1280px;margin:0 auto 50px;padding:0 32px;color:#6b7080;font-size:12px}
   @media(max-width:520px){.grid{grid-template-columns:1fr;padding:0 18px}header.page{padding:28px 18px 18px}}
+
+  /* ============ font pairings section ============ */
+  .fsec{max-width:1280px;margin:0 auto;padding:0 32px 64px}
+  .fsec-hdr{padding:36px 0 22px;border-top:1px solid #24262e}
+  .fsec-hdr h2{margin:0 0 8px;font-size:20px;font-weight:700;color:#e7e9ee;letter-spacing:-.01em}
+  .fsec-hdr p{margin:0;font-size:13px;color:#9aa0ad;max-width:700px;line-height:1.6}
+  .fg{margin-bottom:36px}
+  .fg-label{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#6b7080;
+    padding-bottom:9px;border-bottom:1px solid #24262e;margin-bottom:14px}
+  .fg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+  .fc{border:1px solid #24262e;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+  .fc-top{padding:10px 14px 9px;background:#101116;border-bottom:1px solid #24262e;
+    display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .fc-name{font-size:13px;font-weight:600;color:#c7cbd4}
+  .fc-note{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#525666}
+  .fc-demo{padding:18px 18px 14px;flex:1}
+  .fc-demo .fh{font-size:21px;line-height:1.08;margin:0 0 9px}
+  .fc-demo .fb{font-size:13px;line-height:1.58;margin:0 0 11px}
+  .fc-demo .fm{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 9px;
+    border-radius:3px;display:inline-block}
+  .fc-feet{padding:8px 14px;border-top:1px solid;display:flex;gap:6px;flex-wrap:wrap}
+  .fc-feet span{font-family:'IBM Plex Mono',monospace;font-size:10px;
+    padding:2px 7px;border-radius:3px;letter-spacing:.02em}
+  @media(max-width:520px){.fsec{padding:0 18px 48px}.fg-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -376,6 +400,16 @@
 <p class="note">Fonts load from Google Fonts, so view this online; offline it falls back to system fonts and the type comparison is muted.</p>
 
 <div class="grid" id="grid"></div>
+
+<section class="fsec" id="fonts">
+  <div class="fsec-hdr">
+    <h2>Font pairings</h2>
+    <p>The same heading, body paragraph, and code line rendered in sixteen pairings — grouped by aesthetic mood.
+    The <em>display</em> font carries the headings; the <em>body</em> font carries the prose.
+    Swapping these two is the single biggest lever on whether something reads as AI-generated or designed.</p>
+  </div>
+  <div id="fgroups"></div>
+</section>
 
 <footer>Same agent-kit content, twenty-four skins, five archetypes each · self-contained except web fonts · open in any browser.</footer>
 
@@ -510,6 +544,116 @@ DIRS.forEach(d=>{
     demo.innerHTML=ARCH[b.dataset.arch];
   }));
   grid.appendChild(c);
+});
+
+/* ---- font pairings ---- */
+const HEAD_TXT = 'Five parts, zero memory.';
+const BODY_TXT = 'Every session starts blank. The behavioral contract, hooks, and memory system are what survive the restart — they\'re what separate a focused assistant from a tool you\'re re-briefing every time.';
+const CODE_TXT = '$ printenv → BLOCKED · git commit → ✓';
+
+const GROUPS = [
+  {
+    label: 'Interface · dark',
+    pairs: [
+      { name:'Sora + IBM Plex Mono',  note:'current kit · mono-body = the vibe tell',
+        disp:"'Sora',sans-serif",       dispw:800, body:"'IBM Plex Mono',monospace",
+        mono:"'IBM Plex Mono',monospace", bg:'#15161e',fg:'#c8d0f0',dim:'#6b73a0',acc:'#9ece6a',cb:'rgba(0,0,0,.3)',ft:'#1f2336' },
+      { name:'Sora + IBM Plex Sans',   note:'swap body to sans → less coded',
+        disp:"'Sora',sans-serif",       dispw:800, body:"'IBM Plex Sans',sans-serif",
+        mono:"'IBM Plex Mono',monospace", bg:'#15161e',fg:'#c8d0f0',dim:'#8c94b8',acc:'#9ece6a',cb:'rgba(0,0,0,.3)',ft:'#1f2336' },
+      { name:'Space Grotesk + Plex Sans', note:'Nord / arctic dark',
+        disp:"'Space Grotesk',sans-serif", dispw:700, body:"'IBM Plex Sans',sans-serif",
+        mono:"'JetBrains Mono',monospace",  bg:'#2e3440',fg:'#d8dee9',dim:'#7b8494',acc:'#88c0d0',cb:'rgba(0,0,0,.25)',ft:'#3b4252' },
+      { name:'Plus Jakarta Sans',      note:'glass / contemporary dark',
+        disp:"'Plus Jakarta Sans',sans-serif", dispw:800, body:"'Plus Jakarta Sans',sans-serif",
+        mono:"'IBM Plex Mono',monospace",    bg:'#1d2b4f',fg:'#eef2ff',dim:'#a9b6da',acc:'#7ee0ff',cb:'rgba(0,0,0,.2)',ft:'#273862' },
+    ]
+  },
+  {
+    label: 'Editorial · print',
+    pairs: [
+      { name:'Fraunces + Hanken Grotesk', note:'almanac / handbook',
+        disp:"'Fraunces',serif",         dispw:900, body:"'Hanken Grotesk',sans-serif",
+        mono:"'IBM Plex Mono',monospace",  bg:'#f4f1ea',fg:'#1f1b16',dim:'#6a6358',acc:'#7b2d26',cb:'#ece7dc',ft:'#e0ddd5' },
+      { name:'Source Serif 4 + Plex Sans', note:'Distill-style / scientific',
+        disp:"'Source Serif 4',serif",    dispw:600, body:"'IBM Plex Sans',sans-serif",
+        mono:"'IBM Plex Mono',monospace",  bg:'#fbfbf9',fg:'#1a1a1a',dim:'#6a6a64',acc:'#176f7a',cb:'#f3f3ef',ft:'#eeecea' },
+      { name:'Cormorant + Libre Caslon',  note:'dark academia / scholarly',
+        disp:"'Cormorant Garamond',serif", dispw:600, body:"'Libre Caslon Text',serif",
+        mono:"'IBM Plex Mono',monospace",  bg:'#211c17',fg:'#e8ddc8',dim:'#9b8e76',acc:'#c89b3c',cb:'rgba(0,0,0,.4)',ft:'#2a241d' },
+      { name:'Lora + Lora',              note:'Tufte / long-form calm',
+        disp:"'Lora',serif",             dispw:400, dispItalic:true, body:"'Lora',serif",
+        mono:"'IBM Plex Mono',monospace",  bg:'#fffff8',fg:'#111',dim:'#8c8678',acc:'#a00000',cb:'#f3f0e4',ft:'#f0ece0' },
+    ]
+  },
+  {
+    label: 'Clean sans · light',
+    pairs: [
+      { name:'Archivo + Libre Franklin',  note:'Swiss / International',
+        disp:"'Archivo',sans-serif",      dispw:800, body:"'Libre Franklin',sans-serif",
+        mono:"'IBM Plex Mono',monospace",  bg:'#ffffff',fg:'#111',dim:'#8a8a8a',acc:'#e10600',cb:'#f3f3f3',ft:'#eee' },
+      { name:'IBM Plex Sans + IBM Plex Sans', note:'technical docs / Solarized',
+        disp:"'IBM Plex Sans',sans-serif", dispw:700, body:"'IBM Plex Sans',sans-serif",
+        mono:"'IBM Plex Mono',monospace",   bg:'#fdf6e3',fg:'#586e75',dim:'#93a1a1',acc:'#268bd2',cb:'#eee8d5',ft:'#e8e0c8' },
+      { name:'Outfit + Outfit',           note:'Solarpunk / green-tech',
+        disp:"'Outfit',sans-serif",       dispw:800, body:"'Outfit',sans-serif",
+        mono:"'IBM Plex Mono',monospace",  bg:'#f3f7ee',fg:'#243024',dim:'#6f7d63',acc:'#2e9e5b',cb:'#e6efdc',ft:'#ddebd0' },
+      { name:'Hanken Grotesk + Hanken',   note:'neutral / flexible base',
+        disp:"'Hanken Grotesk',sans-serif", dispw:800, body:"'Hanken Grotesk',sans-serif",
+        mono:"'IBM Plex Mono',monospace",   bg:'#fafafa',fg:'#1a1a1a',dim:'#6a6a6a',acc:'#2563eb',cb:'#f0f0f0',ft:'#ebebeb' },
+    ]
+  },
+  {
+    label: 'Expressive · character',
+    pairs: [
+      { name:'VT323 + IBM Plex Mono',     note:'CRT phosphor / retro terminal',
+        disp:"'VT323',monospace",         dispw:400, body:"'IBM Plex Mono',monospace",
+        mono:"'IBM Plex Mono',monospace",  bg:'#0a0a06',fg:'#ffb000',dim:'#7a5a00',acc:'#33ff66',cb:'rgba(255,176,0,.06)',ft:'#141408' },
+      { name:'JetBrains Mono (all)',       note:'full monospace web / owickstrom',
+        disp:"'JetBrains Mono',monospace", dispw:700, body:"'JetBrains Mono',monospace",
+        mono:"'JetBrains Mono',monospace",  bg:'#f2f0e9',fg:'#1a1a1a',dim:'#7a766c',acc:'#1a1a1a',cb:'#e4e1d6',ft:'#e4e1d6' },
+      { name:'Caveat + Patrick Hand',      note:'Excalidraw / sketch / hand-drawn',
+        disp:"'Caveat',cursive",          dispw:700, body:"'Patrick Hand',cursive",
+        mono:"'Space Mono',monospace",     bg:'#fffdf7',fg:'#2b2b2b',dim:'#8c8678',acc:'#1971c2',cb:'#fff9ec',ft:'#f0ece0' },
+      { name:'Poppins + JetBrains Mono',  note:'Catppuccin / soft dark app UI',
+        disp:"'Poppins',sans-serif",      dispw:700, body:"'Poppins',sans-serif",
+        mono:"'JetBrains Mono',monospace", bg:'#1e1e2e',fg:'#cdd6f4',dim:'#7f849c',acc:'#cba6f7',cb:'#181825',ft:'#262637' },
+    ]
+  },
+];
+
+const fgroups = document.getElementById('fgroups');
+GROUPS.forEach(g => {
+  const sec = document.createElement('div');
+  sec.className = 'fg';
+  const lbl = document.createElement('div');
+  lbl.className = 'fg-label';
+  lbl.textContent = g.label;
+  const grid = document.createElement('div');
+  grid.className = 'fg-grid';
+  g.pairs.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'fc';
+    card.innerHTML = `
+      <div class="fc-top">
+        <span class="fc-name">${p.name}</span>
+        <span class="fc-note">${p.note}</span>
+      </div>
+      <div class="fc-demo" style="background:${p.bg};color:${p.fg}">
+        <div class="fh" style="font-family:${p.disp};font-weight:${p.dispw};color:${p.fg};${p.dispItalic?'font-style:italic;':''}">${HEAD_TXT}</div>
+        <div class="fb" style="font-family:${p.body};color:${p.dim}">${BODY_TXT}</div>
+        <div class="fm" style="font-family:${p.mono};background:${p.cb};color:${p.acc}">${CODE_TXT}</div>
+      </div>
+      <div class="fc-feet" style="background:${p.ft||p.bg};border-color:${p.cb}">
+        <span style="background:${p.cb};color:${p.dim}">disp · ${p.disp.split(',')[0].replace(/'/g,'')}</span>
+        <span style="background:${p.cb};color:${p.dim}">body · ${p.body.split(',')[0].replace(/'/g,'')}</span>
+        <span style="background:${p.cb};color:${p.dim}">mono · ${p.mono.split(',')[0].replace(/'/g,'')}</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+  sec.appendChild(lbl);
+  sec.appendChild(grid);
+  fgroups.appendChild(sec);
 });
 </script>
 </body>
