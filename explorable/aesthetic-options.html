@@ -1,473 +1,1716 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>dpm-agent-kit — aesthetic options</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Caveat:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=DM+Serif+Display&family=Fraunces:opsz,ital,wght@9..144,0,400;9..144,0,600;9..144,0,900;9..144,1,500&family=Hanken+Grotesk:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Libre+Caslon+Text:ital@0;1&family=Libre+Franklin:wght@400;700;900&family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@400;600;800&family=Patrick+Hand&family=Plus+Jakarta+Sans:wght@400;600;800&family=Poppins:wght@400;600;800&family=Quicksand:wght@500;700&family=Sora:wght@400;600;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
-<style>
-  *{box-sizing:border-box}
-  body{margin:0;background:#121317;color:#e7e9ee;
-       font-family:'IBM Plex Sans',system-ui,sans-serif;line-height:1.5}
-  /* ---- gallery chrome (neutral, deliberately plain) ---- */
-  header.page{padding:40px 32px 22px;border-bottom:1px solid #24262e;max-width:1280px;margin:0 auto}
-  header.page h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em}
-  header.page h1 b{color:#8fd17a}
-  header.page p{margin:10px 0 0;color:#9aa0ad;max-width:760px;font-size:14px}
-  header.page .how{margin-top:14px;font-size:13px;color:#c7cbd4;border-left:3px solid #8fd17a;padding-left:12px}
-  .note{max-width:1280px;margin:10px auto 0;padding:0 32px;color:#6b7080;font-size:12px}
-  .grid{max-width:1280px;margin:24px auto 60px;padding:0 32px;
-        display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:22px}
-  .card{border:1px solid #24262e;border-radius:10px;overflow:hidden;background:#15161b;
-        display:flex;flex-direction:column}
-  .meta{padding:14px 16px;border-bottom:1px solid #24262e;display:flex;flex-direction:column;gap:6px}
-  .meta .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-  .meta .name{font-weight:700;font-size:15px}
-  .meta .tag{font-size:12px;color:#9aa0ad}
-  .meta .fonts{font-size:11px;color:#6b7080;letter-spacing:.02em}
-  .sw{display:flex;gap:5px;align-items:center}
-  .sw i{width:15px;height:15px;border-radius:3px;display:inline-block;border:1px solid rgba(255,255,255,.12)}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dpm-agent-kit — aesthetic options</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Caveat:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=DM+Serif+Display&family=Fraunces:opsz,ital,wght@9..144,0,400;9..144,0,600;9..144,0,900;9..144,1,500&family=Hanken+Grotesk:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=Libre+Caslon+Text:ital@0;1&family=Libre+Franklin:wght@400;700;900&family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@400;600;800&family=Patrick+Hand&family=Plus+Jakarta+Sans:wght@400;600;800&family=Poppins:wght@400;600;800&family=Quicksand:wght@500;700&family=Sora:wght@400;600;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Space+Grotesk:wght@400;600;700&family=Space+Mono:wght@400;700&family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #121317;
+        color: #e7e9ee;
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      /* ---- gallery chrome (neutral, deliberately plain) ---- */
+      header.page {
+        padding: 40px 32px 22px;
+        border-bottom: 1px solid #24262e;
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+      header.page h1 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      header.page h1 b {
+        color: #8fd17a;
+      }
+      header.page p {
+        margin: 10px 0 0;
+        color: #9aa0ad;
+        max-width: 760px;
+        font-size: 14px;
+      }
+      header.page .how {
+        margin-top: 14px;
+        font-size: 13px;
+        color: #c7cbd4;
+        background: rgba(143, 209, 122, 0.08);
+        border-radius: 4px;
+        padding: 9px 12px;
+      }
+      .note {
+        max-width: 1280px;
+        margin: 10px auto 0;
+        padding: 0 32px;
+        color: #6b7080;
+        font-size: 12px;
+      }
+      .grid {
+        max-width: 1280px;
+        margin: 24px auto 60px;
+        padding: 0 32px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
+        gap: 22px;
+      }
+      .card {
+        border: 1px solid #24262e;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #15161b;
+        display: flex;
+        flex-direction: column;
+      }
+      .meta {
+        padding: 14px 16px;
+        border-bottom: 1px solid #24262e;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .meta .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .meta .name {
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .meta .tag {
+        font-size: 12px;
+        color: #9aa0ad;
+      }
+      .meta .fonts {
+        font-size: 11px;
+        color: #6b7080;
+        letter-spacing: 0.02em;
+      }
+      .sw {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+      }
+      .sw i {
+        width: 15px;
+        height: 15px;
+        border-radius: 3px;
+        display: inline-block;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
 
-  /* ---- per-card archetype tab row (neutral chrome, sits above the demo) ---- */
-  .tabs{display:flex;gap:2px;padding:8px 10px;background:#101116;border-bottom:1px solid #24262e;flex-wrap:wrap}
-  .tabs button{font:inherit;font-size:11px;letter-spacing:.03em;color:#9aa0ad;background:transparent;
-        border:1px solid transparent;border-radius:6px;padding:4px 9px;cursor:pointer}
-  .tabs button:hover{color:#e7e9ee;background:#1b1d24}
-  .tabs button.on{color:#121317;background:#8fd17a;border-color:#8fd17a;font-weight:700}
+      /* ---- per-card archetype tab row (neutral chrome, sits above the demo) ---- */
+      .tabs {
+        display: flex;
+        gap: 2px;
+        padding: 8px 10px;
+        background: #101116;
+        border-bottom: 1px solid #24262e;
+        flex-wrap: wrap;
+      }
+      .tabs button {
+        font: inherit;
+        font-size: 11px;
+        letter-spacing: 0.03em;
+        color: #9aa0ad;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        padding: 4px 9px;
+        cursor: pointer;
+      }
+      .tabs button:hover {
+        color: #e7e9ee;
+        background: #1b1d24;
+      }
+      .tabs button.on {
+        color: #121317;
+        background: #8fd17a;
+        border-color: #8fd17a;
+        font-weight: 700;
+      }
 
-  /* ============ shared demo skeleton (consumes per-direction vars) ============ */
-  .demo{padding:22px;background:var(--d-bg);color:var(--d-fg);min-height:330px;
-        font-family:var(--d-body);position:relative;overflow:hidden}
-  .demo .kicker{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--d-dim);margin-bottom:8px}
-  .demo .head{font-family:var(--d-disp);font-size:clamp(22px,3vw,30px);line-height:1.05;
-        font-weight:var(--d-dispw,800);letter-spacing:var(--d-displs,-.01em);margin:0 0 6px;color:var(--d-headc,var(--d-fg))}
-  .demo .head .ac{color:var(--d-accent)}
-  .demo .tagline{font-size:13px;color:var(--d-dim);max-width:38ch;margin-bottom:18px}
-  .demo .node{border:var(--d-bord,1px solid var(--d-line));border-radius:var(--d-r,0);
-        background:var(--d-card,transparent);padding:12px 14px;margin-bottom:14px;
-        box-shadow:var(--d-shadow,none);display:flex;justify-content:space-between;align-items:center;gap:10px}
-  .demo .node .nt{font-family:var(--d-disp);font-weight:var(--d-dispw,700);font-size:16px}
-  .demo .node .ns{font-family:var(--d-mono);font-size:11px;color:var(--d-dim)}
-  .demo .row{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
-  .demo .chip{font-family:var(--d-mono);font-size:12px;padding:5px 11px;border-radius:var(--d-chipr,var(--d-r,0));
-        border:var(--d-bord,1px solid var(--d-line));color:var(--d-accent);background:var(--d-chipbg,transparent);
-        box-shadow:var(--d-chipsh,none)}
-  .demo .stat{font-family:var(--d-mono);font-size:12px;color:var(--d-dim)}
-  .demo .stat b{color:var(--d-accent);font-size:15px}
-  .demo .term{font-family:var(--d-mono);font-size:12px;background:var(--d-termbg,rgba(0,0,0,.18));
-        border:var(--d-bord,1px solid var(--d-line));border-radius:var(--d-r,0);padding:10px 12px;color:var(--d-fg)}
-  .demo .term b{color:var(--d-danger,#e0533a)}
-  .demo .term .ok{color:var(--d-accent)}
+      /* ============ shared demo skeleton (consumes per-direction vars) ============ */
+      .demo {
+        padding: 22px;
+        background: var(--d-bg);
+        color: var(--d-fg);
+        min-height: 330px;
+        font-family: var(--d-body);
+        position: relative;
+        overflow: hidden;
+      }
+      .demo .kicker {
+        font-size: 10px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--d-dim);
+        margin-bottom: 8px;
+      }
+      .demo .head {
+        font-family: var(--d-disp);
+        font-size: clamp(22px, 3vw, 30px);
+        line-height: 1.05;
+        font-weight: var(--d-dispw, 800);
+        letter-spacing: var(--d-displs, -0.01em);
+        margin: 0 0 6px;
+        color: var(--d-headc, var(--d-fg));
+      }
+      .demo .head .ac {
+        color: var(--d-accent);
+      }
+      .demo .tagline {
+        font-size: 13px;
+        color: var(--d-dim);
+        max-width: 38ch;
+        margin-bottom: 18px;
+      }
+      .demo .node {
+        border: var(--d-bord, 1px solid var(--d-line));
+        border-radius: var(--d-r, 0);
+        background: var(--d-card, transparent);
+        padding: 12px 14px;
+        margin-bottom: 14px;
+        box-shadow: var(--d-shadow, none);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .demo .node .nt {
+        font-family: var(--d-disp);
+        font-weight: var(--d-dispw, 700);
+        font-size: 16px;
+      }
+      .demo .node .ns {
+        font-family: var(--d-mono);
+        font-size: 11px;
+        color: var(--d-dim);
+      }
+      .demo .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .demo .chip {
+        font-family: var(--d-mono);
+        font-size: 12px;
+        padding: 5px 11px;
+        border-radius: var(--d-chipr, var(--d-r, 0));
+        border: var(--d-bord, 1px solid var(--d-line));
+        color: var(--d-accent);
+        background: var(--d-chipbg, transparent);
+        box-shadow: var(--d-chipsh, none);
+      }
+      .demo .stat {
+        font-family: var(--d-mono);
+        font-size: 12px;
+        color: var(--d-dim);
+      }
+      .demo .stat b {
+        color: var(--d-accent);
+        font-size: 15px;
+      }
+      .demo .term {
+        font-family: var(--d-mono);
+        font-size: 12px;
+        background: var(--d-termbg, rgba(0, 0, 0, 0.18));
+        border: var(--d-bord, 1px solid var(--d-line));
+        border-radius: var(--d-r, 0);
+        padding: 10px 12px;
+        color: var(--d-fg);
+      }
+      .demo .term b {
+        color: var(--d-danger, #e0533a);
+      }
+      .demo .term .ok {
+        color: var(--d-accent);
+      }
 
-  /* archetype-shared structures (list / article / dashboard / form) */
-  .demo .li{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
-        padding:9px 0;border-bottom:var(--d-bord,1px solid var(--d-line))}
-  .demo .li:last-child{border-bottom:none}
-  .demo .li .lt{font-family:var(--d-disp);font-weight:var(--d-dispw,600);font-size:14px}
-  .demo .li .ld{font-family:var(--d-mono);font-size:11px;color:var(--d-dim)}
-  .demo .li .ln{font-family:var(--d-mono);font-size:11px;color:var(--d-accent)}
-  .demo .prose{max-width:46ch}
-  .demo .prose p{font-size:13.5px;margin:0 0 12px;color:var(--d-fg)}
-  .demo .prose .lead{font-size:15px}
-  .demo .prose code{font-family:var(--d-mono);font-size:12px;background:var(--d-termbg,rgba(0,0,0,.14));
-        padding:1px 5px;border-radius:var(--d-r,0)}
-  .demo .prose blockquote{margin:0 0 12px;padding-left:12px;border-left:3px solid var(--d-accent);
-        color:var(--d-dim);font-size:13px}
-  .demo .byline{font-family:var(--d-mono);font-size:11px;color:var(--d-dim);margin-bottom:14px}
-  .demo .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-  .demo .tile{border:var(--d-bord,1px solid var(--d-line));border-radius:var(--d-r,0);
-        background:var(--d-card,transparent);padding:11px 12px;box-shadow:var(--d-shadow,none)}
-  .demo .tile .tv{font-family:var(--d-disp);font-weight:var(--d-dispw,800);font-size:22px;color:var(--d-accent);line-height:1}
-  .demo .tile .tl{font-family:var(--d-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--d-dim);margin-top:5px}
-  .demo .bar{height:8px;border-radius:var(--d-r,0);background:var(--d-line);overflow:hidden;margin:6px 0 14px}
-  .demo .bar i{display:block;height:100%;background:var(--d-accent)}
-  .demo .field{margin-bottom:13px}
-  .demo .field label{display:block;font-family:var(--d-mono);font-size:11px;letter-spacing:.04em;
-        text-transform:uppercase;color:var(--d-dim);margin-bottom:5px}
-  .demo .field .inp{border:var(--d-bord,1px solid var(--d-line));border-radius:var(--d-r,0);
-        background:var(--d-card,rgba(0,0,0,.06));padding:8px 11px;font-family:var(--d-body);
-        font-size:13px;color:var(--d-fg);box-shadow:var(--d-shadow,none)}
-  .demo .field .inp.ph{color:var(--d-dim)}
-  .demo .toggle{display:flex;justify-content:space-between;align-items:center;
-        padding:9px 0;border-bottom:var(--d-bord,1px solid var(--d-line))}
-  .demo .toggle .tk{font-size:13px}
-  .demo .toggle .sw2{width:34px;height:18px;border-radius:99px;background:var(--d-accent);position:relative;flex:none}
-  .demo .toggle .sw2::after{content:"";position:absolute;width:14px;height:14px;border-radius:50%;
-        background:var(--d-bg);top:2px;right:2px}
-  .demo .toggle.off .sw2{background:var(--d-line)}
-  .demo .toggle.off .sw2::after{right:auto;left:2px}
-  .demo .btn{display:inline-block;font-family:var(--d-mono);font-size:12px;padding:8px 16px;
-        border:var(--d-bord,1px solid var(--d-line));border-radius:var(--d-chipr,var(--d-r,0));
-        background:var(--d-accent);color:var(--d-bg);box-shadow:var(--d-chipsh,none);
-        font-weight:700;margin-top:6px}
+      /* archetype-shared structures (list / article / dashboard / form) */
+      .demo .li {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        padding: 9px 0;
+        border-bottom: var(--d-bord, 1px solid var(--d-line));
+      }
+      .demo .li:last-child {
+        border-bottom: none;
+      }
+      .demo .li .lt {
+        font-family: var(--d-disp);
+        font-weight: var(--d-dispw, 600);
+        font-size: 14px;
+      }
+      .demo .li .ld {
+        font-family: var(--d-mono);
+        font-size: 11px;
+        color: var(--d-dim);
+      }
+      .demo .li .ln {
+        font-family: var(--d-mono);
+        font-size: 11px;
+        color: var(--d-accent);
+      }
+      .demo .prose {
+        max-width: 46ch;
+      }
+      .demo .prose p {
+        font-size: 13.5px;
+        margin: 0 0 12px;
+        color: var(--d-fg);
+      }
+      .demo .prose .lead {
+        font-size: 15px;
+      }
+      .demo .prose code {
+        font-family: var(--d-mono);
+        font-size: 12px;
+        background: var(--d-termbg, rgba(0, 0, 0, 0.14));
+        padding: 1px 5px;
+        border-radius: var(--d-r, 0);
+      }
+      .demo .prose blockquote {
+        margin: 0 0 12px;
+        padding-left: 12px;
+        border-left: 3px solid var(--d-accent);
+        color: var(--d-dim);
+        font-size: 13px;
+      }
+      .demo .byline {
+        font-family: var(--d-mono);
+        font-size: 11px;
+        color: var(--d-dim);
+        margin-bottom: 14px;
+      }
+      .demo .tiles {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .demo .tile {
+        border: var(--d-bord, 1px solid var(--d-line));
+        border-radius: var(--d-r, 0);
+        background: var(--d-card, transparent);
+        padding: 11px 12px;
+        box-shadow: var(--d-shadow, none);
+      }
+      .demo .tile .tv {
+        font-family: var(--d-disp);
+        font-weight: var(--d-dispw, 800);
+        font-size: 22px;
+        color: var(--d-accent);
+        line-height: 1;
+      }
+      .demo .tile .tl {
+        font-family: var(--d-mono);
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--d-dim);
+        margin-top: 5px;
+      }
+      .demo .bar {
+        height: 8px;
+        border-radius: var(--d-r, 0);
+        background: var(--d-line);
+        overflow: hidden;
+        margin: 6px 0 14px;
+      }
+      .demo .bar i {
+        display: block;
+        height: 100%;
+        background: var(--d-accent);
+      }
+      .demo .field {
+        margin-bottom: 13px;
+      }
+      .demo .field label {
+        display: block;
+        font-family: var(--d-mono);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--d-dim);
+        margin-bottom: 5px;
+      }
+      .demo .field .inp {
+        border: var(--d-bord, 1px solid var(--d-line));
+        border-radius: var(--d-r, 0);
+        background: var(--d-card, rgba(0, 0, 0, 0.06));
+        padding: 8px 11px;
+        font-family: var(--d-body);
+        font-size: 13px;
+        color: var(--d-fg);
+        box-shadow: var(--d-shadow, none);
+      }
+      .demo .field .inp.ph {
+        color: var(--d-dim);
+      }
+      .demo .toggle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 0;
+        border-bottom: var(--d-bord, 1px solid var(--d-line));
+      }
+      .demo .toggle .tk {
+        font-size: 13px;
+      }
+      .demo .toggle .sw2 {
+        width: 34px;
+        height: 18px;
+        border-radius: 99px;
+        background: var(--d-accent);
+        position: relative;
+        flex: none;
+      }
+      .demo .toggle .sw2::after {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--d-bg);
+        top: 2px;
+        right: 2px;
+      }
+      .demo .toggle.off .sw2 {
+        background: var(--d-line);
+      }
+      .demo .toggle.off .sw2::after {
+        right: auto;
+        left: 2px;
+      }
+      .demo .btn {
+        display: inline-block;
+        font-family: var(--d-mono);
+        font-size: 12px;
+        padding: 8px 16px;
+        border: var(--d-bord, 1px solid var(--d-line));
+        border-radius: var(--d-chipr, var(--d-r, 0));
+        background: var(--d-accent);
+        color: var(--d-bg);
+        box-shadow: var(--d-chipsh, none);
+        font-weight: 700;
+        margin-top: 6px;
+      }
 
-  /* ---------------- 1. Tokyo Night, de-genericified ---------------- */
-  .d-tokyo{--d-bg:#15161e;--d-fg:#c8d0f0;--d-dim:#6b73a0;--d-line:#262a40;--d-accent:#9ece6a;
-    --d-disp:'Sora';--d-body:'IBM Plex Mono';--d-mono:'IBM Plex Mono';--d-r:5px;--d-dispw:800;
-    --d-card:#1b1d29;--d-bord:1px solid #262a40;--d-headc:#fff;--d-danger:#f7768e}
-  .d-tokyo .head{position:relative;padding-left:14px}
-  .d-tokyo .head::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:5px;background:#9ece6a}
-  .d-tokyo .node{border-left:3px solid #9ece6a}
-  .d-tokyo .demo::after{content:"";position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(120% 80% at 90% -10%,rgba(158,206,106,.10),transparent 60%)}
+      /* ---------------- 1. Tokyo Night, de-genericified ---------------- */
+      .d-tokyo {
+        --d-bg: #15161e;
+        --d-fg: #c8d0f0;
+        --d-dim: #6b73a0;
+        --d-line: #262a40;
+        --d-accent: #9ece6a;
+        --d-disp: "Sora";
+        --d-body: "IBM Plex Mono";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 5px;
+        --d-dispw: 800;
+        --d-card: #1b1d29;
+        --d-bord: 1px solid #262a40;
+        --d-headc: #fff;
+        --d-danger: #f7768e;
+      }
+      .d-tokyo .head {
+        position: relative;
+        padding-left: 14px;
+      }
+      .d-tokyo .head::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 4px;
+        bottom: 4px;
+        width: 5px;
+        background: #9ece6a;
+      }
+      .d-tokyo .node {
+        border-left: 3px solid #9ece6a;
+      }
+      .d-tokyo .demo::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          120% 80% at 90% -10%,
+          rgba(158, 206, 106, 0.1),
+          transparent 60%
+        );
+      }
 
-  /* ---------------- 2. Blueprint / schematic ---------------- */
-  .d-blue{--d-bg:#0d2438;--d-fg:#dbe9f4;--d-dim:#6fa3c0;--d-line:#2f5f7a;--d-accent:#f0a500;
-    --d-disp:'IBM Plex Sans';--d-body:'IBM Plex Sans';--d-mono:'IBM Plex Mono';--d-r:0;--d-dispw:700;
-    --d-bord:1.5px solid #2f5f7a;--d-headc:#eaf4fb;--d-danger:#ff8a5c}
-  .d-blue .demo{background-image:
-      linear-gradient(rgba(79,195,221,.07) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(79,195,221,.07) 1px,transparent 1px);
-    background-size:22px 22px;background-color:#0d2438}
-  .d-blue .node{position:relative}
-  .d-blue .node::before,.d-blue .node::after{content:"";position:absolute;width:6px;height:6px;
-    border:1.5px solid #4fc3dd}
-  .d-blue .node::before{left:-3px;top:-3px;border-right:none;border-bottom:none}
-  .d-blue .node::after{right:-3px;bottom:-3px;border-left:none;border-top:none}
-  .d-blue .head .ac{color:#4fc3dd}
+      /* ---------------- 2. Blueprint / schematic ---------------- */
+      .d-blue {
+        --d-bg: #0d2438;
+        --d-fg: #dbe9f4;
+        --d-dim: #6fa3c0;
+        --d-line: #2f5f7a;
+        --d-accent: #f0a500;
+        --d-disp: "IBM Plex Sans";
+        --d-body: "IBM Plex Sans";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 0;
+        --d-dispw: 700;
+        --d-bord: 1.5px solid #2f5f7a;
+        --d-headc: #eaf4fb;
+        --d-danger: #ff8a5c;
+      }
+      .d-blue .demo {
+        background-image:
+          linear-gradient(rgba(79, 195, 221, 0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(79, 195, 221, 0.07) 1px, transparent 1px);
+        background-size: 22px 22px;
+        background-color: #0d2438;
+      }
+      .d-blue .node {
+        position: relative;
+      }
+      .d-blue .node::before,
+      .d-blue .node::after {
+        content: "";
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border: 1.5px solid #4fc3dd;
+      }
+      .d-blue .node::before {
+        left: -3px;
+        top: -3px;
+        border-right: none;
+        border-bottom: none;
+      }
+      .d-blue .node::after {
+        right: -3px;
+        bottom: -3px;
+        border-left: none;
+        border-top: none;
+      }
+      .d-blue .head .ac {
+        color: #4fc3dd;
+      }
 
-  /* ---------------- 3. Editorial / almanac ---------------- */
-  .d-edit{--d-bg:#f4f1ea;--d-fg:#1f1b16;--d-dim:#8a8170;--d-line:#d8d2c4;--d-accent:#7b2d26;
-    --d-disp:'Fraunces';--d-body:'Hanken Grotesk';--d-mono:'IBM Plex Mono';--d-r:0;--d-dispw:900;--d-displs:-.02em;
-    --d-bord:1px solid #d8d2c4;--d-headc:#171310;--d-danger:#7b2d26;--d-termbg:#ece7dc}
-  .d-edit .kicker{border-bottom:1px solid #cfc7b6;padding-bottom:6px}
-  .d-edit .head{font-style:normal}
-  .d-edit .node{border-left:none;border-right:none;border-top:2px solid #171310;border-bottom:1px solid #d8d2c4;padding-left:0;padding-right:0}
-  .d-edit .chip{border-radius:0;border:1px solid #171310}
+      /* ---------------- 3. Editorial / almanac ---------------- */
+      .d-edit {
+        --d-bg: #f4f1ea;
+        --d-fg: #1f1b16;
+        --d-dim: #8a8170;
+        --d-line: #d8d2c4;
+        --d-accent: #7b2d26;
+        --d-disp: "Fraunces";
+        --d-body: "Hanken Grotesk";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 0;
+        --d-dispw: 900;
+        --d-displs: -0.02em;
+        --d-bord: 1px solid #d8d2c4;
+        --d-headc: #171310;
+        --d-danger: #7b2d26;
+        --d-termbg: #ece7dc;
+      }
+      .d-edit .kicker {
+        border-bottom: 1px solid #cfc7b6;
+        padding-bottom: 6px;
+      }
+      .d-edit .head {
+        font-style: normal;
+      }
+      .d-edit .node {
+        border-left: none;
+        border-right: none;
+        border-top: 2px solid #171310;
+        border-bottom: 1px solid #d8d2c4;
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .d-edit .chip {
+        border-radius: 0;
+        border: 1px solid #171310;
+      }
 
-  /* ---------------- 4. Brutalist / zine ---------------- */
-  .d-brut{--d-bg:#fafafa;--d-fg:#0d0d0d;--d-dim:#555;--d-line:#0d0d0d;--d-accent:#ff3b00;
-    --d-disp:'Space Mono';--d-body:'Archivo';--d-mono:'Space Mono';--d-r:0;--d-dispw:700;
-    --d-card:#fff;--d-bord:2px solid #0d0d0d;--d-shadow:4px 4px 0 #0d0d0d;--d-headc:#0d0d0d;
-    --d-chipbg:#ff3b00;--d-chipsh:3px 3px 0 #0d0d0d;--d-danger:#ff3b00;--d-termbg:#0d0d0d}
-  .d-brut .chip{color:#fff;font-weight:700}
-  .d-brut .term{color:#fafafa}
-  .d-brut .head .ac{background:#ff3b00;color:#fff;padding:0 6px}
+      /* ---------------- 4. Brutalist / zine ---------------- */
+      .d-brut {
+        --d-bg: #fafafa;
+        --d-fg: #0d0d0d;
+        --d-dim: #555;
+        --d-line: #0d0d0d;
+        --d-accent: #ff3b00;
+        --d-disp: "Space Mono";
+        --d-body: "Archivo";
+        --d-mono: "Space Mono";
+        --d-r: 0;
+        --d-dispw: 700;
+        --d-card: #fff;
+        --d-bord: 2px solid #0d0d0d;
+        --d-shadow: 4px 4px 0 #0d0d0d;
+        --d-headc: #0d0d0d;
+        --d-chipbg: #ff3b00;
+        --d-chipsh: 3px 3px 0 #0d0d0d;
+        --d-danger: #ff3b00;
+        --d-termbg: #0d0d0d;
+      }
+      .d-brut .chip {
+        color: #fff;
+        font-weight: 700;
+      }
+      .d-brut .term {
+        color: #fafafa;
+      }
+      .d-brut .head .ac {
+        background: #ff3b00;
+        color: #fff;
+        padding: 0 6px;
+      }
 
-  /* ---------------- 5. Swiss / International ---------------- */
-  .d-swiss{--d-bg:#ffffff;--d-fg:#111111;--d-dim:#8a8a8a;--d-line:#111111;--d-accent:#e10600;
-    --d-disp:'Archivo';--d-body:'Libre Franklin';--d-mono:'IBM Plex Mono';--d-r:0;--d-dispw:800;--d-displs:-.02em;
-    --d-bord:none;--d-headc:#111;--d-danger:#e10600}
-  .d-swiss .demo{border-top:6px solid #e10600}
-  .d-swiss .node{border:none;border-top:1px solid #111;padding-left:0;border-radius:0}
-  .d-swiss .head{text-transform:uppercase;font-size:clamp(24px,3.4vw,34px)}
-  .d-swiss .chip{border:1px solid #111}
-  .d-swiss .term{border:1px solid #111;background:#f3f3f3}
-  .d-swiss .li{border-bottom:1px solid #111}
-  .d-swiss .tile{border:1px solid #111}
-  .d-swiss .field .inp{border:1px solid #111}
+      /* ---------------- 5. Swiss / International ---------------- */
+      .d-swiss {
+        --d-bg: #ffffff;
+        --d-fg: #111111;
+        --d-dim: #8a8a8a;
+        --d-line: #111111;
+        --d-accent: #e10600;
+        --d-disp: "Archivo";
+        --d-body: "Libre Franklin";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 0;
+        --d-dispw: 800;
+        --d-displs: -0.02em;
+        --d-bord: none;
+        --d-headc: #111;
+        --d-danger: #e10600;
+      }
+      .d-swiss .demo {
+        border-top: 6px solid #e10600;
+      }
+      .d-swiss .node {
+        border: none;
+        border-top: 1px solid #111;
+        padding-left: 0;
+        border-radius: 0;
+      }
+      .d-swiss .head {
+        text-transform: uppercase;
+        font-size: clamp(24px, 3.4vw, 34px);
+      }
+      .d-swiss .chip {
+        border: 1px solid #111;
+      }
+      .d-swiss .term {
+        border: 1px solid #111;
+        background: #f3f3f3;
+      }
+      .d-swiss .li {
+        border-bottom: 1px solid #111;
+      }
+      .d-swiss .tile {
+        border: 1px solid #111;
+      }
+      .d-swiss .field .inp {
+        border: 1px solid #111;
+      }
 
-  /* ---------------- 6. Retro phosphor / CRT ---------------- */
-  .d-crt{--d-bg:#0a0a06;--d-fg:#ffb000;--d-dim:#7a5a00;--d-line:#3a2e00;--d-accent:#33ff66;
-    --d-disp:'VT323';--d-body:'IBM Plex Mono';--d-mono:'IBM Plex Mono';--d-r:0;--d-dispw:400;
-    --d-bord:1px solid #3a2e00;--d-headc:#ffb000;--d-danger:#ff5e5e}
-  .d-crt .head{font-size:clamp(30px,4.5vw,42px);text-shadow:0 0 8px rgba(255,176,0,.55)}
-  .d-crt .demo::after{content:"";position:absolute;inset:0;pointer-events:none;
-    background:repeating-linear-gradient(0deg,rgba(0,0,0,.0) 0 2px,rgba(0,0,0,.28) 2px 4px)}
-  .d-crt .term .ok,.d-crt .chip{text-shadow:0 0 6px rgba(51,255,102,.5)}
+      /* ---------------- 6. Retro phosphor / CRT ---------------- */
+      .d-crt {
+        --d-bg: #0a0a06;
+        --d-fg: #ffb000;
+        --d-dim: #7a5a00;
+        --d-line: #3a2e00;
+        --d-accent: #33ff66;
+        --d-disp: "VT323";
+        --d-body: "IBM Plex Mono";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 0;
+        --d-dispw: 400;
+        --d-bord: 1px solid #3a2e00;
+        --d-headc: #ffb000;
+        --d-danger: #ff5e5e;
+      }
+      .d-crt .head {
+        font-size: clamp(30px, 4.5vw, 42px);
+        text-shadow: 0 0 8px rgba(255, 176, 0, 0.55);
+      }
+      .d-crt .demo::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0) 0 2px,
+          rgba(0, 0, 0, 0.28) 2px 4px
+        );
+      }
+      .d-crt .term .ok,
+      .d-crt .chip {
+        text-shadow: 0 0 6px rgba(51, 255, 102, 0.5);
+      }
 
-  /* ---------------- 7. Rosé Pine (dark, non-Tokyo) ---------------- */
-  .d-rose{--d-bg:#191724;--d-fg:#e0def4;--d-dim:#908caa;--d-line:#2a273f;--d-accent:#ebbcba;
-    --d-disp:'Sora';--d-body:'IBM Plex Mono';--d-mono:'IBM Plex Mono';--d-r:9px;--d-dispw:800;
-    --d-card:#1f1d2e;--d-bord:1px solid #2a273f;--d-headc:#f2e9e1;--d-danger:#eb6f92}
-  .d-rose .node{box-shadow:0 0 0 1px rgba(246,193,119,.08)}
-  .d-rose .stat b{color:#f6c177}
-  .d-rose .head .ac{color:#9ccfd8}
+      /* ---------------- 7. Rosé Pine (dark, non-Tokyo) ---------------- */
+      .d-rose {
+        --d-bg: #191724;
+        --d-fg: #e0def4;
+        --d-dim: #908caa;
+        --d-line: #2a273f;
+        --d-accent: #ebbcba;
+        --d-disp: "Sora";
+        --d-body: "IBM Plex Mono";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 9px;
+        --d-dispw: 800;
+        --d-card: #1f1d2e;
+        --d-bord: 1px solid #2a273f;
+        --d-headc: #f2e9e1;
+        --d-danger: #eb6f92;
+      }
+      .d-rose .node {
+        box-shadow: 0 0 0 1px rgba(246, 193, 119, 0.08);
+      }
+      .d-rose .stat b {
+        color: #f6c177;
+      }
+      .d-rose .head .ac {
+        color: #9ccfd8;
+      }
 
-  /* ---------------- 8. Scientific paper / Distill ---------------- */
-  .d-paper{--d-bg:#fbfbf9;--d-fg:#1a1a1a;--d-dim:#6a6a64;--d-line:#e2e2dc;--d-accent:#176f7a;
-    --d-disp:'Source Serif 4';--d-body:'Source Serif 4';--d-mono:'IBM Plex Mono';--d-r:3px;--d-dispw:600;
-    --d-bord:1px solid #e2e2dc;--d-headc:#111;--d-danger:#b03a2e;--d-termbg:#f3f3ef}
-  .d-paper .kicker{font-family:'IBM Plex Sans'}
-  .d-paper .tagline{font-style:italic}
-  .d-paper .node{border-left:3px solid #176f7a}
-  .d-paper .chip{font-style:normal}
+      /* ---------------- 8. Scientific paper / Distill ---------------- */
+      .d-paper {
+        --d-bg: #fbfbf9;
+        --d-fg: #1a1a1a;
+        --d-dim: #6a6a64;
+        --d-line: #e2e2dc;
+        --d-accent: #176f7a;
+        --d-disp: "Source Serif 4";
+        --d-body: "Source Serif 4";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 3px;
+        --d-dispw: 600;
+        --d-bord: 1px solid #e2e2dc;
+        --d-headc: #111;
+        --d-danger: #b03a2e;
+        --d-termbg: #f3f3ef;
+      }
+      .d-paper .kicker {
+        font-family: "IBM Plex Sans";
+      }
+      .d-paper .tagline {
+        font-style: italic;
+      }
+      .d-paper .node {
+        border-left: 3px solid #176f7a;
+      }
+      .d-paper .chip {
+        font-style: normal;
+      }
 
-  /* ---------------- 9. Nord (arctic, frost blues) ---------------- */
-  .d-nord{--d-bg:#2e3440;--d-fg:#d8dee9;--d-dim:#7b8494;--d-line:#3b4252;--d-accent:#88c0d0;
-    --d-disp:'Space Grotesk';--d-body:'IBM Plex Sans';--d-mono:'JetBrains Mono';--d-r:6px;--d-dispw:700;
-    --d-card:#3b4252;--d-bord:1px solid #434c5e;--d-headc:#eceff4;--d-danger:#bf616a;--d-termbg:#272c36}
-  .d-nord .node{border-left:3px solid #81a1c1}
-  .d-nord .stat b{color:#a3be8c}
-  .d-nord .head .ac{color:#8fbcbb}
-  .d-nord .tile .tv{color:#81a1c1}
+      /* ---------------- 9. Nord (arctic, frost blues) ---------------- */
+      .d-nord {
+        --d-bg: #2e3440;
+        --d-fg: #d8dee9;
+        --d-dim: #7b8494;
+        --d-line: #3b4252;
+        --d-accent: #88c0d0;
+        --d-disp: "Space Grotesk";
+        --d-body: "IBM Plex Sans";
+        --d-mono: "JetBrains Mono";
+        --d-r: 6px;
+        --d-dispw: 700;
+        --d-card: #3b4252;
+        --d-bord: 1px solid #434c5e;
+        --d-headc: #eceff4;
+        --d-danger: #bf616a;
+        --d-termbg: #272c36;
+      }
+      .d-nord .node {
+        border-left: 3px solid #81a1c1;
+      }
+      .d-nord .stat b {
+        color: #a3be8c;
+      }
+      .d-nord .head .ac {
+        color: #8fbcbb;
+      }
+      .d-nord .tile .tv {
+        color: #81a1c1;
+      }
 
-  /* ---------------- 10. Gruvbox (retro groove, warm dark) ---------------- */
-  .d-gruv{--d-bg:#282828;--d-fg:#ebdbb2;--d-dim:#a89984;--d-line:#3c3836;--d-accent:#fabd2f;
-    --d-disp:'Space Mono';--d-body:'JetBrains Mono';--d-mono:'JetBrains Mono';--d-r:2px;--d-dispw:700;
-    --d-card:#32302f;--d-bord:1px solid #504945;--d-headc:#fbf1c7;--d-danger:#fb4934;--d-termbg:#1d2021}
-  .d-gruv .node{border-left:3px solid #fe8019}
-  .d-gruv .stat b{color:#b8bb26}
-  .d-gruv .head .ac{color:#8ec07c}
-  .d-gruv .tile .tv{color:#fe8019}
+      /* ---------------- 10. Gruvbox (retro groove, warm dark) ---------------- */
+      .d-gruv {
+        --d-bg: #282828;
+        --d-fg: #ebdbb2;
+        --d-dim: #a89984;
+        --d-line: #3c3836;
+        --d-accent: #fabd2f;
+        --d-disp: "Space Mono";
+        --d-body: "JetBrains Mono";
+        --d-mono: "JetBrains Mono";
+        --d-r: 2px;
+        --d-dispw: 700;
+        --d-card: #32302f;
+        --d-bord: 1px solid #504945;
+        --d-headc: #fbf1c7;
+        --d-danger: #fb4934;
+        --d-termbg: #1d2021;
+      }
+      .d-gruv .node {
+        border-left: 3px solid #fe8019;
+      }
+      .d-gruv .stat b {
+        color: #b8bb26;
+      }
+      .d-gruv .head .ac {
+        color: #8ec07c;
+      }
+      .d-gruv .tile .tv {
+        color: #fe8019;
+      }
 
-  /* ---------------- 11. Solarized (light, biophilic) ---------------- */
-  .d-solar{--d-bg:#fdf6e3;--d-fg:#586e75;--d-dim:#93a1a1;--d-line:#eee8d5;--d-accent:#268bd2;
-    --d-disp:'IBM Plex Sans';--d-body:'IBM Plex Sans';--d-mono:'IBM Plex Mono';--d-r:4px;--d-dispw:700;
-    --d-card:#eee8d5;--d-bord:1px solid #e0d8c0;--d-headc:#073642;--d-danger:#dc322f;--d-termbg:#073642}
-  .d-solar .term{color:#eee8d5}
-  .d-solar .node{border-left:3px solid #2aa198}
-  .d-solar .stat b{color:#859900}
-  .d-solar .head .ac{color:#cb4b16}
-  .d-solar .tile .tv{color:#6c71c4}
+      /* ---------------- 11. Solarized (light, biophilic) ---------------- */
+      .d-solar {
+        --d-bg: #fdf6e3;
+        --d-fg: #586e75;
+        --d-dim: #93a1a1;
+        --d-line: #eee8d5;
+        --d-accent: #268bd2;
+        --d-disp: "IBM Plex Sans";
+        --d-body: "IBM Plex Sans";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 4px;
+        --d-dispw: 700;
+        --d-card: #eee8d5;
+        --d-bord: 1px solid #e0d8c0;
+        --d-headc: #073642;
+        --d-danger: #dc322f;
+        --d-termbg: #073642;
+      }
+      .d-solar .term {
+        color: #eee8d5;
+      }
+      .d-solar .node {
+        border-left: 3px solid #2aa198;
+      }
+      .d-solar .stat b {
+        color: #859900;
+      }
+      .d-solar .head .ac {
+        color: #cb4b16;
+      }
+      .d-solar .tile .tv {
+        color: #6c71c4;
+      }
 
-  /* ---------------- 12. Catppuccin Mocha (pastel dark) ---------------- */
-  .d-catp{--d-bg:#1e1e2e;--d-fg:#cdd6f4;--d-dim:#7f849c;--d-line:#313244;--d-accent:#cba6f7;
-    --d-disp:'Quicksand';--d-body:'IBM Plex Sans';--d-mono:'JetBrains Mono';--d-r:12px;--d-dispw:700;
-    --d-card:#313244;--d-bord:1px solid #45475a;--d-headc:#f5e0dc;--d-danger:#f38ba8;--d-termbg:#181825}
-  .d-catp .node{box-shadow:0 0 0 1px rgba(137,180,250,.07)}
-  .d-catp .stat b{color:#a6e3a1}
-  .d-catp .head .ac{color:#89dceb}
-  .d-catp .tile .tv{color:#fab387}
-  .d-catp .chip{background:rgba(203,166,247,.12)}
+      /* ---------------- 12. Catppuccin Mocha (pastel dark) ---------------- */
+      .d-catp {
+        --d-bg: #1e1e2e;
+        --d-fg: #cdd6f4;
+        --d-dim: #7f849c;
+        --d-line: #313244;
+        --d-accent: #cba6f7;
+        --d-disp: "Quicksand";
+        --d-body: "IBM Plex Sans";
+        --d-mono: "JetBrains Mono";
+        --d-r: 12px;
+        --d-dispw: 700;
+        --d-card: #313244;
+        --d-bord: 1px solid #45475a;
+        --d-headc: #f5e0dc;
+        --d-danger: #f38ba8;
+        --d-termbg: #181825;
+      }
+      .d-catp .node {
+        box-shadow: 0 0 0 1px rgba(137, 180, 250, 0.07);
+      }
+      .d-catp .stat b {
+        color: #a6e3a1;
+      }
+      .d-catp .head .ac {
+        color: #89dceb;
+      }
+      .d-catp .tile .tv {
+        color: #fab387;
+      }
+      .d-catp .chip {
+        background: rgba(203, 166, 247, 0.12);
+      }
 
-  /* ---------------- 13. Dracula (high-chroma dark) ---------------- */
-  .d-drac{--d-bg:#282a36;--d-fg:#f8f8f2;--d-dim:#6272a4;--d-line:#44475a;--d-accent:#bd93f9;
-    --d-disp:'Poppins';--d-body:'IBM Plex Sans';--d-mono:'JetBrains Mono';--d-r:8px;--d-dispw:800;
-    --d-card:#343746;--d-bord:1px solid #44475a;--d-headc:#f8f8f2;--d-danger:#ff5555;--d-termbg:#21222c}
-  .d-drac .node{border-left:3px solid #ff79c6}
-  .d-drac .stat b{color:#50fa7b}
-  .d-drac .head .ac{color:#8be9fd}
-  .d-drac .tile .tv{color:#ffb86c}
+      /* ---------------- 13. Dracula (high-chroma dark) ---------------- */
+      .d-drac {
+        --d-bg: #282a36;
+        --d-fg: #f8f8f2;
+        --d-dim: #6272a4;
+        --d-line: #44475a;
+        --d-accent: #bd93f9;
+        --d-disp: "Poppins";
+        --d-body: "IBM Plex Sans";
+        --d-mono: "JetBrains Mono";
+        --d-r: 8px;
+        --d-dispw: 800;
+        --d-card: #343746;
+        --d-bord: 1px solid #44475a;
+        --d-headc: #f8f8f2;
+        --d-danger: #ff5555;
+        --d-termbg: #21222c;
+      }
+      .d-drac .node {
+        border-left: 3px solid #ff79c6;
+      }
+      .d-drac .stat b {
+        color: #50fa7b;
+      }
+      .d-drac .head .ac {
+        color: #8be9fd;
+      }
+      .d-drac .tile .tv {
+        color: #ffb86c;
+      }
 
-  /* ---------------- 14. Tufte (ET Book serif, sidenote feel) ---------------- */
-  .d-tufte{--d-bg:#fffff8;--d-fg:#111111;--d-dim:#8c8678;--d-line:#e6e1d2;--d-accent:#a00000;
-    --d-disp:'Lora';--d-body:'Lora';--d-mono:'IBM Plex Mono';--d-r:0;--d-dispw:400;--d-displs:0;
-    --d-bord:none;--d-headc:#111;--d-danger:#a00000;--d-termbg:#f3f0e4}
-  .d-tufte .head{font-style:italic;font-weight:400}
-  .d-tufte .tagline{font-style:italic}
-  .d-tufte .node{border:none;border-top:1px solid #d8d2c0;padding-left:0;padding-right:0}
-  .d-tufte .chip{border:1px solid #c9c2af;border-radius:0}
-  .d-tufte .li{border-bottom:1px solid #ece7d8}
-  .d-tufte .prose blockquote{font-style:italic}
+      /* ---------------- 14. Tufte (ET Book serif, sidenote feel) ---------------- */
+      .d-tufte {
+        --d-bg: #fffff8;
+        --d-fg: #111111;
+        --d-dim: #8c8678;
+        --d-line: #e6e1d2;
+        --d-accent: #a00000;
+        --d-disp: "Lora";
+        --d-body: "Lora";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 0;
+        --d-dispw: 400;
+        --d-displs: 0;
+        --d-bord: none;
+        --d-headc: #111;
+        --d-danger: #a00000;
+        --d-termbg: #f3f0e4;
+      }
+      .d-tufte .head {
+        font-style: italic;
+        font-weight: 400;
+      }
+      .d-tufte .tagline {
+        font-style: italic;
+      }
+      .d-tufte .node {
+        border: none;
+        border-top: 1px solid #d8d2c0;
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .d-tufte .chip {
+        border: 1px solid #c9c2af;
+        border-radius: 0;
+      }
+      .d-tufte .li {
+        border-bottom: 1px solid #ece7d8;
+      }
+      .d-tufte .prose blockquote {
+        font-style: italic;
+      }
 
-  /* ---------------- 15. The Monospace Web (full grid) ---------------- */
-  .d-mono{--d-bg:#f2f0e9;--d-fg:#1a1a1a;--d-dim:#7a766c;--d-line:#1a1a1a;--d-accent:#1a1a1a;
-    --d-disp:'JetBrains Mono';--d-body:'JetBrains Mono';--d-mono:'JetBrains Mono';--d-r:0;--d-dispw:700;
-    --d-bord:1px solid #1a1a1a;--d-headc:#1a1a1a;--d-danger:#9a1a1a;--d-termbg:#e4e1d6}
-  .d-mono .demo{background-image:linear-gradient(90deg,rgba(0,0,0,.035) 1px,transparent 1px);
-    background-size:9px 100%}
-  .d-mono .head{text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #1a1a1a;padding-bottom:6px}
-  .d-mono .kicker{color:#1a1a1a}
-  .d-mono .node{border:1px solid #1a1a1a}
-  .d-mono .chip{border-radius:0}
-  .d-mono .tile{border:1px solid #1a1a1a}
-  .d-mono .tile .tv{color:#1a1a1a}
-  .d-mono .li{border-bottom:1px dashed #1a1a1a}
+      /* ---------------- 15. The Monospace Web (full grid) ---------------- */
+      .d-mono {
+        --d-bg: #f2f0e9;
+        --d-fg: #1a1a1a;
+        --d-dim: #7a766c;
+        --d-line: #1a1a1a;
+        --d-accent: #1a1a1a;
+        --d-disp: "JetBrains Mono";
+        --d-body: "JetBrains Mono";
+        --d-mono: "JetBrains Mono";
+        --d-r: 0;
+        --d-dispw: 700;
+        --d-bord: 1px solid #1a1a1a;
+        --d-headc: #1a1a1a;
+        --d-danger: #9a1a1a;
+        --d-termbg: #e4e1d6;
+      }
+      .d-mono .demo {
+        background-image: linear-gradient(
+          90deg,
+          rgba(0, 0, 0, 0.035) 1px,
+          transparent 1px
+        );
+        background-size: 9px 100%;
+      }
+      .d-mono .head {
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 2px solid #1a1a1a;
+        padding-bottom: 6px;
+      }
+      .d-mono .kicker {
+        color: #1a1a1a;
+      }
+      .d-mono .node {
+        border: 1px solid #1a1a1a;
+      }
+      .d-mono .chip {
+        border-radius: 0;
+      }
+      .d-mono .tile {
+        border: 1px solid #1a1a1a;
+      }
+      .d-mono .tile .tv {
+        color: #1a1a1a;
+      }
+      .d-mono .li {
+        border-bottom: 1px dashed #1a1a1a;
+      }
 
-  /* ---------------- 16. Vaporwave / Y2K ---------------- */
-  .d-vapor{--d-bg:#1a0a2e;--d-fg:#f4e9ff;--d-dim:#a78bca;--d-line:#52307c;--d-accent:#ff71ce;
-    --d-disp:'Space Grotesk';--d-body:'Space Grotesk';--d-mono:'Space Mono';--d-r:3px;--d-dispw:700;--d-displs:.04em;
-    --d-card:rgba(255,113,206,.06);--d-bord:1px solid #b967ff;--d-headc:#01cdfe;--d-danger:#ff71ce;--d-termbg:#0c0420}
-  .d-vapor .demo{background:linear-gradient(180deg,#1a0a2e 0%,#3a1361 60%,#ff8fb1 140%)}
-  .d-vapor .demo::after{content:"";position:absolute;left:0;right:0;bottom:0;height:48%;pointer-events:none;
-    background-image:linear-gradient(rgba(1,205,254,.35) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(1,205,254,.25) 1px,transparent 1px);
-    background-size:26px 22px;transform:perspective(180px) rotateX(58deg);transform-origin:bottom;opacity:.6}
-  .d-vapor .head{text-shadow:2px 2px 0 #ff71ce,4px 4px 0 rgba(185,103,255,.5)}
-  .d-vapor .stat b{color:#05ffa1}
-  .d-vapor .chip{background:rgba(1,205,254,.1)}
+      /* ---------------- 16. Vaporwave / Y2K ---------------- */
+      .d-vapor {
+        --d-bg: #1a0a2e;
+        --d-fg: #f4e9ff;
+        --d-dim: #a78bca;
+        --d-line: #52307c;
+        --d-accent: #ff71ce;
+        --d-disp: "Space Grotesk";
+        --d-body: "Space Grotesk";
+        --d-mono: "Space Mono";
+        --d-r: 3px;
+        --d-dispw: 700;
+        --d-displs: 0.04em;
+        --d-card: rgba(255, 113, 206, 0.06);
+        --d-bord: 1px solid #b967ff;
+        --d-headc: #01cdfe;
+        --d-danger: #ff71ce;
+        --d-termbg: #0c0420;
+      }
+      .d-vapor .demo {
+        background: linear-gradient(
+          180deg,
+          #1a0a2e 0%,
+          #3a1361 60%,
+          #ff8fb1 140%
+        );
+      }
+      .d-vapor .demo::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 48%;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(1, 205, 254, 0.35) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(1, 205, 254, 0.25) 1px, transparent 1px);
+        background-size: 26px 22px;
+        transform: perspective(180px) rotateX(58deg);
+        transform-origin: bottom;
+        opacity: 0.6;
+      }
+      .d-vapor .head {
+        text-shadow:
+          2px 2px 0 #ff71ce,
+          4px 4px 0 rgba(185, 103, 255, 0.5);
+      }
+      .d-vapor .stat b {
+        color: #05ffa1;
+      }
+      .d-vapor .chip {
+        background: rgba(1, 205, 254, 0.1);
+      }
 
-  /* ---------------- 17. Glassmorphism (frosted layers) ---------------- */
-  .d-glass{--d-bg:#1d2b4f;--d-fg:#eef2ff;--d-dim:#a9b6da;--d-line:rgba(255,255,255,.18);--d-accent:#7ee0ff;
-    --d-disp:'Plus Jakarta Sans';--d-body:'Plus Jakarta Sans';--d-mono:'IBM Plex Mono';--d-r:16px;--d-dispw:800;
-    --d-card:rgba(255,255,255,.08);--d-bord:1px solid rgba(255,255,255,.22);--d-headc:#fff;--d-danger:#ff9a8b;
-    --d-termbg:rgba(255,255,255,.06)}
-  .d-glass .demo{background:radial-gradient(90% 70% at 15% 10%,#5b3aa6 0,transparent 55%),
-    radial-gradient(80% 80% at 95% 100%,#1f8fb0 0,transparent 55%),#1d2b4f}
-  .d-glass .node,.d-glass .tile,.d-glass .term,.d-glass .field .inp{backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
-  .d-glass .node,.d-glass .tile{box-shadow:0 8px 26px rgba(0,0,0,.22)}
-  .d-glass .head .ac{color:#c9b6ff}
-  .d-glass .stat b{color:#aef0c4}
+      /* ---------------- 17. Glassmorphism (frosted layers) ---------------- */
+      .d-glass {
+        --d-bg: #1d2b4f;
+        --d-fg: #eef2ff;
+        --d-dim: #a9b6da;
+        --d-line: rgba(255, 255, 255, 0.18);
+        --d-accent: #7ee0ff;
+        --d-disp: "Plus Jakarta Sans";
+        --d-body: "Plus Jakarta Sans";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 16px;
+        --d-dispw: 800;
+        --d-card: rgba(255, 255, 255, 0.08);
+        --d-bord: 1px solid rgba(255, 255, 255, 0.22);
+        --d-headc: #fff;
+        --d-danger: #ff9a8b;
+        --d-termbg: rgba(255, 255, 255, 0.06);
+      }
+      .d-glass .demo {
+        background:
+          radial-gradient(90% 70% at 15% 10%, #5b3aa6 0, transparent 55%),
+          radial-gradient(80% 80% at 95% 100%, #1f8fb0 0, transparent 55%),
+          #1d2b4f;
+      }
+      .d-glass .node,
+      .d-glass .tile,
+      .d-glass .term,
+      .d-glass .field .inp {
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+      }
+      .d-glass .node,
+      .d-glass .tile {
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.22);
+      }
+      .d-glass .head .ac {
+        color: #c9b6ff;
+      }
+      .d-glass .stat b {
+        color: #aef0c4;
+      }
 
-  /* ---------------- 18. Neubrutalist (color blocks) ---------------- */
-  .d-neub{--d-bg:#ffe14d;--d-fg:#161616;--d-dim:#5b5224;--d-line:#161616;--d-accent:#2b2bff;
-    --d-disp:'Archivo';--d-body:'Plus Jakarta Sans';--d-mono:'Space Mono';--d-r:0;--d-dispw:900;--d-displs:-.01em;
-    --d-card:#ffffff;--d-bord:3px solid #161616;--d-shadow:5px 5px 0 #161616;--d-headc:#161616;
-    --d-chipbg:#52e0a0;--d-chipsh:3px 3px 0 #161616;--d-danger:#ff2e63;--d-termbg:#161616}
-  .d-neub .term{color:#ffe14d}
-  .d-neub .chip{color:#161616;font-weight:700}
-  .d-neub .head .ac{background:#2b2bff;color:#fff;padding:0 6px}
-  .d-neub .tile .tv{color:#2b2bff}
-  .d-neub .btn{background:#ff2e63;color:#fff}
+      /* ---------------- 18. Neubrutalist (color blocks) ---------------- */
+      .d-neub {
+        --d-bg: #ffe14d;
+        --d-fg: #161616;
+        --d-dim: #5b5224;
+        --d-line: #161616;
+        --d-accent: #2b2bff;
+        --d-disp: "Archivo";
+        --d-body: "Plus Jakarta Sans";
+        --d-mono: "Space Mono";
+        --d-r: 0;
+        --d-dispw: 900;
+        --d-displs: -0.01em;
+        --d-card: #ffffff;
+        --d-bord: 3px solid #161616;
+        --d-shadow: 5px 5px 0 #161616;
+        --d-headc: #161616;
+        --d-chipbg: #52e0a0;
+        --d-chipsh: 3px 3px 0 #161616;
+        --d-danger: #ff2e63;
+        --d-termbg: #161616;
+      }
+      .d-neub .term {
+        color: #ffe14d;
+      }
+      .d-neub .chip {
+        color: #161616;
+        font-weight: 700;
+      }
+      .d-neub .head .ac {
+        background: #2b2bff;
+        color: #fff;
+        padding: 0 6px;
+      }
+      .d-neub .tile .tv {
+        color: #2b2bff;
+      }
+      .d-neub .btn {
+        background: #ff2e63;
+        color: #fff;
+      }
 
-  /* ---------------- 19. Bauhaus (primary geometry) ---------------- */
-  .d-bau{--d-bg:#f3efe6;--d-fg:#15110c;--d-dim:#7c7567;--d-line:#15110c;--d-accent:#d62828;
-    --d-disp:'Archivo';--d-body:'Libre Franklin';--d-mono:'Space Mono';--d-r:0;--d-dispw:900;--d-displs:-.02em;
-    --d-card:#fff;--d-bord:2px solid #15110c;--d-headc:#15110c;--d-danger:#d62828;--d-termbg:#15110c}
-  .d-bau .demo::before{content:"";position:absolute;top:0;right:0;width:62px;height:62px;
-    background:#1d4ed8;border-bottom-left-radius:62px;pointer-events:none}
-  .d-bau .demo::after{content:"";position:absolute;bottom:0;left:42px;width:0;height:0;pointer-events:none;
-    border-left:22px solid transparent;border-right:22px solid transparent;border-bottom:38px solid #f4c20d}
-  .d-bau .head{text-transform:uppercase}
-  .d-bau .head .ac{color:#1d4ed8}
-  .d-bau .term{color:#f3efe6}
-  .d-bau .tile .tv{color:#1d4ed8}
+      /* ---------------- 19. Bauhaus (primary geometry) ---------------- */
+      .d-bau {
+        --d-bg: #f3efe6;
+        --d-fg: #15110c;
+        --d-dim: #7c7567;
+        --d-line: #15110c;
+        --d-accent: #d62828;
+        --d-disp: "Archivo";
+        --d-body: "Libre Franklin";
+        --d-mono: "Space Mono";
+        --d-r: 0;
+        --d-dispw: 900;
+        --d-displs: -0.02em;
+        --d-card: #fff;
+        --d-bord: 2px solid #15110c;
+        --d-headc: #15110c;
+        --d-danger: #d62828;
+        --d-termbg: #15110c;
+      }
+      .d-bau .demo::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 62px;
+        height: 62px;
+        background: #1d4ed8;
+        border-bottom-left-radius: 62px;
+        pointer-events: none;
+      }
+      .d-bau .demo::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 42px;
+        width: 0;
+        height: 0;
+        pointer-events: none;
+        border-left: 22px solid transparent;
+        border-right: 22px solid transparent;
+        border-bottom: 38px solid #f4c20d;
+      }
+      .d-bau .head {
+        text-transform: uppercase;
+      }
+      .d-bau .head .ac {
+        color: #1d4ed8;
+      }
+      .d-bau .term {
+        color: #f3efe6;
+      }
+      .d-bau .tile .tv {
+        color: #1d4ed8;
+      }
 
-  /* ---------------- 20. Memphis (postmodern clash) ---------------- */
-  .d-memph{--d-bg:#fdf3e7;--d-fg:#1c1c2b;--d-dim:#8a7d92;--d-line:#1c1c2b;--d-accent:#ff5d8f;
-    --d-disp:'Poppins';--d-body:'Poppins';--d-mono:'Space Mono';--d-r:14px;--d-dispw:800;
-    --d-card:#fff;--d-bord:2.5px solid #1c1c2b;--d-shadow:4px 4px 0 #22d3ee;--d-headc:#1c1c2b;
-    --d-chipbg:#ffd23f;--d-danger:#ff5d8f;--d-termbg:#1c1c2b}
-  .d-memph .demo{background-image:radial-gradient(#ff5d8f 2px,transparent 2px);background-size:24px 24px;background-color:#fdf3e7}
-  .d-memph .chip{color:#1c1c2b;font-weight:700;border-radius:99px}
-  .d-memph .term{color:#fdf3e7}
-  .d-memph .head .ac{color:#22d3ee}
-  .d-memph .tile{box-shadow:4px 4px 0 #ffd23f}
-  .d-memph .tile .tv{color:#7b2ff7}
+      /* ---------------- 20. Memphis (postmodern clash) ---------------- */
+      .d-memph {
+        --d-bg: #fdf3e7;
+        --d-fg: #1c1c2b;
+        --d-dim: #8a7d92;
+        --d-line: #1c1c2b;
+        --d-accent: #ff5d8f;
+        --d-disp: "Poppins";
+        --d-body: "Poppins";
+        --d-mono: "Space Mono";
+        --d-r: 14px;
+        --d-dispw: 800;
+        --d-card: #fff;
+        --d-bord: 2.5px solid #1c1c2b;
+        --d-shadow: 4px 4px 0 #22d3ee;
+        --d-headc: #1c1c2b;
+        --d-chipbg: #ffd23f;
+        --d-danger: #ff5d8f;
+        --d-termbg: #1c1c2b;
+      }
+      .d-memph .demo {
+        background-image: radial-gradient(#ff5d8f 2px, transparent 2px);
+        background-size: 24px 24px;
+        background-color: #fdf3e7;
+      }
+      .d-memph .chip {
+        color: #1c1c2b;
+        font-weight: 700;
+        border-radius: 99px;
+      }
+      .d-memph .term {
+        color: #fdf3e7;
+      }
+      .d-memph .head .ac {
+        color: #22d3ee;
+      }
+      .d-memph .tile {
+        box-shadow: 4px 4px 0 #ffd23f;
+      }
+      .d-memph .tile .tv {
+        color: #7b2ff7;
+      }
 
-  /* ---------------- 21. Claymorphism (soft 3D) ---------------- */
-  .d-clay{--d-bg:#e8ecff;--d-fg:#33335c;--d-dim:#8d8db8;--d-line:transparent;--d-accent:#6c5ce7;
-    --d-disp:'Quicksand';--d-body:'Quicksand';--d-mono:'IBM Plex Mono';--d-r:22px;--d-dispw:700;
-    --d-card:#f3f2ff;--d-bord:none;--d-headc:#3a2f7a;--d-danger:#ff7a90;--d-termbg:#dfe2ff;
-    --d-shadow:9px 9px 18px rgba(120,120,180,.3),-7px -7px 16px #ffffff,inset 2px 2px 4px rgba(255,255,255,.7)}
-  .d-clay .chip{border:none;background:#ddd9ff;color:#6c5ce7;font-weight:600;
-    box-shadow:4px 4px 9px rgba(120,120,180,.28),-3px -3px 7px #fff}
-  .d-clay .tile .tv{color:#6c5ce7}
-  .d-clay .stat b{color:#00b894}
-  .d-clay .btn{box-shadow:5px 5px 12px rgba(108,92,231,.4),-3px -3px 8px rgba(255,255,255,.6)}
+      /* ---------------- 21. Claymorphism (soft 3D) ---------------- */
+      .d-clay {
+        --d-bg: #e8ecff;
+        --d-fg: #33335c;
+        --d-dim: #8d8db8;
+        --d-line: transparent;
+        --d-accent: #6c5ce7;
+        --d-disp: "Quicksand";
+        --d-body: "Quicksand";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 22px;
+        --d-dispw: 700;
+        --d-card: #f3f2ff;
+        --d-bord: none;
+        --d-headc: #3a2f7a;
+        --d-danger: #ff7a90;
+        --d-termbg: #dfe2ff;
+        --d-shadow:
+          9px 9px 18px rgba(120, 120, 180, 0.3), -7px -7px 16px #ffffff,
+          inset 2px 2px 4px rgba(255, 255, 255, 0.7);
+      }
+      .d-clay .chip {
+        border: none;
+        background: #ddd9ff;
+        color: #6c5ce7;
+        font-weight: 600;
+        box-shadow:
+          4px 4px 9px rgba(120, 120, 180, 0.28),
+          -3px -3px 7px #fff;
+      }
+      .d-clay .tile .tv {
+        color: #6c5ce7;
+      }
+      .d-clay .stat b {
+        color: #00b894;
+      }
+      .d-clay .btn {
+        box-shadow:
+          5px 5px 12px rgba(108, 92, 231, 0.4),
+          -3px -3px 8px rgba(255, 255, 255, 0.6);
+      }
 
-  /* ---------------- 22. Hand-drawn / Excalidraw ---------------- */
-  .d-hand{--d-bg:#fffdf7;--d-fg:#2b2b2b;--d-dim:#8c8678;--d-line:#2b2b2b;--d-accent:#1971c2;
-    --d-disp:'Caveat';--d-body:'Patrick Hand';--d-mono:'Space Mono';--d-r:14px 6px 16px 8px/8px 16px 6px 14px;
-    --d-dispw:700;--d-card:#fffdf7;--d-bord:2px solid #2b2b2b;--d-headc:#1e1e1e;--d-danger:#e03131;
-    --d-termbg:#fff9ec;--d-chipr:99px 18px 99px 18px/18px 99px 18px 99px}
-  .d-hand .head{font-size:clamp(30px,4vw,40px)}
-  .d-hand .node{border-style:solid}
-  .d-hand .head .ac{color:#2f9e44}
-  .d-hand .li{border-bottom:2px dashed #cfc7b4}
-  .d-hand .tile{border-radius:18px 8px 18px 8px/8px 18px 8px 18px}
+      /* ---------------- 22. Hand-drawn / Excalidraw ---------------- */
+      .d-hand {
+        --d-bg: #fffdf7;
+        --d-fg: #2b2b2b;
+        --d-dim: #8c8678;
+        --d-line: #2b2b2b;
+        --d-accent: #1971c2;
+        --d-disp: "Caveat";
+        --d-body: "Patrick Hand";
+        --d-mono: "Space Mono";
+        --d-r: 14px 6px 16px 8px/8px 16px 6px 14px;
+        --d-dispw: 700;
+        --d-card: #fffdf7;
+        --d-bord: 2px solid #2b2b2b;
+        --d-headc: #1e1e1e;
+        --d-danger: #e03131;
+        --d-termbg: #fff9ec;
+        --d-chipr: 99px 18px 99px 18px/18px 99px 18px 99px;
+      }
+      .d-hand .head {
+        font-size: clamp(30px, 4vw, 40px);
+      }
+      .d-hand .node {
+        border-style: solid;
+      }
+      .d-hand .head .ac {
+        color: #2f9e44;
+      }
+      .d-hand .li {
+        border-bottom: 2px dashed #cfc7b4;
+      }
+      .d-hand .tile {
+        border-radius: 18px 8px 18px 8px/8px 18px 8px 18px;
+      }
 
-  /* ---------------- 23. Dark academia (scholarly muted) ---------------- */
-  .d-acad{--d-bg:#211c17;--d-fg:#e8ddc8;--d-dim:#9b8e76;--d-line:#3b332a;--d-accent:#c89b3c;
-    --d-disp:'Cormorant Garamond';--d-body:'Libre Caslon Text';--d-mono:'IBM Plex Mono';--d-r:2px;--d-dispw:600;
-    --d-card:#2a241d;--d-bord:1px solid #3b332a;--d-headc:#f1e8d4;--d-danger:#a23b2e;--d-termbg:#171310}
-  .d-acad .head{font-size:clamp(26px,3.6vw,36px)}
-  .d-acad .tagline{font-style:italic}
-  .d-acad .node{border-left:2px solid #7a5c2e}
-  .d-acad .head .ac{color:#7a9b6e}
-  .d-acad .prose p{font-size:14px}
+      /* ---------------- 23. Dark academia (scholarly muted) ---------------- */
+      .d-acad {
+        --d-bg: #211c17;
+        --d-fg: #e8ddc8;
+        --d-dim: #9b8e76;
+        --d-line: #3b332a;
+        --d-accent: #c89b3c;
+        --d-disp: "Cormorant Garamond";
+        --d-body: "Libre Caslon Text";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 2px;
+        --d-dispw: 600;
+        --d-card: #2a241d;
+        --d-bord: 1px solid #3b332a;
+        --d-headc: #f1e8d4;
+        --d-danger: #a23b2e;
+        --d-termbg: #171310;
+      }
+      .d-acad .head {
+        font-size: clamp(26px, 3.6vw, 36px);
+      }
+      .d-acad .tagline {
+        font-style: italic;
+      }
+      .d-acad .node {
+        border-left: 2px solid #7a5c2e;
+      }
+      .d-acad .head .ac {
+        color: #7a9b6e;
+      }
+      .d-acad .prose p {
+        font-size: 14px;
+      }
 
-  /* ---------------- 24. Solarpunk (nature + tech) ---------------- */
-  .d-solarp{--d-bg:#f3f7ee;--d-fg:#243024;--d-dim:#6f7d63;--d-line:#cfe0bf;--d-accent:#2e9e5b;
-    --d-disp:'Outfit';--d-body:'Outfit';--d-mono:'IBM Plex Mono';--d-r:14px;--d-dispw:800;
-    --d-card:#ffffff;--d-bord:1px solid #cfe0bf;--d-headc:#1e3a23;--d-danger:#d97706;--d-termbg:#e6efdc}
-  .d-solarp .demo{background:linear-gradient(180deg,#f3f7ee 0%,#e7f3e4 100%)}
-  .d-solarp .node{box-shadow:0 4px 14px rgba(46,158,91,.08)}
-  .d-solarp .head .ac{color:#d9a521}
-  .d-solarp .stat b{color:#2e9e5b}
-  .d-solarp .tile .tv{color:#0ea5a0}
+      /* ---------------- 24. Solarpunk (nature + tech) ---------------- */
+      .d-solarp {
+        --d-bg: #f3f7ee;
+        --d-fg: #243024;
+        --d-dim: #6f7d63;
+        --d-line: #cfe0bf;
+        --d-accent: #2e9e5b;
+        --d-disp: "Outfit";
+        --d-body: "Outfit";
+        --d-mono: "IBM Plex Mono";
+        --d-r: 14px;
+        --d-dispw: 800;
+        --d-card: #ffffff;
+        --d-bord: 1px solid #cfe0bf;
+        --d-headc: #1e3a23;
+        --d-danger: #d97706;
+        --d-termbg: #e6efdc;
+      }
+      .d-solarp .demo {
+        background: linear-gradient(180deg, #f3f7ee 0%, #e7f3e4 100%);
+      }
+      .d-solarp .node {
+        box-shadow: 0 4px 14px rgba(46, 158, 91, 0.08);
+      }
+      .d-solarp .head .ac {
+        color: #d9a521;
+      }
+      .d-solarp .stat b {
+        color: #2e9e5b;
+      }
+      .d-solarp .tile .tv {
+        color: #0ea5a0;
+      }
 
-  footer{max-width:1280px;margin:0 auto 50px;padding:0 32px;color:#6b7080;font-size:12px}
-  @media(max-width:520px){.grid{grid-template-columns:1fr;padding:0 18px}header.page{padding:28px 18px 18px}}
+      footer {
+        max-width: 1280px;
+        margin: 0 auto 50px;
+        padding: 0 32px;
+        color: #6b7080;
+        font-size: 12px;
+      }
+      @media (max-width: 520px) {
+        .grid {
+          grid-template-columns: 1fr;
+          padding: 0 18px;
+        }
+        header.page {
+          padding: 28px 18px 18px;
+        }
+      }
 
-  /* ============ font pairings section ============ */
-  .fsec{max-width:1280px;margin:0 auto;padding:0 32px 64px}
-  .fsec-hdr{padding:36px 0 22px;border-top:1px solid #24262e}
-  .fsec-hdr h2{margin:0 0 8px;font-size:20px;font-weight:700;color:#e7e9ee;letter-spacing:-.01em}
-  .fsec-hdr p{margin:0;font-size:13px;color:#9aa0ad;max-width:700px;line-height:1.6}
-  .fg{margin-bottom:36px}
-  .fg-label{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#6b7080;
-    padding-bottom:9px;border-bottom:1px solid #24262e;margin-bottom:14px}
-  .fg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
-  .fc{border:1px solid #24262e;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
-  .fc-top{padding:10px 14px 9px;background:#101116;border-bottom:1px solid #24262e;
-    display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-  .fc-name{font-size:13px;font-weight:600;color:#c7cbd4}
-  .fc-note{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#525666}
-  .fc-demo{padding:18px 18px 14px;flex:1}
-  .fc-demo .fh{font-size:21px;line-height:1.08;margin:0 0 9px}
-  .fc-demo .fb{font-size:13px;line-height:1.58;margin:0 0 11px}
-  .fc-demo .fm{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 9px;
-    border-radius:3px;display:inline-block}
-  .fc-feet{padding:8px 14px;border-top:1px solid;display:flex;gap:6px;flex-wrap:wrap}
-  .fc-feet span{font-family:'IBM Plex Mono',monospace;font-size:10px;
-    padding:2px 7px;border-radius:3px;letter-spacing:.02em}
-  @media(max-width:520px){.fsec{padding:0 18px 48px}.fg-grid{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
-<header class="page">
-  <h1>dpm-agent-kit <b>// aesthetic options</b></h1>
-  <p>Twenty-four web design languages, each rendering the <em>same</em> content so you can compare the feel
-  head-to-head. The first eight are the originals; the rest pull from real palettes, indie portfolios, and
-  named design movements. Click the tabs on any card to walk that aesthetic through five page archetypes.</p>
-  <div class="how">Every card carries five base pages — Hero, List, Article, Dashboard, Form — styled by that
-  card's design language. Tell me which direction (or a mix) and I'll rebuild all four explorables in it.</div>
-</header>
-<p class="note">Fonts load from Google Fonts, so view this online; offline it falls back to system fonts and the type comparison is muted.</p>
+      /* ============ font pairings section ============ */
+      .fsec {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 32px 64px;
+      }
+      .fsec-hdr {
+        padding: 36px 0 22px;
+        border-top: 1px solid #24262e;
+      }
+      .fsec-hdr h2 {
+        margin: 0 0 8px;
+        font-size: 20px;
+        font-weight: 700;
+        color: #e7e9ee;
+        letter-spacing: -0.01em;
+      }
+      .fsec-hdr p {
+        margin: 0;
+        font-size: 13px;
+        color: #9aa0ad;
+        max-width: 700px;
+        line-height: 1.6;
+      }
+      .fg {
+        margin-bottom: 36px;
+      }
+      .fg-label {
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #6b7080;
+        padding-bottom: 9px;
+        border-bottom: 1px solid #24262e;
+        margin-bottom: 14px;
+      }
+      .fg-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+        gap: 12px;
+      }
+      .fc {
+        border: 1px solid #24262e;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .fc-top {
+        padding: 10px 14px 9px;
+        background: #101116;
+        border-bottom: 1px solid #24262e;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+      }
+      .fc-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #c7cbd4;
+      }
+      .fc-note {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        color: #525666;
+      }
+      .fc-demo {
+        padding: 18px 18px 14px;
+        flex: 1;
+      }
+      .fc-demo .fh {
+        font-size: 21px;
+        line-height: 1.08;
+        margin: 0 0 9px;
+      }
+      .fc-demo .fb {
+        font-size: 13px;
+        line-height: 1.58;
+        margin: 0 0 11px;
+      }
+      .fc-demo .fm {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        padding: 4px 9px;
+        border-radius: 3px;
+        display: inline-block;
+      }
+      .fc-feet {
+        padding: 8px 14px;
+        border-top: 1px solid;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .fc-feet span {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 10px;
+        padding: 2px 7px;
+        border-radius: 3px;
+        letter-spacing: 0.02em;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+      @media (max-width: 520px) {
+        .fsec {
+          padding: 0 18px 48px;
+        }
+        .fg-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page">
+      <h1>dpm-agent-kit <b>// aesthetic options</b></h1>
+      <p>
+        Twenty-four web design languages, each rendering the
+        <em>same</em> content so you can compare the feel head-to-head. The
+        first eight are the originals; the rest pull from real palettes, indie
+        portfolios, and named design movements. Click the tabs on any card to
+        walk that aesthetic through five page archetypes.
+      </p>
+      <div class="how">
+        Every card carries five base pages — Hero, List, Article, Dashboard,
+        Form — styled by that card's design language. Tell me which direction
+        (or a mix) and I'll rebuild all four explorables in it.
+      </div>
+    </header>
+    <p class="note">
+      Fonts load from Google Fonts, so view this online; offline it falls back
+      to system fonts and the type comparison is muted.
+    </p>
 
-<div class="grid" id="grid"></div>
+    <div class="grid" id="grid"></div>
 
-<section class="fsec" id="fonts">
-  <div class="fsec-hdr">
-    <h2>Font pairings</h2>
-    <p>The same heading, body paragraph, and code line rendered in sixteen pairings — grouped by aesthetic mood.
-    The <em>display</em> font carries the headings; the <em>body</em> font carries the prose.
-    Swapping these two is the single biggest lever on whether something reads as AI-generated or designed.</p>
-  </div>
-  <div id="fgroups"></div>
-</section>
+    <section class="fsec" id="fonts">
+      <div class="fsec-hdr">
+        <h2>Font pairings</h2>
+        <p>
+          The same heading, body paragraph, and code line rendered in sixteen
+          pairings — grouped by aesthetic mood. The <em>display</em> font
+          carries the headings; the <em>body</em> font carries the prose.
+          Swapping these two is the single biggest lever on whether something
+          reads as AI-generated or designed.
+        </p>
+      </div>
+      <div id="fgroups"></div>
+    </section>
 
-<footer>Same agent-kit content, twenty-four skins, five archetypes each · self-contained except web fonts · open in any browser.</footer>
+    <footer>
+      Same agent-kit content, twenty-four skins, five archetypes each ·
+      self-contained except web fonts · open in any browser.
+    </footer>
 
-<script>
-const DIRS=[
-  {cls:'d-tokyo',name:'1 · Tokyo Night, refined',tag:'current palette, de-genericified',
-   fonts:'Sora · IBM Plex Mono',sw:['#15161e','#9ece6a','#7aa2f7','#f7768e']},
-  {cls:'d-blue',name:'2 · Blueprint',tag:'drafting-table schematic',
-   fonts:'IBM Plex Sans · IBM Plex Mono',sw:['#0d2438','#4fc3dd','#f0a500','#dbe9f4']},
-  {cls:'d-edit',name:'3 · Editorial / almanac',tag:'printed handbook, ink on paper',
-   fonts:'Fraunces · Hanken Grotesk',sw:['#f4f1ea','#171310','#7b2d26','#8a8170']},
-  {cls:'d-brut',name:'4 · Brutalist / zine',tag:'hard borders, offset shadows',
-   fonts:'Space Mono · Archivo',sw:['#fafafa','#0d0d0d','#ff3b00','#fff']},
-  {cls:'d-swiss',name:'5 · Swiss / international',tag:'grid, big type, one red',
-   fonts:'Archivo · Libre Franklin',sw:['#ffffff','#111111','#e10600','#8a8a8a']},
-  {cls:'d-crt',name:'6 · Retro phosphor / CRT',tag:'amber terminal, scanlines',
-   fonts:'VT323 · IBM Plex Mono',sw:['#0a0a06','#ffb000','#33ff66','#3a2e00']},
-  {cls:'d-rose',name:'7 · Rosé Pine',tag:'dark but not Tokyo Night',
-   fonts:'Sora · IBM Plex Mono',sw:['#191724','#ebbcba','#f6c177','#9ccfd8']},
-  {cls:'d-paper',name:'8 · Scientific paper',tag:'Distill-style, serif, restrained',
-   fonts:'Source Serif 4 · IBM Plex Mono',sw:['#fbfbf9','#176f7a','#1a1a1a','#b03a2e']},
-  {cls:'d-nord',name:'9 · Nord',tag:'arctic palette, frost blues',
-   fonts:'Space Grotesk · JetBrains Mono',sw:['#2e3440','#88c0d0','#a3be8c','#bf616a']},
-  {cls:'d-gruv',name:'10 · Gruvbox',tag:'retro groove, warm dark',
-   fonts:'Space Mono · JetBrains Mono',sw:['#282828','#fabd2f','#fe8019','#b8bb26']},
-  {cls:'d-solar',name:'11 · Solarized (light)',tag:'low-glare biophilic light',
-   fonts:'IBM Plex Sans · IBM Plex Mono',sw:['#fdf6e3','#268bd2','#2aa198','#cb4b16']},
-  {cls:'d-catp',name:'12 · Catppuccin Mocha',tag:'soothing pastel dark',
-   fonts:'Quicksand · JetBrains Mono',sw:['#1e1e2e','#cba6f7','#89dceb','#a6e3a1']},
-  {cls:'d-drac',name:'13 · Dracula',tag:'high-chroma night palette',
-   fonts:'Poppins · JetBrains Mono',sw:['#282a36','#bd93f9','#ff79c6','#50fa7b']},
-  {cls:'d-tufte',name:'14 · Tufte',tag:'ET-Book serif, sidenote calm',
-   fonts:'Lora · IBM Plex Mono',sw:['#fffff8','#a00000','#111111','#8c8678']},
-  {cls:'d-mono',name:'15 · The Monospace Web',tag:'character grid, owickstrom',
-   fonts:'JetBrains Mono',sw:['#f2f0e9','#1a1a1a','#9a1a1a','#7a766c']},
-  {cls:'d-vapor',name:'16 · Vaporwave / Y2K',tag:'neon grid, retro-future',
-   fonts:'Space Grotesk · Space Mono',sw:['#1a0a2e','#ff71ce','#01cdfe','#05ffa1']},
-  {cls:'d-glass',name:'17 · Glassmorphism',tag:'frosted translucent layers',
-   fonts:'Plus Jakarta Sans · IBM Plex Mono',sw:['#1d2b4f','#7ee0ff','#c9b6ff','#aef0c4']},
-  {cls:'d-neub',name:'18 · Neubrutalist',tag:'color blocks, hard shadows',
-   fonts:'Archivo · Plus Jakarta Sans',sw:['#ffe14d','#161616','#2b2bff','#ff2e63']},
-  {cls:'d-bau',name:'19 · Bauhaus',tag:'primary geometry, sans',
-   fonts:'Archivo · Libre Franklin',sw:['#f3efe6','#d62828','#1d4ed8','#f4c20d']},
-  {cls:'d-memph',name:'20 · Memphis',tag:'postmodern clash, squiggles',
-   fonts:'Poppins · Space Mono',sw:['#fdf3e7','#ff5d8f','#22d3ee','#ffd23f']},
-  {cls:'d-clay',name:'21 · Claymorphism',tag:'soft puffy 3D surfaces',
-   fonts:'Quicksand · IBM Plex Mono',sw:['#e8ecff','#6c5ce7','#00b894','#ff7a90']},
-  {cls:'d-hand',name:'22 · Hand-drawn',tag:'Excalidraw-style sketch',
-   fonts:'Caveat · Patrick Hand',sw:['#fffdf7','#1971c2','#2f9e44','#e03131']},
-  {cls:'d-acad',name:'23 · Dark academia',tag:'scholarly muted, candlelit',
-   fonts:'Cormorant Garamond · Libre Caslon',sw:['#211c17','#c89b3c','#7a9b6e','#a23b2e']},
-  {cls:'d-solarp',name:'24 · Solarpunk',tag:'nature meets clean tech',
-   fonts:'Outfit · IBM Plex Mono',sw:['#f3f7ee','#2e9e5b','#d9a521','#0ea5a0']},
-];
+    <script>
+      const DIRS = [
+        {
+          cls: "d-tokyo",
+          name: "1 · Tokyo Night, refined",
+          tag: "current palette, de-genericified",
+          fonts: "Sora · IBM Plex Mono",
+          sw: ["#15161e", "#9ece6a", "#7aa2f7", "#f7768e"],
+        },
+        {
+          cls: "d-blue",
+          name: "2 · Blueprint",
+          tag: "drafting-table schematic",
+          fonts: "IBM Plex Sans · IBM Plex Mono",
+          sw: ["#0d2438", "#4fc3dd", "#f0a500", "#dbe9f4"],
+        },
+        {
+          cls: "d-edit",
+          name: "3 · Editorial / almanac",
+          tag: "printed handbook, ink on paper",
+          fonts: "Fraunces · Hanken Grotesk",
+          sw: ["#f4f1ea", "#171310", "#7b2d26", "#8a8170"],
+        },
+        {
+          cls: "d-brut",
+          name: "4 · Brutalist / zine",
+          tag: "hard borders, offset shadows",
+          fonts: "Space Mono · Archivo",
+          sw: ["#fafafa", "#0d0d0d", "#ff3b00", "#fff"],
+        },
+        {
+          cls: "d-swiss",
+          name: "5 · Swiss / international",
+          tag: "grid, big type, one red",
+          fonts: "Archivo · Libre Franklin",
+          sw: ["#ffffff", "#111111", "#e10600", "#8a8a8a"],
+        },
+        {
+          cls: "d-crt",
+          name: "6 · Retro phosphor / CRT",
+          tag: "amber terminal, scanlines",
+          fonts: "VT323 · IBM Plex Mono",
+          sw: ["#0a0a06", "#ffb000", "#33ff66", "#3a2e00"],
+        },
+        {
+          cls: "d-rose",
+          name: "7 · Rosé Pine",
+          tag: "dark but not Tokyo Night",
+          fonts: "Sora · IBM Plex Mono",
+          sw: ["#191724", "#ebbcba", "#f6c177", "#9ccfd8"],
+        },
+        {
+          cls: "d-paper",
+          name: "8 · Scientific paper",
+          tag: "Distill-style, serif, restrained",
+          fonts: "Source Serif 4 · IBM Plex Mono",
+          sw: ["#fbfbf9", "#176f7a", "#1a1a1a", "#b03a2e"],
+        },
+        {
+          cls: "d-nord",
+          name: "9 · Nord",
+          tag: "arctic palette, frost blues",
+          fonts: "Space Grotesk · JetBrains Mono",
+          sw: ["#2e3440", "#88c0d0", "#a3be8c", "#bf616a"],
+        },
+        {
+          cls: "d-gruv",
+          name: "10 · Gruvbox",
+          tag: "retro groove, warm dark",
+          fonts: "Space Mono · JetBrains Mono",
+          sw: ["#282828", "#fabd2f", "#fe8019", "#b8bb26"],
+        },
+        {
+          cls: "d-solar",
+          name: "11 · Solarized (light)",
+          tag: "low-glare biophilic light",
+          fonts: "IBM Plex Sans · IBM Plex Mono",
+          sw: ["#fdf6e3", "#268bd2", "#2aa198", "#cb4b16"],
+        },
+        {
+          cls: "d-catp",
+          name: "12 · Catppuccin Mocha",
+          tag: "soothing pastel dark",
+          fonts: "Quicksand · JetBrains Mono",
+          sw: ["#1e1e2e", "#cba6f7", "#89dceb", "#a6e3a1"],
+        },
+        {
+          cls: "d-drac",
+          name: "13 · Dracula",
+          tag: "high-chroma night palette",
+          fonts: "Poppins · JetBrains Mono",
+          sw: ["#282a36", "#bd93f9", "#ff79c6", "#50fa7b"],
+        },
+        {
+          cls: "d-tufte",
+          name: "14 · Tufte",
+          tag: "ET-Book serif, sidenote calm",
+          fonts: "Lora · IBM Plex Mono",
+          sw: ["#fffff8", "#a00000", "#111111", "#8c8678"],
+        },
+        {
+          cls: "d-mono",
+          name: "15 · The Monospace Web",
+          tag: "character grid, owickstrom",
+          fonts: "JetBrains Mono",
+          sw: ["#f2f0e9", "#1a1a1a", "#9a1a1a", "#7a766c"],
+        },
+        {
+          cls: "d-vapor",
+          name: "16 · Vaporwave / Y2K",
+          tag: "neon grid, retro-future",
+          fonts: "Space Grotesk · Space Mono",
+          sw: ["#1a0a2e", "#ff71ce", "#01cdfe", "#05ffa1"],
+        },
+        {
+          cls: "d-glass",
+          name: "17 · Glassmorphism",
+          tag: "frosted translucent layers",
+          fonts: "Plus Jakarta Sans · IBM Plex Mono",
+          sw: ["#1d2b4f", "#7ee0ff", "#c9b6ff", "#aef0c4"],
+        },
+        {
+          cls: "d-neub",
+          name: "18 · Neubrutalist",
+          tag: "color blocks, hard shadows",
+          fonts: "Archivo · Plus Jakarta Sans",
+          sw: ["#ffe14d", "#161616", "#2b2bff", "#ff2e63"],
+        },
+        {
+          cls: "d-bau",
+          name: "19 · Bauhaus",
+          tag: "primary geometry, sans",
+          fonts: "Archivo · Libre Franklin",
+          sw: ["#f3efe6", "#d62828", "#1d4ed8", "#f4c20d"],
+        },
+        {
+          cls: "d-memph",
+          name: "20 · Memphis",
+          tag: "postmodern clash, squiggles",
+          fonts: "Poppins · Space Mono",
+          sw: ["#fdf3e7", "#ff5d8f", "#22d3ee", "#ffd23f"],
+        },
+        {
+          cls: "d-clay",
+          name: "21 · Claymorphism",
+          tag: "soft puffy 3D surfaces",
+          fonts: "Quicksand · IBM Plex Mono",
+          sw: ["#e8ecff", "#6c5ce7", "#00b894", "#ff7a90"],
+        },
+        {
+          cls: "d-hand",
+          name: "22 · Hand-drawn",
+          tag: "Excalidraw-style sketch",
+          fonts: "Caveat · Patrick Hand",
+          sw: ["#fffdf7", "#1971c2", "#2f9e44", "#e03131"],
+        },
+        {
+          cls: "d-acad",
+          name: "23 · Dark academia",
+          tag: "scholarly muted, candlelit",
+          fonts: "Cormorant Garamond · Libre Caslon",
+          sw: ["#211c17", "#c89b3c", "#7a9b6e", "#a23b2e"],
+        },
+        {
+          cls: "d-solarp",
+          name: "24 · Solarpunk",
+          tag: "nature meets clean tech",
+          fonts: "Outfit · IBM Plex Mono",
+          sw: ["#f3f7ee", "#2e9e5b", "#d9a521", "#0ea5a0"],
+        },
+      ];
 
-/* ---- five page archetypes, all in the same agent-kit content theme ---- */
-const ARCH={
-  hero:`
+      /* ---- five page archetypes, all in the same agent-kit content theme ---- */
+      const ARCH = {
+        hero: `
     <div class="kicker">an agentic coding setup</div>
     <h2 class="head">dpm-<span class="ac">agent</span>-kit</h2>
     <div class="tagline">An agent with no memory and infinite willingness to act, wired with standing rules and guardrails.</div>
@@ -479,7 +1722,7 @@ const ARCH={
     </div>
     <div class="term"><span style="opacity:.7">$</span> printenv → <b>BLOCKED</b> &nbsp;·&nbsp; <span style="opacity:.7">$</span> git commit → <span class="ok">✓ allowed</span></div>`,
 
-  list:`
+        list: `
     <div class="kicker">explorables · index</div>
     <h2 class="head">Five <span class="ac">pillars</span></h2>
     <div class="tagline">Each pillar opens its own explorable, all in this skin.</div>
@@ -489,7 +1732,7 @@ const ARCH={
     <div class="li"><span class="lt">Subagents</span><span class="ld">parallel dispatch</span><span class="ln">6 →</span></div>
     <div class="li"><span class="lt">Voice</span><span class="ld">style guardrails</span><span class="ln">3 →</span></div>`,
 
-  article:`
+        article: `
     <div class="kicker">field notes</div>
     <h2 class="head">Why <span class="ac">guardrails</span> first</h2>
     <div class="byline">by the kit · 4 min read</div>
@@ -500,7 +1743,7 @@ const ARCH={
       <p>Everything downstream — skills, memory, subagents — assumes that wall already holds.</p>
     </div>`,
 
-  dashboard:`
+        dashboard: `
     <div class="kicker">session telemetry</div>
     <h2 class="head">Run <span class="ac">dashboard</span></h2>
     <div class="tiles">
@@ -512,7 +1755,7 @@ const ARCH={
     <div class="bar"><i style="width:94%"></i></div>
     <div class="node"><span class="nt">Last run</span><span class="ns">commit · ✓ allowed</span></div>`,
 
-  form:`
+        form: `
     <div class="kicker">settings</div>
     <h2 class="head">Agent <span class="ac">config</span></h2>
     <div class="field"><label>default model</label><div class="inp">claude-sonnet-4-6</div></div>
@@ -520,141 +1763,330 @@ const ARCH={
     <div class="toggle"><span class="tk">Block secret reads</span><span class="sw2"></span></div>
     <div class="toggle off"><span class="tk">Auto-push to remote</span><span class="sw2"></span></div>
     <span class="btn">Save config</span>`,
-};
-const ORDER=[['hero','Hero'],['list','List'],['article','Article'],['dashboard','Dashboard'],['form','Form']];
+      };
+      const ORDER = [
+        ["hero", "Hero"],
+        ["list", "List"],
+        ["article", "Article"],
+        ["dashboard", "Dashboard"],
+        ["form", "Form"],
+      ];
 
-const grid=document.getElementById('grid');
-DIRS.forEach(d=>{
-  const c=document.createElement('div');c.className='card';
-  c.innerHTML=`
+      const grid = document.getElementById("grid");
+      DIRS.forEach((d) => {
+        const c = document.createElement("div");
+        c.className = "card";
+        c.innerHTML = `
     <div class="meta">
       <div class="top"><span class="name">${d.name}</span>
-        <span class="sw">${d.sw.map(x=>`<i style="background:${x}"></i>`).join('')}</span></div>
+        <span class="sw">${d.sw.map((x) => `<i style="background:${x}"></i>`).join("")}</span></div>
       <span class="tag">${d.tag}</span>
       <span class="fonts">${d.fonts}</span>
     </div>
-    <div class="tabs">${ORDER.map(([k,lbl],i)=>
-        `<button data-arch="${k}"${i===0?' class="on"':''}>${lbl}</button>`).join('')}</div>
+    <div class="tabs">${ORDER.map(
+      ([k, lbl], i) =>
+        `<button data-arch="${k}"${i === 0 ? ' class="on"' : ""}>${lbl}</button>`,
+    ).join("")}</div>
     <div class="demo ${d.cls}">${ARCH.hero}</div>`;
-  const demo=c.querySelector('.demo');
-  const btns=c.querySelectorAll('.tabs button');
-  btns.forEach(b=>b.addEventListener('click',()=>{
-    btns.forEach(x=>x.classList.remove('on'));
-    b.classList.add('on');
-    demo.innerHTML=ARCH[b.dataset.arch];
-  }));
-  grid.appendChild(c);
-});
+        const demo = c.querySelector(".demo");
+        const btns = c.querySelectorAll(".tabs button");
+        btns.forEach((b) =>
+          b.addEventListener("click", () => {
+            btns.forEach((x) => x.classList.remove("on"));
+            b.classList.add("on");
+            demo.innerHTML = ARCH[b.dataset.arch];
+          }),
+        );
+        grid.appendChild(c);
+      });
 
-/* ---- font pairings ---- */
-const HEAD_TXT = 'Five parts, zero memory.';
-const BODY_TXT = 'Every session starts blank. The behavioral contract, hooks, and memory system are what survive the restart — they\'re what separate a focused assistant from a tool you\'re re-briefing every time.';
-const CODE_TXT = '$ printenv → BLOCKED · git commit → ✓';
+      /* ---- font pairings ---- */
+      const HEAD_TXT = "Five parts, zero memory.";
+      const BODY_TXT =
+        "Every session starts blank. The behavioral contract, hooks, and memory system are what survive the restart — they're what separate a focused assistant from a tool you're re-briefing every time.";
+      const CODE_TXT = "$ printenv → BLOCKED · git commit → ✓";
 
-const GROUPS = [
-  {
-    label: 'Interface · dark',
-    pairs: [
-      { name:'Sora + IBM Plex Mono',  note:'current kit · mono-body = the vibe tell',
-        disp:"'Sora',sans-serif",       dispw:800, body:"'IBM Plex Mono',monospace",
-        mono:"'IBM Plex Mono',monospace", bg:'#15161e',fg:'#c8d0f0',dim:'#6b73a0',acc:'#9ece6a',cb:'rgba(0,0,0,.3)',ft:'#1f2336' },
-      { name:'Sora + IBM Plex Sans',   note:'swap body to sans → less coded',
-        disp:"'Sora',sans-serif",       dispw:800, body:"'IBM Plex Sans',sans-serif",
-        mono:"'IBM Plex Mono',monospace", bg:'#15161e',fg:'#c8d0f0',dim:'#8c94b8',acc:'#9ece6a',cb:'rgba(0,0,0,.3)',ft:'#1f2336' },
-      { name:'Space Grotesk + Plex Sans', note:'Nord / arctic dark',
-        disp:"'Space Grotesk',sans-serif", dispw:700, body:"'IBM Plex Sans',sans-serif",
-        mono:"'JetBrains Mono',monospace",  bg:'#2e3440',fg:'#d8dee9',dim:'#7b8494',acc:'#88c0d0',cb:'rgba(0,0,0,.25)',ft:'#3b4252' },
-      { name:'Plus Jakarta Sans',      note:'glass / contemporary dark',
-        disp:"'Plus Jakarta Sans',sans-serif", dispw:800, body:"'Plus Jakarta Sans',sans-serif",
-        mono:"'IBM Plex Mono',monospace",    bg:'#1d2b4f',fg:'#eef2ff',dim:'#a9b6da',acc:'#7ee0ff',cb:'rgba(0,0,0,.2)',ft:'#273862' },
-    ]
-  },
-  {
-    label: 'Editorial · print',
-    pairs: [
-      { name:'Fraunces + Hanken Grotesk', note:'almanac / handbook',
-        disp:"'Fraunces',serif",         dispw:900, body:"'Hanken Grotesk',sans-serif",
-        mono:"'IBM Plex Mono',monospace",  bg:'#f4f1ea',fg:'#1f1b16',dim:'#6a6358',acc:'#7b2d26',cb:'#ece7dc',ft:'#e0ddd5' },
-      { name:'Source Serif 4 + Plex Sans', note:'Distill-style / scientific',
-        disp:"'Source Serif 4',serif",    dispw:600, body:"'IBM Plex Sans',sans-serif",
-        mono:"'IBM Plex Mono',monospace",  bg:'#fbfbf9',fg:'#1a1a1a',dim:'#6a6a64',acc:'#176f7a',cb:'#f3f3ef',ft:'#eeecea' },
-      { name:'Cormorant + Libre Caslon',  note:'dark academia / scholarly',
-        disp:"'Cormorant Garamond',serif", dispw:600, body:"'Libre Caslon Text',serif",
-        mono:"'IBM Plex Mono',monospace",  bg:'#211c17',fg:'#e8ddc8',dim:'#9b8e76',acc:'#c89b3c',cb:'rgba(0,0,0,.4)',ft:'#2a241d' },
-      { name:'Lora + Lora',              note:'Tufte / long-form calm',
-        disp:"'Lora',serif",             dispw:400, dispItalic:true, body:"'Lora',serif",
-        mono:"'IBM Plex Mono',monospace",  bg:'#fffff8',fg:'#111',dim:'#8c8678',acc:'#a00000',cb:'#f3f0e4',ft:'#f0ece0' },
-    ]
-  },
-  {
-    label: 'Clean sans · light',
-    pairs: [
-      { name:'Archivo + Libre Franklin',  note:'Swiss / International',
-        disp:"'Archivo',sans-serif",      dispw:800, body:"'Libre Franklin',sans-serif",
-        mono:"'IBM Plex Mono',monospace",  bg:'#ffffff',fg:'#111',dim:'#8a8a8a',acc:'#e10600',cb:'#f3f3f3',ft:'#eee' },
-      { name:'IBM Plex Sans + IBM Plex Sans', note:'technical docs / Solarized',
-        disp:"'IBM Plex Sans',sans-serif", dispw:700, body:"'IBM Plex Sans',sans-serif",
-        mono:"'IBM Plex Mono',monospace",   bg:'#fdf6e3',fg:'#586e75',dim:'#93a1a1',acc:'#268bd2',cb:'#eee8d5',ft:'#e8e0c8' },
-      { name:'Outfit + Outfit',           note:'Solarpunk / green-tech',
-        disp:"'Outfit',sans-serif",       dispw:800, body:"'Outfit',sans-serif",
-        mono:"'IBM Plex Mono',monospace",  bg:'#f3f7ee',fg:'#243024',dim:'#6f7d63',acc:'#2e9e5b',cb:'#e6efdc',ft:'#ddebd0' },
-      { name:'Hanken Grotesk + Hanken',   note:'neutral / flexible base',
-        disp:"'Hanken Grotesk',sans-serif", dispw:800, body:"'Hanken Grotesk',sans-serif",
-        mono:"'IBM Plex Mono',monospace",   bg:'#fafafa',fg:'#1a1a1a',dim:'#6a6a6a',acc:'#2563eb',cb:'#f0f0f0',ft:'#ebebeb' },
-    ]
-  },
-  {
-    label: 'Expressive · character',
-    pairs: [
-      { name:'VT323 + IBM Plex Mono',     note:'CRT phosphor / retro terminal',
-        disp:"'VT323',monospace",         dispw:400, body:"'IBM Plex Mono',monospace",
-        mono:"'IBM Plex Mono',monospace",  bg:'#0a0a06',fg:'#ffb000',dim:'#7a5a00',acc:'#33ff66',cb:'rgba(255,176,0,.06)',ft:'#141408' },
-      { name:'JetBrains Mono (all)',       note:'full monospace web / owickstrom',
-        disp:"'JetBrains Mono',monospace", dispw:700, body:"'JetBrains Mono',monospace",
-        mono:"'JetBrains Mono',monospace",  bg:'#f2f0e9',fg:'#1a1a1a',dim:'#7a766c',acc:'#1a1a1a',cb:'#e4e1d6',ft:'#e4e1d6' },
-      { name:'Caveat + Patrick Hand',      note:'Excalidraw / sketch / hand-drawn',
-        disp:"'Caveat',cursive",          dispw:700, body:"'Patrick Hand',cursive",
-        mono:"'Space Mono',monospace",     bg:'#fffdf7',fg:'#2b2b2b',dim:'#8c8678',acc:'#1971c2',cb:'#fff9ec',ft:'#f0ece0' },
-      { name:'Poppins + JetBrains Mono',  note:'Catppuccin / soft dark app UI',
-        disp:"'Poppins',sans-serif",      dispw:700, body:"'Poppins',sans-serif",
-        mono:"'JetBrains Mono',monospace", bg:'#1e1e2e',fg:'#cdd6f4',dim:'#7f849c',acc:'#cba6f7',cb:'#181825',ft:'#262637' },
-    ]
-  },
-];
+      const GROUPS = [
+        {
+          label: "Interface · dark",
+          pairs: [
+            {
+              name: "Sora + IBM Plex Mono",
+              note: "current kit · mono-body = the vibe tell",
+              disp: "'Sora',sans-serif",
+              dispw: 800,
+              body: "'IBM Plex Mono',monospace",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#15161e",
+              fg: "#c8d0f0",
+              dim: "#6b73a0",
+              acc: "#9ece6a",
+              cb: "rgba(0,0,0,.3)",
+              ft: "#1f2336",
+            },
+            {
+              name: "Sora + IBM Plex Sans",
+              note: "swap body to sans → less coded",
+              disp: "'Sora',sans-serif",
+              dispw: 800,
+              body: "'IBM Plex Sans',sans-serif",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#15161e",
+              fg: "#c8d0f0",
+              dim: "#8c94b8",
+              acc: "#9ece6a",
+              cb: "rgba(0,0,0,.3)",
+              ft: "#1f2336",
+            },
+            {
+              name: "Space Grotesk + Plex Sans",
+              note: "Nord / arctic dark",
+              disp: "'Space Grotesk',sans-serif",
+              dispw: 700,
+              body: "'IBM Plex Sans',sans-serif",
+              mono: "'JetBrains Mono',monospace",
+              bg: "#2e3440",
+              fg: "#d8dee9",
+              dim: "#7b8494",
+              acc: "#88c0d0",
+              cb: "rgba(0,0,0,.25)",
+              ft: "#3b4252",
+            },
+            {
+              name: "Plus Jakarta Sans",
+              note: "glass / contemporary dark",
+              disp: "'Plus Jakarta Sans',sans-serif",
+              dispw: 800,
+              body: "'Plus Jakarta Sans',sans-serif",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#1d2b4f",
+              fg: "#eef2ff",
+              dim: "#a9b6da",
+              acc: "#7ee0ff",
+              cb: "rgba(0,0,0,.2)",
+              ft: "#273862",
+            },
+          ],
+        },
+        {
+          label: "Editorial · print",
+          pairs: [
+            {
+              name: "Fraunces + Hanken Grotesk",
+              note: "almanac / handbook",
+              disp: "'Fraunces',serif",
+              dispw: 900,
+              body: "'Hanken Grotesk',sans-serif",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#f4f1ea",
+              fg: "#1f1b16",
+              dim: "#6a6358",
+              acc: "#7b2d26",
+              cb: "#ece7dc",
+              ft: "#e0ddd5",
+            },
+            {
+              name: "Source Serif 4 + Plex Sans",
+              note: "Distill-style / scientific",
+              disp: "'Source Serif 4',serif",
+              dispw: 600,
+              body: "'IBM Plex Sans',sans-serif",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#fbfbf9",
+              fg: "#1a1a1a",
+              dim: "#6a6a64",
+              acc: "#176f7a",
+              cb: "#f3f3ef",
+              ft: "#eeecea",
+            },
+            {
+              name: "Cormorant + Libre Caslon",
+              note: "dark academia / scholarly",
+              disp: "'Cormorant Garamond',serif",
+              dispw: 600,
+              body: "'Libre Caslon Text',serif",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#211c17",
+              fg: "#e8ddc8",
+              dim: "#9b8e76",
+              acc: "#c89b3c",
+              cb: "rgba(0,0,0,.4)",
+              ft: "#2a241d",
+            },
+            {
+              name: "Lora + Lora",
+              note: "Tufte / long-form calm",
+              disp: "'Lora',serif",
+              dispw: 400,
+              dispItalic: true,
+              body: "'Lora',serif",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#fffff8",
+              fg: "#111",
+              dim: "#8c8678",
+              acc: "#a00000",
+              cb: "#f3f0e4",
+              ft: "#f0ece0",
+            },
+          ],
+        },
+        {
+          label: "Clean sans · light",
+          pairs: [
+            {
+              name: "Archivo + Libre Franklin",
+              note: "Swiss / International",
+              disp: "'Archivo',sans-serif",
+              dispw: 800,
+              body: "'Libre Franklin',sans-serif",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#ffffff",
+              fg: "#111",
+              dim: "#8a8a8a",
+              acc: "#e10600",
+              cb: "#f3f3f3",
+              ft: "#eee",
+            },
+            {
+              name: "IBM Plex Sans + IBM Plex Sans",
+              note: "technical docs / Solarized",
+              disp: "'IBM Plex Sans',sans-serif",
+              dispw: 700,
+              body: "'IBM Plex Sans',sans-serif",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#fdf6e3",
+              fg: "#586e75",
+              dim: "#93a1a1",
+              acc: "#268bd2",
+              cb: "#eee8d5",
+              ft: "#e8e0c8",
+            },
+            {
+              name: "Outfit + Outfit",
+              note: "Solarpunk / green-tech",
+              disp: "'Outfit',sans-serif",
+              dispw: 800,
+              body: "'Outfit',sans-serif",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#f3f7ee",
+              fg: "#243024",
+              dim: "#6f7d63",
+              acc: "#2e9e5b",
+              cb: "#e6efdc",
+              ft: "#ddebd0",
+            },
+            {
+              name: "Hanken Grotesk + Hanken",
+              note: "neutral / flexible base",
+              disp: "'Hanken Grotesk',sans-serif",
+              dispw: 800,
+              body: "'Hanken Grotesk',sans-serif",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#fafafa",
+              fg: "#1a1a1a",
+              dim: "#6a6a6a",
+              acc: "#2563eb",
+              cb: "#f0f0f0",
+              ft: "#ebebeb",
+            },
+          ],
+        },
+        {
+          label: "Expressive · character",
+          pairs: [
+            {
+              name: "VT323 + IBM Plex Mono",
+              note: "CRT phosphor / retro terminal",
+              disp: "'VT323',monospace",
+              dispw: 400,
+              body: "'IBM Plex Mono',monospace",
+              mono: "'IBM Plex Mono',monospace",
+              bg: "#0a0a06",
+              fg: "#ffb000",
+              dim: "#7a5a00",
+              acc: "#33ff66",
+              cb: "rgba(255,176,0,.06)",
+              ft: "#141408",
+            },
+            {
+              name: "JetBrains Mono (all)",
+              note: "full monospace web / owickstrom",
+              disp: "'JetBrains Mono',monospace",
+              dispw: 700,
+              body: "'JetBrains Mono',monospace",
+              mono: "'JetBrains Mono',monospace",
+              bg: "#f2f0e9",
+              fg: "#1a1a1a",
+              dim: "#7a766c",
+              acc: "#1a1a1a",
+              cb: "#e4e1d6",
+              ft: "#e4e1d6",
+            },
+            {
+              name: "Caveat + Patrick Hand",
+              note: "Excalidraw / sketch / hand-drawn",
+              disp: "'Caveat',cursive",
+              dispw: 700,
+              body: "'Patrick Hand',cursive",
+              mono: "'Space Mono',monospace",
+              bg: "#fffdf7",
+              fg: "#2b2b2b",
+              dim: "#8c8678",
+              acc: "#1971c2",
+              cb: "#fff9ec",
+              ft: "#f0ece0",
+            },
+            {
+              name: "Poppins + JetBrains Mono",
+              note: "Catppuccin / soft dark app UI",
+              disp: "'Poppins',sans-serif",
+              dispw: 700,
+              body: "'Poppins',sans-serif",
+              mono: "'JetBrains Mono',monospace",
+              bg: "#1e1e2e",
+              fg: "#cdd6f4",
+              dim: "#7f849c",
+              acc: "#cba6f7",
+              cb: "#181825",
+              ft: "#262637",
+            },
+          ],
+        },
+      ];
 
-const fgroups = document.getElementById('fgroups');
-GROUPS.forEach(g => {
-  const sec = document.createElement('div');
-  sec.className = 'fg';
-  const lbl = document.createElement('div');
-  lbl.className = 'fg-label';
-  lbl.textContent = g.label;
-  const grid = document.createElement('div');
-  grid.className = 'fg-grid';
-  g.pairs.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'fc';
-    card.innerHTML = `
+      const fgroups = document.getElementById("fgroups");
+      GROUPS.forEach((g) => {
+        const sec = document.createElement("div");
+        sec.className = "fg";
+        const lbl = document.createElement("div");
+        lbl.className = "fg-label";
+        lbl.textContent = g.label;
+        const grid = document.createElement("div");
+        grid.className = "fg-grid";
+        g.pairs.forEach((p) => {
+          const card = document.createElement("div");
+          card.className = "fc";
+          card.innerHTML = `
       <div class="fc-top">
         <span class="fc-name">${p.name}</span>
         <span class="fc-note">${p.note}</span>
       </div>
       <div class="fc-demo" style="background:${p.bg};color:${p.fg}">
-        <div class="fh" style="font-family:${p.disp};font-weight:${p.dispw};color:${p.fg};${p.dispItalic?'font-style:italic;':''}">${HEAD_TXT}</div>
+        <div class="fh" style="font-family:${p.disp};font-weight:${p.dispw};color:${p.fg};${p.dispItalic ? "font-style:italic;" : ""}">${HEAD_TXT}</div>
         <div class="fb" style="font-family:${p.body};color:${p.dim}">${BODY_TXT}</div>
         <div class="fm" style="font-family:${p.mono};background:${p.cb};color:${p.acc}">${CODE_TXT}</div>
       </div>
-      <div class="fc-feet" style="background:${p.ft||p.bg};border-color:${p.cb}">
-        <span style="background:${p.cb};color:${p.dim}">disp · ${p.disp.split(',')[0].replace(/'/g,'')}</span>
-        <span style="background:${p.cb};color:${p.dim}">body · ${p.body.split(',')[0].replace(/'/g,'')}</span>
-        <span style="background:${p.cb};color:${p.dim}">mono · ${p.mono.split(',')[0].replace(/'/g,'')}</span>
+      <div class="fc-feet" style="background:${p.ft || p.bg};border-color:${p.cb}">
+        <span style="background:${p.cb};color:${p.dim}">disp · ${p.disp.split(",")[0].replace(/'/g, "")}</span>
+        <span style="background:${p.cb};color:${p.dim}">body · ${p.body.split(",")[0].replace(/'/g, "")}</span>
+        <span style="background:${p.cb};color:${p.dim}">mono · ${p.mono.split(",")[0].replace(/'/g, "")}</span>
       </div>`;
-    grid.appendChild(card);
-  });
-  sec.appendChild(lbl);
-  sec.appendChild(grid);
-  fgroups.appendChild(sec);
-});
-</script>
-</body>
+          grid.appendChild(card);
+        });
+        sec.appendChild(lbl);
+        sec.appendChild(grid);
+        fgroups.appendChild(sec);
+      });
+    </script>
+  </body>
 </html>

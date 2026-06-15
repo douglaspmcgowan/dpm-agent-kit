@@ -1,322 +1,1063 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="tokyo">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>dpm-agent-kit — component map</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  /* ===== theme tokens (whole-site toggle target) ===== */
-  :root,[data-theme="tokyo"]{
-    --bg:#15161e; --panel:#1b1d29; --panel2:#191b25; --text:#c8d0f0; --muted:#6b73a0;
-    --line:#262a40; --accent:#9ece6a; --accent2:#7aa2f7; --cyan:#7dcfff; --magenta:#bb9af7;
-    --danger:#f7768e; --warn:#e0af68; --body:#aeb6df;
-    --disp:'Sora',system-ui,sans-serif;
-    --mono:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,monospace; --r:6px;
-  }
-  [data-theme="brutalist"]{
-    --bg:#fafafa; --panel:#ffffff; --panel2:#f2f2f2; --text:#0d0d0d; --muted:#5a5a5a;
-    --line:#0d0d0d; --accent:#c81e00; --accent2:#0a58ff; --cyan:#0a58ff; --magenta:#7a3cff;
-    --danger:#c81e00; --warn:#9a5a00; --body:#2a2a2a;
-    --disp:'Space Mono',monospace; --mono:'Space Mono',monospace; --r:0;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
-  body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:15px;line-height:1.55;
-       display:flex;flex-direction:column;min-height:100vh}
-  /* ---- top bar (shared chrome) ---- */
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;
-          padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel2)}
-  .topbar a.back{color:var(--muted);text-decoration:none;font-size:13px}
-  .topbar a.back:hover{color:var(--cyan)}
-  .xnav{display:flex;gap:14px;flex-wrap:wrap}
-  .xnav a{color:var(--muted);text-decoration:none;font-size:13px}
-  .xnav a:hover,.xnav a.on{color:var(--accent)}
-  .theme-pill{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);
-       border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text);cursor:pointer}
-  .theme-pill:hover{border-color:var(--accent)}
-  .theme-pill .sw{width:11px;height:11px;border-radius:50%;background:var(--accent)}
-  /* ---- header ---- */
-  header.h{padding:22px 28px 12px}
-  header.h h1{margin:0;font-family:var(--disp);font-size:24px;font-weight:800;letter-spacing:-.01em}
-  header.h p{margin:10px 0 0;color:var(--muted);max-width:820px}
-  .hint{color:var(--cyan)}
-  main{flex:1;display:grid;grid-template-columns:1fr 420px;gap:0;min-height:0;position:relative}
-  #stage{position:relative;overflow:hidden}
-  svg.links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-  svg.links line{stroke:var(--line);stroke-width:2;transition:stroke .2s,stroke-width .2s,opacity .25s}
-  svg.links line.hot{stroke:var(--accent);stroke-width:3}
-  svg.links line.dim{opacity:.12}
-  .node{position:absolute;transform:translate(-50%,-50%);cursor:pointer;user-select:none;
-        background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;
-        text-align:center;transition:border-color .2s,box-shadow .2s,transform .12s,opacity .25s;min-width:122px}
-  .node:hover{transform:translate(-50%,-50%) scale(1.05)}
-  .node.sel{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent)}
-  .node.dim{opacity:.28}
-  .node .t{font-family:var(--disp);font-weight:700;font-size:14px}
-  .node .s{font-size:11px;color:var(--muted)}
-  .node.hub{background:var(--panel);border:1px solid var(--accent);min-width:158px;padding:14px 18px}
-  .node.hub .t{font-size:16px;color:var(--accent)}
-  .node .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
-  .node.pillar .dot{background:var(--accent2)}
-  .node.tool .dot{background:var(--magenta)}
-  #stage::after{content:"";position:absolute;inset:0;pointer-events:none;
-       background:radial-gradient(130% 90% at 88% -8%,rgba(158,206,106,.06),transparent 55%)}
-  /* ---- side panel ---- */
-  aside{background:var(--panel2);border-left:1px solid var(--line);padding:24px;overflow-y:auto;position:relative}
-  aside h2{margin:0 0 4px;font-family:var(--disp);font-size:19px}
-  aside .kind{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px}
-  aside .desc{color:var(--body)}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
-  .chip{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:5px 12px;
-        font-size:12px;cursor:pointer;color:var(--cyan);transition:background .15s,border-color .15s}
-  .chip:hover{background:var(--panel);border-color:var(--cyan)}
-  .chip.leaf::after{content:" ›";color:var(--muted)}
-  .empty{color:var(--muted)}
-  .extlink{display:inline-flex;align-items:center;gap:6px;margin-top:18px;background:var(--panel);
-        border:1px solid var(--line);border-radius:var(--r);padding:8px 14px;color:var(--accent);
-        text-decoration:none;font-size:13px}
-  .extlink:hover{border-color:var(--accent)}
-  /* ---- detail drawer (the "different document") ---- */
-  .drawer{position:absolute;inset:0;background:var(--panel2);border-left:1px solid var(--line);
-        padding:24px;overflow-y:auto;transform:translateX(100%);transition:transform .28s ease;z-index:5}
-  .drawer.open{transform:none}
-  .drawer .dback{background:none;border:none;color:var(--cyan);font-family:var(--mono);font-size:13px;
-        cursor:pointer;padding:0;margin-bottom:18px}
-  .drawer .dback:hover{text-decoration:underline}
-  .drawer .dkind{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
-  .drawer h3{font-family:var(--disp);font-size:21px;margin:4px 0 14px}
-  .drawer p{color:var(--body);margin:0 0 12px}
-  .drawer h4{font-family:var(--disp);font-size:13px;text-transform:uppercase;letter-spacing:1px;
-        color:var(--accent);margin:16px 0 6px}
-  .drawer code{color:var(--cyan);background:var(--panel);padding:1px 6px;border-radius:5px;font-size:13px}
-  .drawer .src{margin-top:18px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
-  footer{padding:10px 28px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;
-         display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
-  .legend span{margin-right:16px}
-  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
-  @media(max-width:900px){main{grid-template-columns:1fr}aside,.drawer{border-left:none;border-top:1px solid var(--line)}
-    #stage{min-height:460px}}
-</style>
-</head>
-<body>
-<div class="topbar">
-  <a class="back" href="index.html">← intro</a>
-  <nav class="xnav">
-    <a href="option-2-scrollytelling.html">walkthrough</a>
-    <a class="on" href="option-1-node-map.html">map</a>
-    <a href="option-3-terminal.html">terminal</a>
-    <a href="option-4-dashboard.html">panel</a>
-      <a href="skills-library.html">library</a>
-    <a href="harness-map.html">harness</a>
-  </nav>
-  <button class="theme-pill" id="themeBtn" title="switch theme"><span class="sw"></span><span id="theme-label">tokyo</span></button>
-</div>
-<header class="h">
-  <h1>The setup as a system of parts</h1>
-  <p>"The agent" is the AI assistant that reads your files and runs commands for you. On its own it forgets
-  everything between chats and will do almost anything you ask. These five parts fix that. <span class="hint">Click a node</span>
-  to see what it does, then click a <span style="color:var(--cyan)">chip ›</span> to open a full explainer for that piece.
-  Selecting a node also lights up its connections.</p>
-</header>
-<main>
-  <div id="stage"><svg class="links" id="links"></svg></div>
-  <aside id="panel">
-    <h2 id="p-title">Start here</h2>
-    <div class="kind" id="p-kind">the kit</div>
-    <p class="desc" id="p-desc">An agent with no memory and infinite willingness to act needs five things:
-    standing rules, guardrails, a way to remember, reusable know-how, and a rhythm for driving it. Each pillar
-    covers one. Pick a node to dig in.</p>
-    <div id="p-ext"></div>
-    <div class="chips" id="p-chips"></div>
-  </aside>
-  <div class="drawer" id="drawer">
-    <button class="dback" id="dback">← back to the map</button>
-    <div class="dkind" id="d-kind"></div>
-    <h3 id="d-title"></h3>
-    <div id="d-body"></div>
-    <div class="src" id="d-src"></div>
-  </div>
-</main>
-<footer>
-  <div class="legend">
-    <span><i style="background:var(--accent)"></i>kit</span>
-    <span><i style="background:var(--accent2)"></i>pillar</span>
-    <span><i style="background:var(--magenta)"></i>plugged-in tool</span>
-  </div>
-  <div>self-contained · web fonts only · open in any browser</div>
-</footer>
-<script>
-/* ---------- theme toggle ---------- */
-const THEMES=['tokyo','brutalist'];
-let ti=Math.max(0,THEMES.indexOf(localStorage.getItem('dpmkit-theme')));
-function applyTheme(){document.documentElement.dataset.theme=THEMES[ti];
-  localStorage.setItem('dpmkit-theme',THEMES[ti]);
-  const l=document.getElementById('theme-label');if(l)l.textContent=THEMES[ti];}
-document.getElementById('themeBtn').onclick=()=>{ti=(ti+1)%THEMES.length;applyTheme();};
-applyTheme();
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dpm-agent-kit — component map</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===== theme tokens (whole-site toggle target) ===== */
+      :root,
+      [data-theme="tokyo"] {
+        --bg: #15161e;
+        --panel: #1b1d29;
+        --panel2: #191b25;
+        --text: #c8d0f0;
+        --muted: #6b73a0;
+        --line: #262a40;
+        --accent: #9ece6a;
+        --accent2: #7aa2f7;
+        --cyan: #7dcfff;
+        --magenta: #bb9af7;
+        --danger: #f7768e;
+        --warn: #e0af68;
+        --body: #aeb6df;
+        --disp: "Sora", system-ui, sans-serif;
+        --body-font: "IBM Plex Sans", system-ui, sans-serif;
+        --mono:
+          "IBM Plex Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+        --r: 6px;
+      }
+      [data-theme="brutalist"] {
+        --bg: #fafafa;
+        --panel: #ffffff;
+        --panel2: #f2f2f2;
+        --text: #0d0d0d;
+        --muted: #5a5a5a;
+        --line: #0d0d0d;
+        --accent: #c81e00;
+        --accent2: #0a58ff;
+        --cyan: #0a58ff;
+        --magenta: #7a3cff;
+        --danger: #c81e00;
+        --warn: #9a5a00;
+        --body: #2a2a2a;
+        --disp: "Space Mono", monospace;
+        --mono: "Space Mono", monospace;
+        --body-font: "Space Mono", monospace;
+        --r: 0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--body-font);
+        font-size: 15px;
+        line-height: 1.55;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      /* ---- top bar (shared chrome) ---- */
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel2);
+      }
+      .topbar a.back {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .topbar a.back:hover {
+        color: var(--cyan);
+      }
+      .xnav {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .xnav a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .xnav a:hover,
+      .xnav a.on {
+        color: var(--accent);
+      }
+      .theme-pill {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 12px;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .theme-pill:hover {
+        border-color: var(--accent);
+      }
+      .theme-pill .sw {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      /* ---- header ---- */
+      header.h {
+        padding: 22px 28px 12px;
+      }
+      header.h h1 {
+        margin: 0;
+        font-family: var(--disp);
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      header.h p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        max-width: 820px;
+      }
+      .hint {
+        color: var(--cyan);
+      }
+      main {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 420px;
+        gap: 0;
+        min-height: 0;
+        position: relative;
+      }
+      #stage {
+        position: relative;
+        overflow: hidden;
+      }
+      svg.links {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+      svg.links line {
+        stroke: var(--line);
+        stroke-width: 2;
+        transition:
+          stroke 0.2s,
+          stroke-width 0.2s,
+          opacity 0.25s;
+      }
+      svg.links line.hot {
+        stroke: var(--accent);
+        stroke-width: 3;
+      }
+      svg.links line.dim {
+        opacity: 0.12;
+      }
+      .node {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+        user-select: none;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 10px 14px;
+        text-align: center;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          transform 0.12s,
+          opacity 0.25s;
+        min-width: 122px;
+      }
+      .node:hover {
+        transform: translate(-50%, -50%) scale(1.05);
+      }
+      .node.sel {
+        box-shadow: 0 0 0 2px var(--accent);
+        border-color: var(--accent);
+      }
+      .node.dim {
+        opacity: 0.28;
+      }
+      .node .t {
+        font-family: var(--disp);
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .node .s {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .node.hub {
+        background: var(--panel);
+        border: 1px solid var(--accent);
+        min-width: 158px;
+        padding: 14px 18px;
+      }
+      .node.hub .t {
+        font-size: 16px;
+        color: var(--accent);
+      }
+      .node .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      .node.pillar .dot {
+        background: var(--accent2);
+      }
+      .node.tool .dot {
+        background: var(--magenta);
+      }
+      #stage::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          130% 90% at 88% -8%,
+          rgba(158, 206, 106, 0.06),
+          transparent 55%
+        );
+      }
+      /* ---- side panel ---- */
+      aside {
+        background: var(--panel2);
+        border-left: 1px solid var(--line);
+        padding: 24px;
+        overflow-y: auto;
+        position: relative;
+      }
+      aside h2 {
+        margin: 0 0 4px;
+        font-family: var(--disp);
+        font-size: 19px;
+      }
+      aside .kind {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      aside .desc {
+        color: var(--body);
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .chip {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 5px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        color: var(--cyan);
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+      .chip:hover {
+        background: var(--panel);
+        border-color: var(--cyan);
+      }
+      .chip.leaf::after {
+        content: " ›";
+        color: var(--muted);
+      }
+      .empty {
+        color: var(--muted);
+      }
+      .extlink {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 18px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 8px 14px;
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .extlink:hover {
+        border-color: var(--accent);
+      }
+      /* ---- detail drawer (the "different document") ---- */
+      .drawer {
+        position: absolute;
+        inset: 0;
+        background: var(--panel2);
+        border-left: 1px solid var(--line);
+        padding: 24px;
+        overflow-y: auto;
+        transform: translateX(100%);
+        transition: transform 0.28s ease;
+        z-index: 5;
+      }
+      .drawer.open {
+        transform: none;
+      }
+      .drawer .dback {
+        background: none;
+        border: none;
+        color: var(--cyan);
+        font-family: var(--mono);
+        font-size: 13px;
+        cursor: pointer;
+        padding: 0;
+        margin-bottom: 18px;
+      }
+      .drawer .dback:hover {
+        text-decoration: underline;
+      }
+      .drawer .dkind {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted);
+      }
+      .drawer h3 {
+        font-family: var(--disp);
+        font-size: 21px;
+        margin: 4px 0 14px;
+      }
+      .drawer p {
+        color: var(--body);
+        margin: 0 0 12px;
+      }
+      .drawer h4 {
+        font-family: var(--disp);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--accent);
+        margin: 16px 0 6px;
+      }
+      .drawer code {
+        color: var(--cyan);
+        background: var(--panel);
+        padding: 1px 6px;
+        border-radius: 5px;
+        font-size: 13px;
+      }
+      .drawer .src {
+        margin-top: 18px;
+        font-size: 12px;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+      }
+      footer {
+        padding: 10px 28px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .legend span {
+        margin-right: 16px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        margin-right: 5px;
+        vertical-align: middle;
+      }
+      .theme-pill:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 2px var(--bg),
+          0 0 0 3px var(--accent);
+      }
+      .chip:focus-visible,
+      .extlink:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 2px var(--bg),
+          0 0 0 3px var(--accent);
+      }
+      @media (max-width: 900px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+        aside,
+        .drawer {
+          border-left: none;
+          border-top: 1px solid var(--line);
+        }
+        #stage {
+          min-height: 460px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="back" href="index.html">← intro</a>
+      <nav class="xnav">
+        <a href="option-2-scrollytelling.html">walkthrough</a>
+        <a class="on" href="option-1-node-map.html">map</a>
+        <a href="option-3-terminal.html">terminal</a>
+        <a href="option-4-dashboard.html">panel</a>
+        <a href="skills-library.html">library</a>
+        <a href="harness-map.html">harness</a>
+      </nav>
+      <button class="theme-pill" id="themeBtn" title="switch theme">
+        <span class="sw"></span><span id="theme-label">tokyo</span>
+      </button>
+    </div>
+    <header class="h">
+      <h1>The setup as a system of parts</h1>
+      <p>
+        "The agent" is the AI assistant that reads your files and runs commands
+        for you. On its own it forgets everything between chats and will do
+        almost anything you ask. These five parts fix that.
+        <span class="hint">Click a node</span> to see what it does, then click a
+        <span style="color: var(--cyan)">chip ›</span> to open a full explainer
+        for that piece. Selecting a node also lights up its connections.
+      </p>
+    </header>
+    <main>
+      <div id="stage"><svg class="links" id="links"></svg></div>
+      <aside id="panel">
+        <h2 id="p-title">Start here</h2>
+        <div class="kind" id="p-kind">the kit</div>
+        <p class="desc" id="p-desc">
+          An agent with no memory and infinite willingness to act needs five
+          things: standing rules, guardrails, a way to remember, reusable
+          know-how, and a rhythm for driving it. Each pillar covers one. Pick a
+          node to dig in.
+        </p>
+        <div id="p-ext"></div>
+        <div class="chips" id="p-chips"></div>
+      </aside>
+      <div class="drawer" id="drawer">
+        <button class="dback" id="dback">← back to the map</button>
+        <div class="dkind" id="d-kind"></div>
+        <h3 id="d-title"></h3>
+        <div id="d-body"></div>
+        <div class="src" id="d-src"></div>
+      </div>
+    </main>
+    <footer>
+      <div class="legend">
+        <span><i style="background: var(--accent)"></i>kit</span>
+        <span><i style="background: var(--accent2)"></i>pillar</span>
+        <span><i style="background: var(--magenta)"></i>plugged-in tool</span>
+      </div>
+      <div>self-contained · web fonts only · open in any browser</div>
+    </footer>
+    <script>
+      /* ---------- theme toggle ---------- */
+      const THEMES = ["tokyo", "brutalist"];
+      let ti = Math.max(
+        0,
+        THEMES.indexOf(localStorage.getItem("dpmkit-theme")),
+      );
+      function applyTheme() {
+        document.documentElement.dataset.theme = THEMES[ti];
+        localStorage.setItem("dpmkit-theme", THEMES[ti]);
+        const l = document.getElementById("theme-label");
+        if (l) l.textContent = THEMES[ti];
+      }
+      document.getElementById("themeBtn").onclick = () => {
+        ti = (ti + 1) % THEMES.length;
+        applyTheme();
+      };
+      applyTheme();
 
-/* ---------- graph data ---------- */
-const DATA={
-  hub:{id:'hub',title:'dpm-agent-kit',kind:'the kit',cls:'hub',x:50,y:50,
-    desc:'A drop-in setup for Claude Code (a coding agent that lives in your terminal): skills, hooks, memory, the CLAUDE.md contract, and a daily workflow, plus the outside tools that make the loop fast. Each pillar answers one need of working with an agent that starts every chat with a blank memory and will run whatever you ask.',
-    chips:['Skills','Hooks','Memory','CLAUDE.md','Workflow']},
-  nodes:[
-    {id:'Skills',title:'Skills',sub:'reusable expertise',cls:'pillar',x:22,y:24,link:'hub',
-      desc:'A skill is a short markdown file that teaches the agent a procedure once, so you never have to re-explain it. Each file has a name and a description; the description is the trigger the agent matches against your request. Layers: the superpowers framework, grill-me, and your own custom skills.',
-      chips:['what is a skill?','superpowers','grill-me','deep-search','make-playbook','parallelize']},
-    {id:'Hooks',title:'Hooks',sub:'guardrails',cls:'pillar',x:78,y:24,link:'hub',
-      desc:'A hook is a small script the agent host runs automatically at set moments (before a command, after it, at session start). Hooks can block an action or warn about it. They are the seatbelt for an agent that will otherwise do anything you ask.',
-      chips:['what is a hook?','check-secret-exposure','block-egress-exfil','block-dangerous-bash','session-primer','protect-security-config']},
-    {id:'Memory',title:'Memory',sub:'continuity',cls:'pillar',x:14,y:62,link:'hub',
-      desc:'The agent forgets everything when a chat ends. Memory is a folder of small markdown files plus a tiny always-loaded index (MEMORY.md), so the next chat starts already knowing your preferences and past decisions. Four types: user, feedback, project, reference.',
-      chips:['what is agent memory?','user','feedback','project','reference']},
-    {id:'CLAUDE.md',title:'CLAUDE.md',sub:'the contract',cls:'pillar',x:86,y:62,link:'hub',
-      desc:'CLAUDE.md is a plain markdown file the agent reads at the start of every chat: your standing rules. Voice, anti-fabrication, file-safety, autonomy, plan-means-plan. Keep it short; push deep detail into sibling CLAUDE-*.md files it reads only when needed.',
-      chips:['what is CLAUDE.md?','voice','no-fabrication','backup+new-file','proceed-dont-ask','plan-means-plan']},
-    {id:'Workflow',title:'Workflow',sub:'how you drive it',cls:'pillar',x:50,y:84,link:'hub',
-      desc:'The habits that turn the parts into a practice: one long chat ridden through "compaction" (when the host summarizes old turns to free up space), a handoff file so nothing is lost, and a rule for when to split work across helper agents.',
-      chips:['what is compaction?','CURRENT-TASK.md','/rollover','two-question test','parallel sub-agents','daily rituals']},
-    {id:'Obsidian',title:'Obsidian',sub:'notes vault',cls:'tool',x:30,y:43,link:'Workflow',
-      desc:'Obsidian is a free markdown note app. Here the agent treats the vault as its long-term working memory: it reads and writes notes (often through a small local API), and a guard hook stops accidental deletions. Agent notes live in a Claude/ subfolder.',chips:['how the vault fits in'],ext:'Obsidian'},
-    {id:'Wispr Flow',title:'Wispr Flow',sub:'voice input',cls:'tool',x:70,y:43,link:'Workflow',
-      desc:'Wispr Flow is voice-dictation software. You speak a long prompt (around 150 words a minute against about 60 by typing); it strips the "ums", adds punctuation, and pastes clean text into the agent. The fastest way to hand over a big, rambly brief.',chips:['why dictate to an agent'],ext:'Wispr Flow'},
-    {id:'wmux',title:'wmux',sub:'multi-agent terminal',cls:'tool',x:50,y:33,link:'hub',
-      desc:'wmux is a Windows terminal multiplexer built for AI agents. It splits one window into panes, each running an agent (Claude Code / Codex / Gemini) over the same repo, with agent-to-agent messaging. Run a small team of agents side by side.',chips:['running a team of agents'],ext:'wmux'},
-    {id:'claude-global-config',title:'global-config',sub:'~/.claude as a repo',cls:'tool',x:20,y:80,link:'CLAUDE.md',
-      desc:'The idea of keeping your whole ~/.claude folder (rules, hooks, skills, settings) as a private git repo, so your entire agent setup is versioned and portable across machines. This kit is its public, scrubbed, explained sibling.',chips:[],detail:'globalcfg'},
-    {id:'dpm-sites',title:'sites hub',sub:'profile + index',cls:'tool',x:80,y:80,link:'Memory',
-      desc:'A small corpus of markdown about you (bio, stories, the numbers you cite) that any agent reads before it writes outreach or portfolio copy, so it pulls from facts instead of inventing them. A blank skeleton ships in templates/profile/.',chips:[],detail:'siteshub'},
-  ]
-};
-/* ---------- external tool links ---------- */
-const EXT={
-  'Obsidian':{label:'obsidian.md',url:'https://obsidian.md'},
-  'Wispr Flow':{label:'wisprflow.ai',url:'https://wisprflow.ai'},
-  'wmux':{label:'winget install openwong2kim.wmux',url:''},
-};
-/* ---------- leaf detail pages — each opens its own explainer ---------- */
-const DETAILS={
-  // concept explainers (newcomer-first)
-  'what is a skill?':{kind:'concept',t:'What is a skill?',body:`<p>A skill is a markdown file that teaches the agent how to do one job, so you explain it once instead of every time.</p><h4>How it works</h4><p>The file lives in <code>~/.claude/commands/</code> (or a plugin). Its top line is a <em>description</em>; when your request matches it, the agent loads the file and follows the steps inside. You can also call it directly by typing <code>/the-skill-name</code>.</p><h4>The mindset</h4><p>Any time you catch yourself re-explaining the same workflow, write it down as a skill. That is how the setup gets smarter the more you use it.</p>`,src:'docs/DETAILED-GUIDE.md'},
-  'what is a hook?':{kind:'concept',t:'What is a hook?',body:`<p>A hook is a tiny script that the agent's host program runs <em>for</em> you at fixed moments: before a shell command, after it, when a chat starts, or when it ends.</p><h4>Why it exists</h4><p>The agent is willing to run anything you ask, including commands that would leak a password or delete files. A hook sits in the way and can <strong>block</strong> the action or <strong>warn</strong> about it before it happens. It is enforced by the host, so the agent cannot talk its way past it.</p><h4>How it works</h4><p>Each hook is a dependency-free Node script in <code>~/.claude/hooks/</code>, wired up in <code>settings.json</code>. It reads what the agent is about to do as JSON, then says allow, warn, or block.</p><h4>The mindset</h4><p>Keep hooks high-precision: block only what is genuinely dangerous, so normal work never gets nagged.</p>`,src:'templates/hooks/'},
-  'what is agent memory?':{kind:'concept',t:'What is agent memory?',body:`<p>The agent starts every chat blank. "Memory" is just a folder of small markdown files it reads back in, so it remembers you across chats.</p><h4>How it works</h4><p>One tiny file, <code>MEMORY.md</code>, is loaded every session as an index of one-line pointers. The full notes live in separate files the agent opens only when relevant, which keeps the always-on cost small.</p><h4>The mindset</h4><p>Save corrections <em>and</em> things that worked. If you only ever save "don't do that," the agent slowly turns timid and forgets what good looked like.</p>`,src:'templates/memory/MEMORY-SYSTEM.md'},
-  'what is CLAUDE.md?':{kind:'concept',t:'What is CLAUDE.md?',body:`<p>CLAUDE.md is a plain markdown file of your standing rules that the agent reads at the start of every chat. Think of it as the contract you'd give a brand-new assistant on day one.</p><h4>How it works</h4><p>The global one lives at <code>~/.claude/CLAUDE.md</code>; a project can add its own. Keep the main file short so it is cheap to load every time, and move long detail into <code>CLAUDE-*.md</code> files the agent opens only when it needs them.</p><h4>The mindset</h4><p>Most rules in here are scar tissue: each one exists because its absence broke something once. Add a rule the first time a mistake stings.</p>`,src:'templates/claude-md/CLAUDE.md'},
-  'what is compaction?':{kind:'concept',t:'What is compaction?',body:`<p>A chat has a limited amount of room (the "context"). When it fills, the host automatically summarizes the older turns to make space. That summarizing step is <em>compaction</em>.</p><h4>Why it matters</h4><p>Compaction can quietly drop a detail you still needed. The fix is to keep the things that matter in files (the task handoff and memory) instead of trusting the chat to hold them.</p><h4>The mindset</h4><p>Ride one long chat and let it compact, because the important state lives on disk. A fresh chat then reloads that state and picks up cleanly.</p>`,src:'docs/DETAILED-GUIDE.md'},
-  // Skills
-  'superpowers':{kind:'skill framework',t:'superpowers',body:`<p>A framework of about 14 skills (by Jesse Vincent) that move any task through <code>brainstorm → plan → execute → verify</code>.</p><h4>How it works</h4><p>The flagship skill, <code>brainstorming</code>, refuses to write code until you approve a design; others cover planning, test-first coding, debugging, and verification. Install it once and the agent reaches for the right phase on its own.</p><h4>The mindset</h4><p>Design before code. Most wasted agent time comes from building the wrong thing fast.</p>`,src:'github.com/obra/superpowers'},
-  'grill-me':{kind:'skill',t:'grill-me',body:`<p>A skill that interrogates your idea one sharp question at a time, walking the whole decision tree and proposing a recommended answer with each question.</p><h4>Why it exists</h4><p>Fuzzy ideas produce fuzzy builds. Grilling surfaces the holes before any code is written.</p><h4>The mindset</h4><p>Use it when you half-know what you want. Expect a few dozen questions for a vague brief.</p>`,src:'a custom skill in the kit'},
-  'deep-search':{kind:'skill',t:'deep-search',body:`<p>Multi-step web research: it breaks your question into sub-questions, runs several searches in parallel, leans on human-written sources, and returns a synthesis with inline citations.</p><h4>The mindset</h4><p>Reach for it whenever an answer needs three or more sources or any real judgment, instead of trusting a single search.</p>`,src:'a custom skill in the kit'},
-  'make-playbook':{kind:'skill',t:'make-playbook',body:`<p>After you finish something worth repeating, this captures it as a reusable playbook so the next run is faster.</p><h4>The mindset</h4><p>It is the habit that makes the whole setup compound: turn a one-time effort into a written procedure the moment it works.</p>`,src:'a custom skill in the kit'},
-  'parallelize':{kind:'skill',t:'parallelize',body:`<p>Breaks a job into independent parts and dispatches them as several helper agents at once, then collects the results.</p><h4>How it works</h4><p>The guard rails: 3+ genuinely independent parts, all dispatched in one message, and never two helpers writing the same file.</p>`,src:'a custom skill in the kit'},
-  // Hooks
-  'check-secret-exposure':{kind:'hook · before a command',t:'check-secret-exposure',body:`<p>Blocks shell commands that would print secrets or environment values into the chat (for example <code>printenv</code>, or echoing a token).</p><h4>Why it matters</h4><p>Once a secret appears in the transcript, the only safe fix is to rotate (replace) it. This hook keeps it out in the first place.</p>`,src:'templates/hooks/check-secret-exposure.js'},
-  'block-egress-exfil':{kind:'hook · before a command',t:'block-egress-exfil',body:`<p>Cuts off uploads to hosts you have not approved, plus tricks like <code>curl | bash</code> and netcat. You list trusted hosts in <code>ALLOWED_UPLOAD_HOSTS</code> at the top of the file.</p><h4>Why it matters</h4><p>This is the defense against the "lethal trifecta": the agent has access to private data, can read untrusted text that might contain instructions, and has a way to send data out. Remove the way out and a hijacked agent cannot leak.</p>`,src:'templates/hooks/block-egress-exfil.js'},
-  'block-dangerous-bash':{kind:'hook · before a command',t:'block-dangerous-bash',body:`<p>Stops the short list of commands that are hard to undo: <code>rm -rf ~</code>, <code>git push --force</code>, <code>git reset --hard</code>, <code>git clean -f</code>, and live <code>DROP</code>/<code>TRUNCATE</code> on a database.</p><h4>The mindset</h4><p>Everything reversible runs freely; only the genuinely destructive gets stopped, so the guard never gets in the way of normal work.</p>`,src:'templates/hooks/block-dangerous-bash.js'},
-  'session-primer':{kind:'hook · at session start',t:'session-primer',body:`<p>When a new chat starts, this injects the task handoff file and the memory index as opening context.</p><h4>Why it exists</h4><p>It is the half of the handoff loop that makes a fresh chat resume exactly where the last one stopped, with no manual catch-up.</p>`,src:'templates/hooks/session-primer.js'},
-  'protect-security-config':{kind:'hook · before a command',t:'protect-security-config',body:`<p>Warns when an action would change the guards themselves (the hooks, or <code>settings.json</code>).</p><h4>The mindset</h4><p>It warns instead of hard-blocking, because you sometimes do need to edit these; the warning just makes sure the change is deliberate.</p>`,src:'templates/hooks/protect-security-config.js'},
-  // Memory
-  'user':{kind:'memory type',t:'user memory',body:`<p>Who you are: your role, your experience, how you like things explained.</p><h4>How it helps</h4><p>It lets the agent pitch an answer to your level, instead of over- or under-explaining every time.</p>`,src:'templates/memory/MEMORY-SYSTEM.md'},
-  'feedback':{kind:'memory type',t:'feedback memory',body:`<p>How you like work done. Each entry leads with the rule, then a short <code>Why</code> and a <code>How to apply</code>.</p><h4>The mindset</h4><p>Save corrections <em>and</em> approaches that worked. Saving only corrections teaches the agent to be timid.</p>`,src:'templates/memory/MEMORY-SYSTEM.md'},
-  'project':{kind:'memory type',t:'project memory',body:`<p>Who/why/when on the current work.</p><h4>How it works</h4><p>It goes stale fast, so dates are stored absolute ("2026-03-05", never "Thursday") and old entries get pruned.</p>`,src:'templates/memory/MEMORY-SYSTEM.md'},
-  'reference':{kind:'memory type',t:'reference memory',body:`<p>Where things live in your other systems: the issue tracker for pipeline bugs, the dashboard the on-call watches.</p><h4>The mindset</h4><p>Store pointers, so the agent knows where to look rather than guessing.</p>`,src:'templates/memory/MEMORY-SYSTEM.md'},
-  // CLAUDE.md rules
-  'voice':{kind:'CLAUDE.md rule',t:'voice',body:`<p>Before writing anything you'll publish or send, the agent reads a <code>voice.md</code> so the result sounds like you.</p><h4>The headline ban</h4><p>The "X, then the opposite" antithesis phrasing is forbidden, since it is the clearest tell of machine-written text. State the positive claim and stop.</p>`,src:'templates/claude-md/CLAUDE.md'},
-  'no-fabrication':{kind:'CLAUDE.md rule',t:'never fabricate',body:`<p>If a fact is not in the source, the agent says so and asks, instead of filling the gap with a confident guess. It also names which source a fact came from.</p><h4>The mindset</h4><p>An admitted gap is cheap; an invented number that ships is expensive.</p>`,src:'templates/claude-md/CLAUDE.md'},
-  'backup+new-file':{kind:'CLAUDE.md rule',t:'backup + new file',body:`<p>When editing a file you authored, the agent saves a timestamped backup first and writes the result to a new versioned file.</p><h4>Why it exists</h4><p>An in-place overwrite once destroyed unsaved edits with no way back. Backup-plus-new-file means a mistake is always recoverable.</p>`,src:'templates/claude-md/CLAUDE.md'},
-  'proceed-dont-ask':{kind:'CLAUDE.md rule',t:'proceed, don\'t ask',body:`<p>State one line of assumptions, run the whole multi-step task, and report once at the end. Batch any genuine questions into a single message.</p><h4>The mindset</h4><p>An assistant that pauses for permission at every step is slower than doing it yourself. The agent stops only for a hard blocker or a costly wrong guess.</p>`,src:'templates/claude-md/CLAUDE.md'},
-  'plan-means-plan':{kind:'CLAUDE.md rule',t:'plan means plan',body:`<p>When you say "plan", the only output is a written plan. Nothing is created, edited, or run until you reply with an explicit action verb like "do it" or "build".</p><h4>Why it exists</h4><p>So an eager agent never starts changing files while you are still thinking out loud.</p>`,src:'templates/claude-md/CLAUDE.md'},
-  // Workflow
-  'CURRENT-TASK.md':{kind:'workflow',t:'CURRENT-TASK.md',body:`<p>A single handoff file: the one-sentence goal, the steps done (with file paths), the steps left in order, and the exact command to run next.</p><h4>How it works</h4><p>On resume the agent reads it first and continues. It is deleted when the task is done, so a stale file never misleads the next chat.</p><h4>The mindset</h4><p>Treat it like a baton in a relay: whatever you write here is what survives a compaction or a brand-new chat.</p>`,src:'docs/DETAILED-GUIDE.md'},
-  '/rollover':{kind:'workflow',t:'/rollover',body:`<p>The end-of-session ritual. It gathers diagnostics (the task file, the memory folder, what files changed, git status), writes a clean handoff into CURRENT-TASK.md, and saves the session's lessons to memory.</p><h4>The mindset</h4><p>Spend the last two minutes of a session setting up the next one. Tomorrow boots clean.</p>`,src:'a custom skill in the kit'},
-  'two-question test':{kind:'workflow',t:'the two-question test',body:`<p>A rule for deciding whether to hand work to a helper agent. Delegate only if you can (1) brief the helper in a paragraph and (2) check its result without a judgment call.</p><h4>The mindset</h4><p>If either answer is no, keep the task yourself or break it down further. Delegation that you cannot verify just moves the risk around.</p>`,src:'templates/claude-md/CLAUDE-delegation.md'},
-  'parallel sub-agents':{kind:'workflow',t:'parallel sub-agents',body:`<p>For 3+ genuinely independent parts, launch all the helpers in one message so they run at the same time.</p><h4>How it works</h4><p>Never point two helpers at the same file. If one is stuck after three tries, stop and re-plan rather than spawning another.</p>`,src:'templates/claude-md/CLAUDE-delegation.md'},
-  'daily rituals':{kind:'workflow',t:'daily rituals',body:`<p>Two light habits: a "what did I build yesterday" summary, and a review that turns recent debugging into saved lessons.</p><h4>The mindset</h4><p>Small, regular reflection is what keeps the memory and skills growing instead of going stale.</p>`,src:'custom skills in the kit'},
-  // tools (patterns kept as concepts in the public kit)
-  'how the vault fits in':{kind:'tool',t:'Obsidian as the agent\'s memory',body:`<p>Obsidian is a free app for markdown notes. Here it doubles as the agent's long-term workspace: it reads and writes notes through a small localhost API, and a guard hook blocks accidental deletes.</p><h4>The strategy</h4><p>You drop raw material into an inbox note; a skill researches each item, writes a clean structured note, links it to related notes, and files the raw copy away. Over time the vault becomes a searchable second brain the agent maintains for you.</p>`,src:'docs/OBSIDIAN-VAULT-AND-MEMORY.md'},
-  'why dictate to an agent':{kind:'tool',t:'Why dictate to an agent',body:`<p>Agents do their best work from a rich, rambly brief, and talking is far faster than typing one. Wispr Flow turns speech into clean, punctuated text.</p><h4>How it fits</h4><p>You hold a key, talk for a minute about what you want, and paste the cleaned result straight into the agent. The longer the brief, the bigger the speed-up.</p>`,src:'a plugged-in tool'},
-  'running a team of agents':{kind:'tool',t:'Running a team of agents',body:`<p>wmux splits one terminal window into panes, each running its own agent over the same project, with a way for them to message each other.</p><h4>How it fits</h4><p>One pane implements while another reviews, or several work different files at once. It is the desktop version of the "parallel sub-agents" idea.</p>`,src:'a plugged-in tool'},
-  'globalcfg':{kind:'pattern',t:'claude-global-config',body:`<p>Keep your entire <code>~/.claude</code> folder (rules, hooks, skills, settings) as a private git repo.</p><h4>Why it helps</h4><p>Your whole agent setup becomes versioned and portable: clone it onto a new machine and everything comes with you. A <code>.gitignore</code> keeps secrets and chat transcripts out of the repo.</p><h4>The mindset</h4><p>This kit is the public, scrubbed export of that private repo.</p>`,src:'pattern · see docs/HANDLING-SECRETS.md'},
-  'siteshub':{kind:'pattern',t:'profile + sites hub',body:`<p>A small set of markdown files about you (bio, experience, stories, the numbers you cite), each fact in one canonical place.</p><h4>Why it helps</h4><p>Any agent reads it before writing outreach, a bio, or portfolio copy, so it pulls from facts instead of improvising. It is the anti-fabrication backstop for writing about yourself.</p><h4>How to use it</h4><p>Fill in the blank <code>templates/profile/</code> skeleton and point your CLAUDE.md at it.</p>`,src:'templates/profile/'},
-};
+      /* ---------- graph data ---------- */
+      const DATA = {
+        hub: {
+          id: "hub",
+          title: "dpm-agent-kit",
+          kind: "the kit",
+          cls: "hub",
+          x: 50,
+          y: 50,
+          desc: "A drop-in setup for Claude Code (a coding agent that lives in your terminal): skills, hooks, memory, the CLAUDE.md contract, and a daily workflow, plus the outside tools that make the loop fast. Each pillar answers one need of working with an agent that starts every chat with a blank memory and will run whatever you ask.",
+          chips: ["Skills", "Hooks", "Memory", "CLAUDE.md", "Workflow"],
+        },
+        nodes: [
+          {
+            id: "Skills",
+            title: "Skills",
+            sub: "reusable expertise",
+            cls: "pillar",
+            x: 22,
+            y: 24,
+            link: "hub",
+            desc: "A skill is a short markdown file that teaches the agent a procedure once, so you never have to re-explain it. Each file has a name and a description; the description is the trigger the agent matches against your request. Layers: the superpowers framework, grill-me, and your own custom skills.",
+            chips: [
+              "what is a skill?",
+              "superpowers",
+              "grill-me",
+              "deep-search",
+              "make-playbook",
+              "parallelize",
+            ],
+          },
+          {
+            id: "Hooks",
+            title: "Hooks",
+            sub: "guardrails",
+            cls: "pillar",
+            x: 78,
+            y: 24,
+            link: "hub",
+            desc: "A hook is a small script the agent host runs automatically at set moments (before a command, after it, at session start). Hooks can block an action or warn about it. They are the seatbelt for an agent that will otherwise do anything you ask.",
+            chips: [
+              "what is a hook?",
+              "check-secret-exposure",
+              "block-egress-exfil",
+              "block-dangerous-bash",
+              "session-primer",
+              "protect-security-config",
+            ],
+          },
+          {
+            id: "Memory",
+            title: "Memory",
+            sub: "continuity",
+            cls: "pillar",
+            x: 14,
+            y: 62,
+            link: "hub",
+            desc: "The agent forgets everything when a chat ends. Memory is a folder of small markdown files plus a tiny always-loaded index (MEMORY.md), so the next chat starts already knowing your preferences and past decisions. Four types: user, feedback, project, reference.",
+            chips: [
+              "what is agent memory?",
+              "user",
+              "feedback",
+              "project",
+              "reference",
+            ],
+          },
+          {
+            id: "CLAUDE.md",
+            title: "CLAUDE.md",
+            sub: "the contract",
+            cls: "pillar",
+            x: 86,
+            y: 62,
+            link: "hub",
+            desc: "CLAUDE.md is a plain markdown file the agent reads at the start of every chat: your standing rules. Voice, anti-fabrication, file-safety, autonomy, plan-means-plan. Keep it short; push deep detail into sibling CLAUDE-*.md files it reads only when needed.",
+            chips: [
+              "what is CLAUDE.md?",
+              "voice",
+              "no-fabrication",
+              "backup+new-file",
+              "proceed-dont-ask",
+              "plan-means-plan",
+            ],
+          },
+          {
+            id: "Workflow",
+            title: "Workflow",
+            sub: "how you drive it",
+            cls: "pillar",
+            x: 50,
+            y: 84,
+            link: "hub",
+            desc: 'The habits that turn the parts into a practice: one long chat ridden through "compaction" (when the host summarizes old turns to free up space), a handoff file so nothing is lost, and a rule for when to split work across helper agents.',
+            chips: [
+              "what is compaction?",
+              "CURRENT-TASK.md",
+              "/rollover",
+              "two-question test",
+              "parallel sub-agents",
+              "daily rituals",
+            ],
+          },
+          {
+            id: "Obsidian",
+            title: "Obsidian",
+            sub: "notes vault",
+            cls: "tool",
+            x: 30,
+            y: 43,
+            link: "Workflow",
+            desc: "Obsidian is a free markdown note app. Here the agent treats the vault as its long-term working memory: it reads and writes notes (often through a small local API), and a guard hook stops accidental deletions. Agent notes live in a Claude/ subfolder.",
+            chips: ["how the vault fits in"],
+            ext: "Obsidian",
+          },
+          {
+            id: "Wispr Flow",
+            title: "Wispr Flow",
+            sub: "voice input",
+            cls: "tool",
+            x: 70,
+            y: 43,
+            link: "Workflow",
+            desc: 'Wispr Flow is voice-dictation software. You speak a long prompt (around 150 words a minute against about 60 by typing); it strips the "ums", adds punctuation, and pastes clean text into the agent. The fastest way to hand over a big, rambly brief.',
+            chips: ["why dictate to an agent"],
+            ext: "Wispr Flow",
+          },
+          {
+            id: "wmux",
+            title: "wmux",
+            sub: "multi-agent terminal",
+            cls: "tool",
+            x: 50,
+            y: 33,
+            link: "hub",
+            desc: "wmux is a Windows terminal multiplexer built for AI agents. It splits one window into panes, each running an agent (Claude Code / Codex / Gemini) over the same repo, with agent-to-agent messaging. Run a small team of agents side by side.",
+            chips: ["running a team of agents"],
+            ext: "wmux",
+          },
+          {
+            id: "claude-global-config",
+            title: "global-config",
+            sub: "~/.claude as a repo",
+            cls: "tool",
+            x: 20,
+            y: 80,
+            link: "CLAUDE.md",
+            desc: "The idea of keeping your whole ~/.claude folder (rules, hooks, skills, settings) as a private git repo, so your entire agent setup is versioned and portable across machines. This kit is its public, scrubbed, explained sibling.",
+            chips: [],
+            detail: "globalcfg",
+          },
+          {
+            id: "dpm-sites",
+            title: "sites hub",
+            sub: "profile + index",
+            cls: "tool",
+            x: 80,
+            y: 80,
+            link: "Memory",
+            desc: "A small corpus of markdown about you (bio, stories, the numbers you cite) that any agent reads before it writes outreach or portfolio copy, so it pulls from facts instead of inventing them. A blank skeleton ships in templates/profile/.",
+            chips: [],
+            detail: "siteshub",
+          },
+        ],
+      };
+      /* ---------- external tool links ---------- */
+      const EXT = {
+        Obsidian: { label: "obsidian.md", url: "https://obsidian.md" },
+        "Wispr Flow": { label: "wisprflow.ai", url: "https://wisprflow.ai" },
+        wmux: { label: "winget install openwong2kim.wmux", url: "" },
+      };
+      /* ---------- leaf detail pages — each opens its own explainer ---------- */
+      const DETAILS = {
+        // concept explainers (newcomer-first)
+        "what is a skill?": {
+          kind: "concept",
+          t: "What is a skill?",
+          body: `<p>A skill is a markdown file that teaches the agent how to do one job, so you explain it once instead of every time.</p><h4>How it works</h4><p>The file lives in <code>~/.claude/commands/</code> (or a plugin). Its top line is a <em>description</em>; when your request matches it, the agent loads the file and follows the steps inside. You can also call it directly by typing <code>/the-skill-name</code>.</p><h4>The mindset</h4><p>Any time you catch yourself re-explaining the same workflow, write it down as a skill. That is how the setup gets smarter the more you use it.</p>`,
+          src: "docs/DETAILED-GUIDE.md",
+        },
+        "what is a hook?": {
+          kind: "concept",
+          t: "What is a hook?",
+          body: `<p>A hook is a tiny script that the agent's host program runs <em>for</em> you at fixed moments: before a shell command, after it, when a chat starts, or when it ends.</p><h4>Why it exists</h4><p>The agent is willing to run anything you ask, including commands that would leak a password or delete files. A hook sits in the way and can <strong>block</strong> the action or <strong>warn</strong> about it before it happens. It is enforced by the host, so the agent cannot talk its way past it.</p><h4>How it works</h4><p>Each hook is a dependency-free Node script in <code>~/.claude/hooks/</code>, wired up in <code>settings.json</code>. It reads what the agent is about to do as JSON, then says allow, warn, or block.</p><h4>The mindset</h4><p>Keep hooks high-precision: block only what is genuinely dangerous, so normal work never gets nagged.</p>`,
+          src: "templates/hooks/",
+        },
+        "what is agent memory?": {
+          kind: "concept",
+          t: "What is agent memory?",
+          body: `<p>The agent starts every chat blank. "Memory" is just a folder of small markdown files it reads back in, so it remembers you across chats.</p><h4>How it works</h4><p>One tiny file, <code>MEMORY.md</code>, is loaded every session as an index of one-line pointers. The full notes live in separate files the agent opens only when relevant, which keeps the always-on cost small.</p><h4>The mindset</h4><p>Save corrections <em>and</em> things that worked. If you only ever save "don't do that," the agent slowly turns timid and forgets what good looked like.</p>`,
+          src: "templates/memory/MEMORY-SYSTEM.md",
+        },
+        "what is CLAUDE.md?": {
+          kind: "concept",
+          t: "What is CLAUDE.md?",
+          body: `<p>CLAUDE.md is a plain markdown file of your standing rules that the agent reads at the start of every chat. Think of it as the contract you'd give a brand-new assistant on day one.</p><h4>How it works</h4><p>The global one lives at <code>~/.claude/CLAUDE.md</code>; a project can add its own. Keep the main file short so it is cheap to load every time, and move long detail into <code>CLAUDE-*.md</code> files the agent opens only when it needs them.</p><h4>The mindset</h4><p>Most rules in here are scar tissue: each one exists because its absence broke something once. Add a rule the first time a mistake stings.</p>`,
+          src: "templates/claude-md/CLAUDE.md",
+        },
+        "what is compaction?": {
+          kind: "concept",
+          t: "What is compaction?",
+          body: `<p>A chat has a limited amount of room (the "context"). When it fills, the host automatically summarizes the older turns to make space. That summarizing step is <em>compaction</em>.</p><h4>Why it matters</h4><p>Compaction can quietly drop a detail you still needed. The fix is to keep the things that matter in files (the task handoff and memory) instead of trusting the chat to hold them.</p><h4>The mindset</h4><p>Ride one long chat and let it compact, because the important state lives on disk. A fresh chat then reloads that state and picks up cleanly.</p>`,
+          src: "docs/DETAILED-GUIDE.md",
+        },
+        // Skills
+        superpowers: {
+          kind: "skill framework",
+          t: "superpowers",
+          body: `<p>A framework of about 14 skills (by Jesse Vincent) that move any task through <code>brainstorm → plan → execute → verify</code>.</p><h4>How it works</h4><p>The flagship skill, <code>brainstorming</code>, refuses to write code until you approve a design; others cover planning, test-first coding, debugging, and verification. Install it once and the agent reaches for the right phase on its own.</p><h4>The mindset</h4><p>Design before code. Most wasted agent time comes from building the wrong thing fast.</p>`,
+          src: "github.com/obra/superpowers",
+        },
+        "grill-me": {
+          kind: "skill",
+          t: "grill-me",
+          body: `<p>A skill that interrogates your idea one sharp question at a time, walking the whole decision tree and proposing a recommended answer with each question.</p><h4>Why it exists</h4><p>Fuzzy ideas produce fuzzy builds. Grilling surfaces the holes before any code is written.</p><h4>The mindset</h4><p>Use it when you half-know what you want. Expect a few dozen questions for a vague brief.</p>`,
+          src: "a custom skill in the kit",
+        },
+        "deep-search": {
+          kind: "skill",
+          t: "deep-search",
+          body: `<p>Multi-step web research: it breaks your question into sub-questions, runs several searches in parallel, leans on human-written sources, and returns a synthesis with inline citations.</p><h4>The mindset</h4><p>Reach for it whenever an answer needs three or more sources or any real judgment, instead of trusting a single search.</p>`,
+          src: "a custom skill in the kit",
+        },
+        "make-playbook": {
+          kind: "skill",
+          t: "make-playbook",
+          body: `<p>After you finish something worth repeating, this captures it as a reusable playbook so the next run is faster.</p><h4>The mindset</h4><p>It is the habit that makes the whole setup compound: turn a one-time effort into a written procedure the moment it works.</p>`,
+          src: "a custom skill in the kit",
+        },
+        parallelize: {
+          kind: "skill",
+          t: "parallelize",
+          body: `<p>Breaks a job into independent parts and dispatches them as several helper agents at once, then collects the results.</p><h4>How it works</h4><p>The guard rails: 3+ genuinely independent parts, all dispatched in one message, and never two helpers writing the same file.</p>`,
+          src: "a custom skill in the kit",
+        },
+        // Hooks
+        "check-secret-exposure": {
+          kind: "hook · before a command",
+          t: "check-secret-exposure",
+          body: `<p>Blocks shell commands that would print secrets or environment values into the chat (for example <code>printenv</code>, or echoing a token).</p><h4>Why it matters</h4><p>Once a secret appears in the transcript, the only safe fix is to rotate (replace) it. This hook keeps it out in the first place.</p>`,
+          src: "templates/hooks/check-secret-exposure.js",
+        },
+        "block-egress-exfil": {
+          kind: "hook · before a command",
+          t: "block-egress-exfil",
+          body: `<p>Cuts off uploads to hosts you have not approved, plus tricks like <code>curl | bash</code> and netcat. You list trusted hosts in <code>ALLOWED_UPLOAD_HOSTS</code> at the top of the file.</p><h4>Why it matters</h4><p>This is the defense against the "lethal trifecta": the agent has access to private data, can read untrusted text that might contain instructions, and has a way to send data out. Remove the way out and a hijacked agent cannot leak.</p>`,
+          src: "templates/hooks/block-egress-exfil.js",
+        },
+        "block-dangerous-bash": {
+          kind: "hook · before a command",
+          t: "block-dangerous-bash",
+          body: `<p>Stops the short list of commands that are hard to undo: <code>rm -rf ~</code>, <code>git push --force</code>, <code>git reset --hard</code>, <code>git clean -f</code>, and live <code>DROP</code>/<code>TRUNCATE</code> on a database.</p><h4>The mindset</h4><p>Everything reversible runs freely; only the genuinely destructive gets stopped, so the guard never gets in the way of normal work.</p>`,
+          src: "templates/hooks/block-dangerous-bash.js",
+        },
+        "session-primer": {
+          kind: "hook · at session start",
+          t: "session-primer",
+          body: `<p>When a new chat starts, this injects the task handoff file and the memory index as opening context.</p><h4>Why it exists</h4><p>It is the half of the handoff loop that makes a fresh chat resume exactly where the last one stopped, with no manual catch-up.</p>`,
+          src: "templates/hooks/session-primer.js",
+        },
+        "protect-security-config": {
+          kind: "hook · before a command",
+          t: "protect-security-config",
+          body: `<p>Warns when an action would change the guards themselves (the hooks, or <code>settings.json</code>).</p><h4>The mindset</h4><p>It warns instead of hard-blocking, because you sometimes do need to edit these; the warning just makes sure the change is deliberate.</p>`,
+          src: "templates/hooks/protect-security-config.js",
+        },
+        // Memory
+        user: {
+          kind: "memory type",
+          t: "user memory",
+          body: `<p>Who you are: your role, your experience, how you like things explained.</p><h4>How it helps</h4><p>It lets the agent pitch an answer to your level, instead of over- or under-explaining every time.</p>`,
+          src: "templates/memory/MEMORY-SYSTEM.md",
+        },
+        feedback: {
+          kind: "memory type",
+          t: "feedback memory",
+          body: `<p>How you like work done. Each entry leads with the rule, then a short <code>Why</code> and a <code>How to apply</code>.</p><h4>The mindset</h4><p>Save corrections <em>and</em> approaches that worked. Saving only corrections teaches the agent to be timid.</p>`,
+          src: "templates/memory/MEMORY-SYSTEM.md",
+        },
+        project: {
+          kind: "memory type",
+          t: "project memory",
+          body: `<p>Who/why/when on the current work.</p><h4>How it works</h4><p>It goes stale fast, so dates are stored absolute ("2026-03-05", never "Thursday") and old entries get pruned.</p>`,
+          src: "templates/memory/MEMORY-SYSTEM.md",
+        },
+        reference: {
+          kind: "memory type",
+          t: "reference memory",
+          body: `<p>Where things live in your other systems: the issue tracker for pipeline bugs, the dashboard the on-call watches.</p><h4>The mindset</h4><p>Store pointers, so the agent knows where to look rather than guessing.</p>`,
+          src: "templates/memory/MEMORY-SYSTEM.md",
+        },
+        // CLAUDE.md rules
+        voice: {
+          kind: "CLAUDE.md rule",
+          t: "voice",
+          body: `<p>Before writing anything you'll publish or send, the agent reads a <code>voice.md</code> so the result sounds like you.</p><h4>The headline ban</h4><p>The "X, then the opposite" antithesis phrasing is forbidden, since it is the clearest tell of machine-written text. State the positive claim and stop.</p>`,
+          src: "templates/claude-md/CLAUDE.md",
+        },
+        "no-fabrication": {
+          kind: "CLAUDE.md rule",
+          t: "never fabricate",
+          body: `<p>If a fact is not in the source, the agent says so and asks, instead of filling the gap with a confident guess. It also names which source a fact came from.</p><h4>The mindset</h4><p>An admitted gap is cheap; an invented number that ships is expensive.</p>`,
+          src: "templates/claude-md/CLAUDE.md",
+        },
+        "backup+new-file": {
+          kind: "CLAUDE.md rule",
+          t: "backup + new file",
+          body: `<p>When editing a file you authored, the agent saves a timestamped backup first and writes the result to a new versioned file.</p><h4>Why it exists</h4><p>An in-place overwrite once destroyed unsaved edits with no way back. Backup-plus-new-file means a mistake is always recoverable.</p>`,
+          src: "templates/claude-md/CLAUDE.md",
+        },
+        "proceed-dont-ask": {
+          kind: "CLAUDE.md rule",
+          t: "proceed, don't ask",
+          body: `<p>State one line of assumptions, run the whole multi-step task, and report once at the end. Batch any genuine questions into a single message.</p><h4>The mindset</h4><p>An assistant that pauses for permission at every step is slower than doing it yourself. The agent stops only for a hard blocker or a costly wrong guess.</p>`,
+          src: "templates/claude-md/CLAUDE.md",
+        },
+        "plan-means-plan": {
+          kind: "CLAUDE.md rule",
+          t: "plan means plan",
+          body: `<p>When you say "plan", the only output is a written plan. Nothing is created, edited, or run until you reply with an explicit action verb like "do it" or "build".</p><h4>Why it exists</h4><p>So an eager agent never starts changing files while you are still thinking out loud.</p>`,
+          src: "templates/claude-md/CLAUDE.md",
+        },
+        // Workflow
+        "CURRENT-TASK.md": {
+          kind: "workflow",
+          t: "CURRENT-TASK.md",
+          body: `<p>A single handoff file: the one-sentence goal, the steps done (with file paths), the steps left in order, and the exact command to run next.</p><h4>How it works</h4><p>On resume the agent reads it first and continues. It is deleted when the task is done, so a stale file never misleads the next chat.</p><h4>The mindset</h4><p>Treat it like a baton in a relay: whatever you write here is what survives a compaction or a brand-new chat.</p>`,
+          src: "docs/DETAILED-GUIDE.md",
+        },
+        "/rollover": {
+          kind: "workflow",
+          t: "/rollover",
+          body: `<p>The end-of-session ritual. It gathers diagnostics (the task file, the memory folder, what files changed, git status), writes a clean handoff into CURRENT-TASK.md, and saves the session's lessons to memory.</p><h4>The mindset</h4><p>Spend the last two minutes of a session setting up the next one. Tomorrow boots clean.</p>`,
+          src: "a custom skill in the kit",
+        },
+        "two-question test": {
+          kind: "workflow",
+          t: "the two-question test",
+          body: `<p>A rule for deciding whether to hand work to a helper agent. Delegate only if you can (1) brief the helper in a paragraph and (2) check its result without a judgment call.</p><h4>The mindset</h4><p>If either answer is no, keep the task yourself or break it down further. Delegation that you cannot verify just moves the risk around.</p>`,
+          src: "templates/claude-md/CLAUDE-delegation.md",
+        },
+        "parallel sub-agents": {
+          kind: "workflow",
+          t: "parallel sub-agents",
+          body: `<p>For 3+ genuinely independent parts, launch all the helpers in one message so they run at the same time.</p><h4>How it works</h4><p>Never point two helpers at the same file. If one is stuck after three tries, stop and re-plan rather than spawning another.</p>`,
+          src: "templates/claude-md/CLAUDE-delegation.md",
+        },
+        "daily rituals": {
+          kind: "workflow",
+          t: "daily rituals",
+          body: `<p>Two light habits: a "what did I build yesterday" summary, and a review that turns recent debugging into saved lessons.</p><h4>The mindset</h4><p>Small, regular reflection is what keeps the memory and skills growing instead of going stale.</p>`,
+          src: "custom skills in the kit",
+        },
+        // tools (patterns kept as concepts in the public kit)
+        "how the vault fits in": {
+          kind: "tool",
+          t: "Obsidian as the agent's memory",
+          body: `<p>Obsidian is a free app for markdown notes. Here it doubles as the agent's long-term workspace: it reads and writes notes through a small localhost API, and a guard hook blocks accidental deletes.</p><h4>The strategy</h4><p>You drop raw material into an inbox note; a skill researches each item, writes a clean structured note, links it to related notes, and files the raw copy away. Over time the vault becomes a searchable second brain the agent maintains for you.</p>`,
+          src: "docs/OBSIDIAN-VAULT-AND-MEMORY.md",
+        },
+        "why dictate to an agent": {
+          kind: "tool",
+          t: "Why dictate to an agent",
+          body: `<p>Agents do their best work from a rich, rambly brief, and talking is far faster than typing one. Wispr Flow turns speech into clean, punctuated text.</p><h4>How it fits</h4><p>You hold a key, talk for a minute about what you want, and paste the cleaned result straight into the agent. The longer the brief, the bigger the speed-up.</p>`,
+          src: "a plugged-in tool",
+        },
+        "running a team of agents": {
+          kind: "tool",
+          t: "Running a team of agents",
+          body: `<p>wmux splits one terminal window into panes, each running its own agent over the same project, with a way for them to message each other.</p><h4>How it fits</h4><p>One pane implements while another reviews, or several work different files at once. It is the desktop version of the "parallel sub-agents" idea.</p>`,
+          src: "a plugged-in tool",
+        },
+        globalcfg: {
+          kind: "pattern",
+          t: "claude-global-config",
+          body: `<p>Keep your entire <code>~/.claude</code> folder (rules, hooks, skills, settings) as a private git repo.</p><h4>Why it helps</h4><p>Your whole agent setup becomes versioned and portable: clone it onto a new machine and everything comes with you. A <code>.gitignore</code> keeps secrets and chat transcripts out of the repo.</p><h4>The mindset</h4><p>This kit is the public, scrubbed export of that private repo.</p>`,
+          src: "pattern · see docs/HANDLING-SECRETS.md",
+        },
+        siteshub: {
+          kind: "pattern",
+          t: "profile + sites hub",
+          body: `<p>A small set of markdown files about you (bio, experience, stories, the numbers you cite), each fact in one canonical place.</p><h4>Why it helps</h4><p>Any agent reads it before writing outreach, a bio, or portfolio copy, so it pulls from facts instead of improvising. It is the anti-fabrication backstop for writing about yourself.</p><h4>How to use it</h4><p>Fill in the blank <code>templates/profile/</code> skeleton and point your CLAUDE.md at it.</p>`,
+          src: "templates/profile/",
+        },
+      };
 
-const stage=document.getElementById('stage'), svg=document.getElementById('links');
-const all=[DATA.hub,...DATA.nodes]; const byId={}; all.forEach(n=>byId[n.id]=n);
-const neighbors={}; all.forEach(n=>neighbors[n.id]=new Set([n.id]));
-DATA.nodes.forEach(n=>{if(byId[n.link]){neighbors[n.id].add(n.link);neighbors[n.link].add(n.id);}});
+      const stage = document.getElementById("stage"),
+        svg = document.getElementById("links");
+      const all = [DATA.hub, ...DATA.nodes];
+      const byId = {};
+      all.forEach((n) => (byId[n.id] = n));
+      const neighbors = {};
+      all.forEach((n) => (neighbors[n.id] = new Set([n.id])));
+      DATA.nodes.forEach((n) => {
+        if (byId[n.link]) {
+          neighbors[n.id].add(n.link);
+          neighbors[n.link].add(n.id);
+        }
+      });
 
-function place(){
-  stage.querySelectorAll('.node').forEach(e=>e.remove());
-  const W=stage.clientWidth,H=stage.clientHeight; svg.innerHTML='';
-  DATA.nodes.forEach(n=>{const t=byId[n.link];if(!t)return;
-    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
-    l.setAttribute('x1',t.x/100*W);l.setAttribute('y1',t.y/100*H);
-    l.setAttribute('x2',n.x/100*W);l.setAttribute('y2',n.y/100*H);
-    l.dataset.a=n.id;l.dataset.b=n.link;svg.appendChild(l);});
-  all.forEach(n=>{const d=document.createElement('div');d.className='node '+n.cls;
-    d.style.left=n.x+'%';d.style.top=n.y+'%';d.dataset.id=n.id;
-    const dot=(n.cls==='pillar'||n.cls==='tool')?'<span class="dot"></span>':'';
-    d.innerHTML=`<div class="t">${dot}${n.title}</div>`+(n.sub?`<div class="s">${n.sub}</div>`:'');
-    d.onclick=()=>select(n.id);
-    d.onmouseenter=()=>hot(n.id,true);d.onmouseleave=()=>hot(n.id,false);
-    stage.appendChild(d);});
-  applyFocus(curSel);
-}
-function hot(id,on){ if(id===curSel) return; // keep selected node's edges lit
-  svg.querySelectorAll('line').forEach(l=>{
-    if(l.dataset.a===id||l.dataset.b===id)l.classList.toggle('hot',on);});}
+      function place() {
+        stage.querySelectorAll(".node").forEach((e) => e.remove());
+        const W = stage.clientWidth,
+          H = stage.clientHeight;
+        svg.innerHTML = "";
+        DATA.nodes.forEach((n) => {
+          const t = byId[n.link];
+          if (!t) return;
+          const l = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "line",
+          );
+          l.setAttribute("x1", (t.x / 100) * W);
+          l.setAttribute("y1", (t.y / 100) * H);
+          l.setAttribute("x2", (n.x / 100) * W);
+          l.setAttribute("y2", (n.y / 100) * H);
+          l.dataset.a = n.id;
+          l.dataset.b = n.link;
+          svg.appendChild(l);
+        });
+        all.forEach((n) => {
+          const d = document.createElement("div");
+          d.className = "node " + n.cls;
+          d.style.left = n.x + "%";
+          d.style.top = n.y + "%";
+          d.dataset.id = n.id;
+          const dot =
+            n.cls === "pillar" || n.cls === "tool"
+              ? '<span class="dot"></span>'
+              : "";
+          d.innerHTML =
+            `<div class="t">${dot}${n.title}</div>` +
+            (n.sub ? `<div class="s">${n.sub}</div>` : "");
+          d.onclick = () => select(n.id);
+          d.onmouseenter = () => hot(n.id, true);
+          d.onmouseleave = () => hot(n.id, false);
+          stage.appendChild(d);
+        });
+        applyFocus(curSel);
+      }
+      function hot(id, on) {
+        if (id === curSel) return; // keep selected node's edges lit
+        svg.querySelectorAll("line").forEach((l) => {
+          if (l.dataset.a === id || l.dataset.b === id)
+            l.classList.toggle("hot", on);
+        });
+      }
 
-let curSel='hub';
-function applyFocus(id){
-  document.querySelectorAll('.node').forEach(e=>{
-    e.classList.toggle('sel',e.dataset.id===id);
-    e.classList.toggle('dim',id!=='hub'&&!neighbors[id].has(e.dataset.id));});
-  svg.querySelectorAll('line').forEach(l=>{
-    const on=l.dataset.a===id||l.dataset.b===id;
-    l.classList.toggle('hot',on);            // selected node's edges light up
-    l.classList.toggle('dim',id!=='hub'&&!on);});
-}
-function select(id){const n=byId[id];if(!n)return; curSel=id; closeDrawer();
-  if(location.hash!=='#'+id)history.replaceState(null,'','#'+id);
-  applyFocus(id);
-  document.getElementById('p-title').textContent=n.title;
-  document.getElementById('p-kind').textContent=n.kind||({pillar:'pillar',tool:'plugged-in tool',hub:'the kit'})[n.cls]||'';
-  document.getElementById('p-desc').textContent=n.desc;
-  const ext=document.getElementById('p-ext');ext.innerHTML='';
-  if(n.ext&&EXT[n.ext]){const e=EXT[n.ext];
-    if(e.url){ext.innerHTML=`<a class="extlink" href="${e.url}" target="_blank" rel="noopener">Open ↗ <span style="color:var(--muted)">${e.label}</span></a>`;}
-    else{ext.innerHTML=`<span class="extlink" style="color:var(--muted);cursor:default">${e.label}</span>`;}}
-  if(n.detail){const b=document.createElement('a');b.className='extlink';b.href='javascript:void 0';
-    b.textContent='Read more ›';b.onclick=()=>openDetail(n.detail);ext.appendChild(b);}
-  const c=document.getElementById('p-chips');c.innerHTML='';
-  (n.chips||[]).forEach(ch=>{const e=document.createElement('span');
-    e.textContent=ch;
-    if(DETAILS[ch]){e.className='chip leaf';e.onclick=()=>openDetail(ch);}
-    else if(byId[ch]){e.className='chip';e.onclick=()=>select(ch);}
-    else{e.className='chip';e.style.cursor='default';}
-    c.appendChild(e);});
-  if(!(n.chips&&n.chips.length)&&!n.ext&&!n.detail){const e=document.createElement('span');
-    e.className='empty';e.textContent='— a leaf component —';c.appendChild(e);}
-}
-/* ---------- detail drawer ---------- */
-const drawer=document.getElementById('drawer');
-function openDetail(key){const d=DETAILS[key];if(!d)return;
-  document.getElementById('d-kind').textContent=d.kind||'';
-  document.getElementById('d-title').textContent=d.t;
-  document.getElementById('d-body').innerHTML=d.body;
-  document.getElementById('d-src').innerHTML=d.src?('source · '+d.src):'';
-  drawer.classList.add('open');}
-function closeDrawer(){drawer.classList.remove('open');}
-document.getElementById('dback').onclick=closeDrawer;
+      let curSel = "hub";
+      function applyFocus(id) {
+        document.querySelectorAll(".node").forEach((e) => {
+          e.classList.toggle("sel", e.dataset.id === id);
+          e.classList.toggle(
+            "dim",
+            id !== "hub" && !neighbors[id].has(e.dataset.id),
+          );
+        });
+        svg.querySelectorAll("line").forEach((l) => {
+          const on = l.dataset.a === id || l.dataset.b === id;
+          l.classList.toggle("hot", on); // selected node's edges light up
+          l.classList.toggle("dim", id !== "hub" && !on);
+        });
+      }
+      function select(id) {
+        const n = byId[id];
+        if (!n) return;
+        curSel = id;
+        closeDrawer();
+        if (location.hash !== "#" + id)
+          history.replaceState(null, "", "#" + id);
+        applyFocus(id);
+        document.getElementById("p-title").textContent = n.title;
+        document.getElementById("p-kind").textContent =
+          n.kind ||
+          { pillar: "pillar", tool: "plugged-in tool", hub: "the kit" }[
+            n.cls
+          ] ||
+          "";
+        document.getElementById("p-desc").textContent = n.desc;
+        const ext = document.getElementById("p-ext");
+        ext.innerHTML = "";
+        if (n.ext && EXT[n.ext]) {
+          const e = EXT[n.ext];
+          if (e.url) {
+            ext.innerHTML = `<a class="extlink" href="${e.url}" target="_blank" rel="noopener">Open ↗ <span style="color:var(--muted)">${e.label}</span></a>`;
+          } else {
+            ext.innerHTML = `<span class="extlink" style="color:var(--muted);cursor:default">${e.label}</span>`;
+          }
+        }
+        if (n.detail) {
+          const b = document.createElement("a");
+          b.className = "extlink";
+          b.href = "javascript:void 0";
+          b.textContent = "Read more ›";
+          b.onclick = () => openDetail(n.detail);
+          ext.appendChild(b);
+        }
+        const c = document.getElementById("p-chips");
+        c.innerHTML = "";
+        (n.chips || []).forEach((ch) => {
+          const e = document.createElement("span");
+          e.textContent = ch;
+          if (DETAILS[ch]) {
+            e.className = "chip leaf";
+            e.onclick = () => openDetail(ch);
+          } else if (byId[ch]) {
+            e.className = "chip";
+            e.onclick = () => select(ch);
+          } else {
+            e.className = "chip";
+            e.style.cursor = "default";
+          }
+          c.appendChild(e);
+        });
+        if (!(n.chips && n.chips.length) && !n.ext && !n.detail) {
+          const e = document.createElement("span");
+          e.className = "empty";
+          e.textContent = "— a leaf component —";
+          c.appendChild(e);
+        }
+      }
+      /* ---------- detail drawer ---------- */
+      const drawer = document.getElementById("drawer");
+      function openDetail(key) {
+        const d = DETAILS[key];
+        if (!d) return;
+        document.getElementById("d-kind").textContent = d.kind || "";
+        document.getElementById("d-title").textContent = d.t;
+        document.getElementById("d-body").innerHTML = d.body;
+        document.getElementById("d-src").innerHTML = d.src
+          ? "source · " + d.src
+          : "";
+        drawer.classList.add("open");
+      }
+      function closeDrawer() {
+        drawer.classList.remove("open");
+      }
+      document.getElementById("dback").onclick = closeDrawer;
 
-window.addEventListener('resize',place);
-window.addEventListener('hashchange',()=>{const id=decodeURIComponent(location.hash.slice(1));
-  if(byId[id])select(id);});
-place();
-const start=decodeURIComponent(location.hash.slice(1));
-select(byId[start]?start:'hub');
-</script>
-</body>
+      window.addEventListener("resize", place);
+      window.addEventListener("hashchange", () => {
+        const id = decodeURIComponent(location.hash.slice(1));
+        if (byId[id]) select(id);
+      });
+      place();
+      const start = decodeURIComponent(location.hash.slice(1));
+      select(byId[start] ? start : "hub");
+    </script>
+  </body>
 </html>
