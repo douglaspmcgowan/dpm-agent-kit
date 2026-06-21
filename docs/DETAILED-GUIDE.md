@@ -215,3 +215,13 @@ These aren't bundled (they're separate software / private repos) but they're par
 
 The kit is opinionated on purpose. Delete what doesn't fit. The goal is a working skeleton plus the
 reasoning behind each bone, ready for you to adapt.
+
+---
+
+## 9. Going further — the harness & loop layer
+
+Once the five pillars feel natural, `HARNESS-AND-LOOPS.md` covers the engineering layer above them:
+making a repo legible/executable/verifiable, the catalog of loop types (heartbeat, cron, hook, goal,
+generator–verifier, map-reduce), the file/output model for shared state, and how to write custom lints
+whose error messages name the fix. That's how you move from driving the agent turn by turn to building
+systems that drive it for you.

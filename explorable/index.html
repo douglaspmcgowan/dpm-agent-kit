@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="tokyo">
+<html lang="en" data-theme="paper">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,100 +16,177 @@
 <meta name="twitter:image" content="https://dpm-agent-kit.vercel.app/explorable/preview.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root,[data-theme="tokyo"]{
-    --bg:#15161e; --panel:#1b1d29; --panel2:#191b25; --text:#c8d0f0; --muted:#6b73a0;
-    --line:#262a40; --accent:#9ece6a; --accent2:#7aa2f7; --cyan:#7dcfff; --magenta:#bb9af7;
-    --warn:#e0af68; --danger:#f7768e; --body:#aeb6df;
-    --disp:'Sora',system-ui,sans-serif;
-    --mono:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,monospace; --r:8px;
+  /* Light editorial default — true off-white at chroma 0, deep ink, one committed
+     forest-teal accent. Escapes the dark-neon "AI coding tool" reflex. */
+  :root,[data-theme="paper"]{
+    --bg:#f4f3ef; --panel:#fffefb; --panel2:#eceae3;
+    --ink:#1a1c1a; --text:#262a27; --body:#3d423d; --muted:#6c726b;
+    --line:#dcdacf; --line2:#cbc9bc;
+    --accent:#1f5d52; --accent-deep:#163f38; --accent-soft:#e0ece8;
+    --thread:#9a5a2b;            /* warm secondary, used once for the bonus link */
+    --disp:'Fraunces',Georgia,'Times New Roman',serif;
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
+    --r:4px; --shadow:0 1px 2px rgba(26,28,26,.04), 0 10px 30px rgba(26,28,26,.06);
+    --z-base:0;
   }
-  [data-theme="brutalist"]{
-    --bg:#fafafa; --panel:#ffffff; --panel2:#f2f2f2; --text:#0d0d0d; --muted:#5a5a5a;
-    --line:#0d0d0d; --accent:#c81e00; --accent2:#0a58ff; --cyan:#0a58ff; --magenta:#7a3cff;
-    --warn:#9a5a00; --danger:#c81e00; --body:#2a2a2a;
-    --disp:'Space Mono',monospace; --mono:'Space Mono',monospace; --r:0;
+  /* Ink dark — a real warm-black study, not neon Tokyo Night. */
+  [data-theme="ink"]{
+    --bg:#16181a; --panel:#1e2123; --panel2:#202325;
+    --ink:#f1efe9; --text:#dcdad3; --body:#b6b8b3; --muted:#80847f;
+    --line:#2c2f31; --line2:#3a3e40;
+    --accent:#5fb3a3; --accent-deep:#7cc6b8; --accent-soft:#1c2b29;
+    --thread:#d39b6e;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 36px rgba(0,0,0,.34);
   }
   *{box-sizing:border-box}
   html,body{margin:0}
-  body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.6;min-height:100vh}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;min-height:100vh;
+       -webkit-font-smoothing:antialiased;
+       transition:background .35s ease, color .35s ease}
+  ::selection{background:var(--accent-soft);color:var(--ink)}
+  a{color:var(--accent-deep)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;
-          padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel2)}
-  .topbar .mid{font-family:var(--disp);font-weight:700;letter-spacing:-.01em;font-size:15px}
-  .topbar .mid b{color:var(--accent)}
-  .theme-pill{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);
-       border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text);cursor:pointer}
-  .theme-pill:hover{border-color:var(--accent)}
-  .theme-pill .sw{width:11px;height:11px;border-radius:50%;background:var(--accent)}
-  .wrap{max-width:980px;margin:0 auto;padding:54px 24px 64px}
-  .hero{text-align:center;max-width:760px;margin:0 auto 44px}
-  .hero .kick{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
-  h1{font-family:var(--disp);font-size:clamp(28px,4.4vw,46px);margin:0 0 18px;font-weight:800;
-     letter-spacing:-.015em;line-height:1.08}
-  h1 .c{color:var(--cyan)} h1 .g{color:var(--accent)}
-  .hero p{color:var(--body);font-size:clamp(15px,2vw,18px);margin:0}
-  .choose{font-size:13px;letter-spacing:.04em;color:var(--muted);text-align:center;margin:0 0 18px}
-  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-  a.card{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--panel);
-    border:1px solid var(--line);border-radius:var(--r);padding:22px;transition:border-color .18s,transform .18s,box-shadow .18s}
-  a.card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 14px 34px rgba(0,0,0,.4)}
-  a.card.primary{grid-column:1 / -1;border-color:var(--accent);background:var(--panel)}
-  a.card.primary .n{color:var(--accent)}
-  .card .n{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
-  .card h2{font-family:var(--disp);font-size:20px;margin:8px 0 8px}
-  .card p{font-size:13.5px;color:var(--body);margin:0}
-  .card .go{margin-top:14px;font-size:12px;color:var(--cyan)}
-  .bonus{display:flex;justify-content:center;margin-top:22px}
-  .bonus a{color:var(--magenta);text-decoration:none;font-size:13px;border:1px solid var(--line);
-    border-radius:999px;padding:7px 16px}
-  .bonus a:hover{border-color:var(--magenta)}
-  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:34px}
-  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+          padding:15px 28px;border-bottom:1px solid var(--line);background:transparent}
+  .topbar .mid{font-family:var(--mono);font-weight:500;letter-spacing:0;font-size:13.5px;color:var(--text)}
+  .topbar .mid b{color:var(--accent-deep);font-weight:600}
+  .theme-pill{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line2);
+       border-radius:999px;padding:6px 13px 6px 11px;font-size:12px;font-family:var(--mono);color:var(--body);cursor:pointer;
+       transition:border-color .16s ease, color .16s ease}
+  .theme-pill:hover{border-color:var(--accent);color:var(--ink)}
+  .theme-pill .sw{width:10px;height:10px;border-radius:50%;background:var(--accent);
+       box-shadow:0 0 0 3px var(--accent-soft)}
+
+  .wrap{max-width:940px;margin:0 auto;padding:72px 28px 80px}
+
+  /* ---- hero: serif display, no eyebrow, single restrained accent ---- */
+  .hero{max-width:720px;margin:0 0 18px}
+  h1{font-family:var(--disp);font-size:clamp(34px,5vw,60px);margin:0 0 22px;font-weight:500;
+     letter-spacing:-.02em;line-height:1.04;color:var(--ink);text-wrap:balance;
+     font-variation-settings:'opsz' 110}
+  h1 em{font-style:italic;color:var(--accent-deep);font-weight:500;padding-right:.06em}
+  .hero p{color:var(--body);font-size:clamp(16px,1.6vw,18.5px);margin:0;max-width:62ch;line-height:1.62}
+
+  /* ---- thin rule that separates lede from the choices ---- */
+  .lede-rule{display:flex;align-items:center;gap:16px;margin:48px 0 26px;color:var(--muted)}
+  .lede-rule .ln{flex:1;height:1px;background:var(--line2)}
+  .lede-rule span{font-family:var(--mono);font-size:12.5px;letter-spacing:0;white-space:nowrap}
+
+  /* ---- the primary card: a wide editorial banner, distinct from the trio ---- */
+  a.feature{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:22px;
+    text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line2);
+    border-radius:var(--r);padding:26px 28px;margin-bottom:14px;box-shadow:var(--shadow);
+    transition:border-color .18s ease, box-shadow .22s ease}
+  a.feature:hover{border-color:var(--accent);box-shadow:0 2px 4px rgba(26,28,26,.05),0 16px 40px rgba(26,28,26,.1)}
+  a.feature .mark{font-family:var(--disp);font-size:30px;font-weight:500;color:var(--accent);
+    width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--accent);
+    border-radius:50%;flex:0 0 auto;font-variation-settings:'opsz' 144}
+  a.feature .ftext h2{font-family:var(--disp);font-size:23px;font-weight:500;margin:0 0 5px;color:var(--ink);letter-spacing:-.01em}
+  a.feature .ftext p{font-size:14.5px;color:var(--body);margin:0;max-width:60ch;line-height:1.55}
+  a.feature .arr{font-family:var(--mono);font-size:13px;color:var(--accent-deep);white-space:nowrap;
+    transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+  a.feature:hover .arr{transform:translateX(4px)}
+
+  /* ---- the three explore cards: a list, not an identical grid ---- */
+  .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px}
+  a.path{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--r);padding:20px 20px 18px;
+    transition:border-color .18s ease, transform .2s cubic-bezier(.2,.8,.2,1)}
+  a.path:hover{border-color:var(--accent);transform:translateY(-3px)}
+  a.path .verb{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  a.path h3{font-family:var(--disp);font-size:18px;font-weight:500;margin:6px 0 7px;color:var(--ink);letter-spacing:-.01em}
+  a.path p{font-size:13px;color:var(--body);margin:0 0 14px;line-height:1.5;flex:1}
+  a.path .go{font-family:var(--mono);font-size:12px;color:var(--accent-deep)}
+  a.path:hover .go{text-decoration:underline;text-underline-offset:3px}
+
+  /* ---- bonus row ---- */
+  .bonus{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+    margin-top:34px;padding-top:22px;border-top:1px solid var(--line)}
+  .bonus a{color:var(--thread);text-decoration:none;font-family:var(--mono);font-size:13px;
+    display:inline-flex;align-items:center;gap:7px}
+  .bonus a:hover{text-decoration:underline;text-underline-offset:3px}
+  footer{color:var(--muted);font-family:var(--mono);font-size:11.5px}
+
+  @media(max-width:760px){
+    .wrap{padding:48px 20px 60px}
+    .trio{grid-template-columns:1fr}
+    a.feature{grid-template-columns:auto 1fr;gap:16px}
+    a.feature .arr{display:none}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important}
+    a.feature:hover .arr{transform:none}
+    a.path:hover{transform:none}
+  }
 </style>
 </head>
 <body>
 <div class="topbar">
   <span class="mid">dpm-<b>agent</b>-kit</span>
-  <button class="theme-pill" id="themeBtn" title="switch theme"><span class="sw"></span><span id="theme-label">tokyo</span></button>
+  <button class="theme-pill" id="themeBtn" title="switch theme"><span class="sw"></span><span id="theme-label">paper</span></button>
 </div>
 <div class="wrap">
   <div class="hero">
-    <div class="kick">an agentic coding setup</div>
-    <h1>You hired an assistant with <span class="c">no memory</span> and <span class="g">infinite willingness to act</span>.</h1>
-    <p>That one fact drives this whole kit. An AI agent like that needs standing rules, guardrails, a way to
-    remember, reusable know-how, and a rhythm for driving it. Start with the walkthrough to see why, then play
-    with the interactive views.</p>
+    <h1>You hired an assistant with <em>no memory</em> and an endless willingness to act.</h1>
+    <p>That one fact shapes the whole kit. An agent like that needs standing rules, guardrails, a place to
+    remember, reusable know-how, and a steady rhythm for driving it. Start with the walkthrough to see why each
+    part exists, then open the interactive views.</p>
   </div>
-  <p class="choose">Pick a way in:</p>
-  <div class="grid">
-    <a class="card primary" href="option-2-scrollytelling.html">
-      <div class="n">Start here</div><h2>The walkthrough</h2>
-      <p>A short, plain-language tour of why an agent needs each of the five parts. Built for someone who has
-      never worked with a coding agent before. It ends by handing you off to the three interactive views.</p>
-      <span class="go">begin the walkthrough →</span>
-    </a>
-    <a class="card" href="option-1-node-map.html">
-      <div class="n">Explore</div><h2>Component map</h2>
-      <p>The setup as a clickable graph. Click a node, follow its links, open any piece on its own page.</p>
+
+  <div class="lede-rule"><span>Four ways in</span><div class="ln"></div></div>
+
+  <a class="feature" href="option-2-scrollytelling.html">
+    <span class="mark" aria-hidden="true">¶</span>
+    <div class="ftext">
+      <h2>The walkthrough</h2>
+      <p>A short, plain-language tour of why an agent needs each of the five parts. Written for someone
+      who has never driven a coding agent. It hands you off to the interactive views at the end.</p>
+    </div>
+    <span class="arr">begin →</span>
+  </a>
+
+  <div class="trio">
+    <a class="path" href="option-1-node-map.html">
+      <span class="verb">Explore</span>
+      <h3>Component map</h3>
+      <p>The setup as a clickable graph. Follow a node's links, open any piece on its own page.</p>
       <span class="go">open the map →</span>
     </a>
-    <a class="card" href="option-3-terminal.html">
-      <div class="n">Try it</div><h2>Interactive terminal</h2>
+    <a class="path" href="option-3-terminal.html">
+      <span class="verb">Try it</span>
+      <h3>Interactive terminal</h3>
       <p>A simulated agent shell. Type commands, run the tour, watch the hooks and skills react.</p>
       <span class="go">open the terminal →</span>
     </a>
-    <a class="card" href="option-4-dashboard.html">
-      <div class="n">Browse</div><h2>Control panel</h2>
-      <p>A dashboard of every part. Click any tile to expand the full detail behind it.</p>
+    <a class="path" href="option-4-dashboard.html">
+      <span class="verb">Browse</span>
+      <h3>Control panel</h3>
+      <p>A dashboard of every part. Click a tile to expand the full detail behind it.</p>
       <span class="go">open the panel →</span>
     </a>
   </div>
-  <div class="bonus"><a href="aesthetic-options.html">Bonus: aesthetic options gallery →</a></div>
-  <footer>self-contained HTML · web fonts only · best in a desktop browser</footer>
+
+  <a class="feature" href="skills-library.html">
+    <span class="mark" aria-hidden="true">§</span>
+    <div class="ftext">
+      <h2>The library</h2>
+      <p>Every part of the kit in one searchable index — skills, hooks, memory notes, AI-coding tricks,
+      loop types, and config maps. Filter, search, and jump with ⌘K.</p>
+    </div>
+    <span class="arr">open →</span>
+  </a>
+
+  <div class="bonus">
+    <a href="aesthetic-options.html">Aesthetic options gallery →</a>
+    <footer>self-contained HTML · web fonts only · best in a desktop browser</footer>
+  </div>
 </div>
 <script>
-const THEMES=['tokyo','brutalist'];
+const THEMES=['paper','ink'];
 let ti=Math.max(0,THEMES.indexOf(localStorage.getItem('dpmkit-theme')));
 function applyTheme(){document.documentElement.dataset.theme=THEMES[ti];
   localStorage.setItem('dpmkit-theme',THEMES[ti]);

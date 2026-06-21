@@ -31,7 +31,9 @@ add your own sensitive bits back.
 | `docs/DETAILED-GUIDE.md` | How the whole thing works, end to end — the deep read. |
 | `docs/HANDLING-SECRETS.md` | Where and how to add your real paths/keys/policy back, safely. |
 | `docs/SETUP-PREFLIGHT.md` | Pre-install checklist: Node, Claude Code, gh, git identity, Vercel CLI. |
-| `explorable/` | Five interactive HTML explorables (intro hub, walkthrough, node-map, terminal, control panel) + an aesthetic-options gallery. Open any in a browser or visit the [live site](https://dpm-agent-kit.vercel.app). |
+| `explorable/` | Interactive HTML explorables (intro hub, walkthrough, node-map, terminal, control panel) + a searchable **library** of every part + an aesthetic-options gallery. Open any in a browser or visit the [live site](https://dpm-agent-kit.vercel.app). |
+| `explorable/skills-library.html` | A searchable, filterable index of the whole kit — skills, hooks, memory notes, AI-coding tricks, loop types, and config maps — with a ⌘K global palette. |
+| `docs/HARNESS-AND-LOOPS.md` | The engineering layer above the five pillars: harness design, the loop-type catalog, the file/output model, and custom lints. |
 | `obsidian/` | A Superpowers skills guide formatted for an Obsidian vault. |
 
 ---

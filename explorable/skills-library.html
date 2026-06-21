@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>dpm-agent-kit — library</title>
+<meta name="description" content="A searchable library of everything in the dpm-agent-kit: skills, hooks, memory notes, AI-coding tricks, loop types, and config maps.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7/dist/fuse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1/Sortable.min.js"></script>
+<style>
+/* ============================ TOKENS ============================
+   Editorial light "paper" default + warm-black "ink" dark. Serif (Fraunces)
+   for titles, humanist sans (IBM Plex Sans) for UI, mono (IBM Plex Mono) for
+   data/labels — a real serif/sans contrast axis. One committed forest-teal
+   accent; muted greens for state. Matches index.html. */
+:root{
+  --bg:#f4f3ef; --surface:#fffefb; --surface-2:#eceae3;
+  --border:#dcdacf; --border-strong:#cbc9bc;
+  --text:#262a27; --text-strong:#1a1c1a; --text-dim:#5b605a; --text-faint:#878c84;
+  --accent:#1f5d52;            /* forest teal — the one accent */
+  --accent-soft:#e0ece8;
+  --accent-text:#163f38;
+  --ok:#2f6d4a; --ok-soft:#e1efe6;
+  --warn:#8a5a12; --warn-soft:#f1e7d2;
+  --off:#7e3a36; --off-soft:#efe1df;
+  --shadow:0 1px 2px rgba(26,28,26,.04), 0 4px 14px rgba(26,28,26,.05);
+  --radius:6px; --radius-sm:4px;
+  --s1:4px; --s2:8px; --s3:16px; --s4:24px; --s5:32px; --s6:48px;
+  --tabbar-h:60px;
+  /* semantic z-index scale */
+  --z-base:0; --z-sticky:30; --z-tabbar:40; --z-scrim:50; --z-sheet:60; --z-palette:70;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#16181a; --surface:#1e2123; --surface-2:#202325;
+    --border:#2c2f31; --border-strong:#3a3e40;
+    --text:#dcdad3; --text-strong:#f1efe9; --text-dim:#a3a69f; --text-faint:#777b75;
+    --accent:#5fb3a3; --accent-soft:#1c2b29; --accent-text:#86cfc0;
+    --ok:#5db488; --ok-soft:#19271f;
+    --warn:#cf9b4e; --warn-soft:#2a2415;
+    --off:#d0827d; --off-soft:#2b1c1b;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 22px rgba(0,0,0,.3);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+}
+button{font-family:inherit; cursor:pointer}
+a{color:var(--accent-text)}
+::selection{background:var(--accent-soft); color:var(--text-strong)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+
+/* ============================ HEADER ============================ */
+header{
+  position:sticky; top:0; z-index:var(--z-sticky);
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+  padding:calc(env(safe-area-inset-top) + var(--s3)) var(--s3) var(--s2);
+}
+.hrow{display:flex; align-items:baseline; gap:var(--s2); margin-bottom:var(--s3)}
+.hrow h1{
+  font-family:var(--display); font-size:25px; font-weight:500;
+  margin:0; letter-spacing:-.015em; color:var(--text-strong);
+  font-variation-settings:'opsz' 80;
+}
+.hrow .who{font-size:12px; color:var(--text-faint); font-family:var(--mono)}
+.hrow .who a{color:inherit; text-decoration:none}
+.hrow .who a:hover{color:var(--accent-text)}
+#viewlabel{margin-left:auto; font-size:12px; color:var(--accent-text);
+  font-family:var(--mono); padding:3px 0 3px 11px; border-left:1px solid var(--border-strong);}
+.searchwrap{display:flex; gap:var(--s2); align-items:center}
+#search{
+  flex:1; appearance:none; border:1px solid var(--border-strong);
+  background:var(--surface); color:var(--text);
+  border-radius:var(--radius); padding:11px var(--s3); font-size:15px;
+  transition:border-color .14s ease, box-shadow .14s ease;
+}
+#search:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); outline:none}
+#search::placeholder{color:var(--text-faint)}
+.kbtn{
+  border:1px solid var(--border-strong); background:var(--surface);
+  color:var(--text-dim); border-radius:var(--radius); padding:0 12px;
+  height:44px; font-family:var(--mono); font-size:12px; white-space:nowrap;
+  transition:border-color .14s ease, color .14s ease;
+}
+.kbtn:hover{border-color:var(--accent); color:var(--accent-text)}
+
+/* per-view filter bar */
+.filterbar{
+  display:flex; gap:var(--s2); overflow-x:auto; padding:var(--s2) var(--s3) 0;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none;
+}
+.filterbar::-webkit-scrollbar{display:none}
+.filterbar:empty{display:none}
+
+/* ============================ PRIMITIVES ============================ */
+.chip{
+  border:1px solid var(--border-strong); background:var(--surface);
+  color:var(--text-dim); border-radius:99px; padding:7px 13px;
+  font-size:13px; white-space:nowrap; line-height:1; min-height:34px;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.chip[aria-pressed="true"]{
+  background:var(--accent-soft); color:var(--accent-text);
+  border-color:var(--accent);
+}
+.badge{
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:11px; font-weight:600; padding:3px 9px; border-radius:99px;
+  font-family:var(--mono); letter-spacing:.01em; line-height:1.3;
+}
+.badge.ok{background:var(--ok-soft); color:var(--ok)}
+.badge.warn{background:var(--warn-soft); color:var(--warn)}
+.badge.off{background:var(--off-soft); color:var(--off)}
+.badge.neutral{background:var(--surface-2); color:var(--text-dim)}
+.badge .dot{width:6px; height:6px; border-radius:50%; background:currentColor}
+
+.card{
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:var(--s3);
+  box-shadow:var(--shadow); transition:border-color .14s ease, background .14s ease;
+}
+.card:hover{border-color:var(--border-strong)}
+.card .ct{font-family:var(--display); font-weight:600; font-size:16px;
+  letter-spacing:-.01em; margin:0 0 4px; word-break:break-word;}
+.card .cs{font-size:13.5px; color:var(--text-dim); margin:0}
+.card .tagrow{display:flex; flex-wrap:wrap; gap:6px; margin-top:var(--s2)}
+.tag{font-size:11px; color:var(--text-faint); background:var(--surface-2);
+  border-radius:6px; padding:2px 7px; font-family:var(--mono);}
+
+.row{
+  display:flex; align-items:flex-start; gap:var(--s3);
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:13px var(--s3); margin-bottom:var(--s2);
+  box-shadow:var(--shadow);
+}
+.row .led{width:9px; height:9px; border-radius:50%; margin-top:7px; flex:0 0 auto}
+.row .led.ok{background:var(--ok)} .row .led.off{background:var(--text-faint)}
+.row .rmain{min-width:0; flex:1}
+.row .rt{font-family:var(--mono); font-size:14px; font-weight:500; margin:0; word-break:break-all}
+.row .rs{font-size:13px; color:var(--text-dim); margin:3px 0 0}
+.row .rtrail{flex:0 0 auto; margin-left:auto}
+
+.meta{font-family:var(--mono); font-size:12px; color:var(--text-faint)}
+
+/* ============================ LAYOUT WRAPPERS ============================ */
+main{padding:var(--s3)}
+section[hidden]{display:none}
+
+.card-grid{
+  display:grid; gap:var(--s3);
+  grid-template-columns:repeat(auto-fill, minmax(min(18rem,100%), 1fr));
+}
+.list{display:flex; flex-direction:column}
+.emptyhint{color:var(--text-faint); font-size:14px; padding:var(--s4); text-align:center}
+
+/* tree (maps) */
+.tree{display:flex; flex-direction:column; gap:var(--s2)}
+.tree .row{margin-bottom:0}
+.tree .row[data-depth="1"]{margin-left:var(--s4); border-left:2px solid var(--border); }
+.tree .caret{color:var(--text-faint); font-family:var(--mono); margin-top:1px}
+
+/* kanban */
+.kanban{
+  display:flex; gap:var(--s3); overflow-x:auto; padding-bottom:var(--s3);
+  -webkit-overflow-scrolling:touch; scroll-snap-type:x proximity;
+}
+.kanban::-webkit-scrollbar{height:8px}
+.kanban::-webkit-scrollbar-thumb{background:var(--border-strong); border-radius:99px}
+.column{
+  flex:0 0 86vw; max-width:340px; scroll-snap-align:start;
+  background:var(--surface-2); border:1px solid var(--border);
+  border-radius:var(--radius); padding:var(--s2) var(--s2) var(--s3);
+}
+.colhead{
+  display:flex; align-items:center; gap:var(--s2);
+  padding:var(--s2) var(--s2) var(--s3); position:sticky; top:0;
+}
+.colhead .ctitle{font-family:var(--display); font-weight:600; font-size:14px}
+.colhead .count{font-family:var(--mono); font-size:12px; color:var(--text-faint);
+  background:var(--surface); border:1px solid var(--border); border-radius:99px; padding:1px 8px}
+.col-list{min-height:40px; display:flex; flex-direction:column; gap:var(--s2)}
+.kcard{
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:11px var(--s3);
+  box-shadow:var(--shadow); touch-action:manipulation; user-select:none;
+}
+.kcard .kt{font-family:var(--mono); font-size:12.5px; font-weight:500; color:var(--text-dim)}
+.kcard .ktitle{font-family:var(--display); font-weight:600; font-size:14.5px; margin:3px 0 0}
+.kcard .ksub{font-size:12.5px; color:var(--text-dim); margin:6px 0 0; display:none}
+.kcard.open .ksub{display:block}
+.kcard .kfoot{display:flex; align-items:center; gap:var(--s2); margin-top:9px}
+.sortable-ghost{opacity:.4}
+.sortable-drag{box-shadow:0 8px 24px rgba(0,0,0,.25); transform:rotate(1.5deg)}
+.kcard select{
+  font-family:var(--font); font-size:12px; border:1px solid var(--border-strong);
+  background:var(--surface); color:var(--text); border-radius:6px; padding:3px 6px;
+  margin-left:auto; max-width:55%;
+}
+
+/* ============================ TAB BAR ============================ */
+.tabbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  display:flex; background:var(--surface);
+  border-top:1px solid var(--border);
+  padding-bottom:env(safe-area-inset-bottom);
+  height:calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+}
+.tabbar button{
+  flex:1; border:0; background:transparent; color:var(--text-faint);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; font-size:11px; min-height:44px; padding-top:8px;
+}
+.tabbar button svg{width:22px; height:22px; stroke:currentColor; fill:none;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round}
+.tabbar button[aria-selected="true"]{color:var(--accent)}
+.tabbar button .lab{font-weight:500}
+
+/* ============================ SHEETS / MODAL ============================ */
+.scrim{
+  position:fixed; inset:0; z-index:50; background:rgba(10,14,18,.45);
+  opacity:0; pointer-events:none; transition:opacity .18s ease;
+}
+.scrim.show{opacity:1; pointer-events:auto}
+.sheet{
+  position:fixed; left:0; right:0; bottom:0; z-index:60;
+  background:var(--surface); border-top-left-radius:18px; border-top-right-radius:18px;
+  border:1px solid var(--border); border-bottom:0;
+  padding:var(--s3) var(--s3) calc(var(--s4) + env(safe-area-inset-bottom));
+  transform:translateY(102%); transition:transform .22s cubic-bezier(.2,.8,.2,1);
+  max-height:82vh; overflow:auto;
+}
+.sheet.show{transform:translateY(0)}
+.grip{width:38px; height:4px; background:var(--border-strong); border-radius:99px;
+  margin:0 auto var(--s3)}
+.sheet h2{font-family:var(--display); font-size:16px; margin:0 0 var(--s3)}
+.morelist{display:flex; flex-direction:column; gap:var(--s2)}
+.moreitem{
+  display:flex; align-items:center; gap:var(--s3); width:100%; text-align:left;
+  border:1px solid var(--border); background:var(--surface); color:var(--text);
+  border-radius:var(--radius); padding:13px var(--s3); font-size:15px;
+}
+.moreitem svg{width:20px; height:20px; stroke:var(--text-dim); fill:none; stroke-width:1.8}
+.moreitem .mcount{margin-left:auto; font-family:var(--mono); font-size:12px; color:var(--text-faint)}
+
+/* command palette */
+.palette{
+  position:fixed; left:50%; top:9vh; transform:translateX(-50%) translateY(-8px);
+  width:min(620px, 94vw); z-index:70; background:var(--surface);
+  border:1px solid var(--border-strong); border-radius:14px; box-shadow:0 18px 50px rgba(0,0,0,.3);
+  opacity:0; pointer-events:none; transition:opacity .14s ease, transform .14s ease;
+  display:flex; flex-direction:column; max-height:80vh;
+}
+.palette.show{opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0)}
+.palette input{
+  border:0; border-bottom:1px solid var(--border); background:transparent; color:var(--text);
+  font-size:17px; padding:16px var(--s4); outline:none; font-family:var(--font);
+}
+.presults{overflow:auto; padding:var(--s2)}
+.pgroup{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--text-faint); padding:var(--s2) var(--s2) 4px}
+.pitem{
+  display:flex; align-items:center; gap:var(--s3); padding:9px var(--s2);
+  border-radius:8px; cursor:pointer;
+}
+.pitem.active{background:var(--accent-soft)}
+.pitem .ptype{font-family:var(--mono); font-size:10px; color:var(--accent-text);
+  background:var(--accent-soft); border-radius:5px; padding:2px 6px; flex:0 0 auto}
+.pitem.active .ptype{background:var(--surface)}
+.pitem .pmain{min-width:0; flex:1}
+.pitem .ptitle{font-size:14px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.pitem .psub{font-size:12px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.pempty{color:var(--text-faint); font-size:14px; padding:var(--s4); text-align:center}
+.phint{display:flex; gap:var(--s3); padding:var(--s2) var(--s4); border-top:1px solid var(--border);
+  font-size:11px; color:var(--text-faint)}
+.phint kbd{font-family:var(--mono); background:var(--surface-2); border:1px solid var(--border);
+  border-radius:4px; padding:1px 5px; font-size:10px}
+
+.gen{font-family:var(--mono); font-size:11px; color:var(--text-faint);
+  text-align:center; padding:var(--s4) var(--s3) var(--s2)}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <h1>Agent Kit library</h1>
+    <span class="who"><a href="index.html">← dpm-agent-kit</a></span>
+    <span id="viewlabel">Skills</span>
+  </div>
+  <div class="searchwrap">
+    <input id="search" role="searchbox" autocomplete="off" aria-label="Search this view" placeholder="Search skills…">
+    <button class="kbtn" id="paletteBtn" aria-label="Open global search">⌘K</button>
+  </div>
+  <div class="filterbar" id="filterbar" role="group" aria-label="Filters"></div>
+</header>
+
+<main>
+  <section data-view="skills" role="tabpanel" aria-label="Skills"><div class="card-grid" id="grid-skills"></div></section>
+  <section data-view="artifacts" role="tabpanel" aria-label="Tricks" hidden><div class="kanban" id="kanban"></div></section>
+  <section data-view="hooks" role="tabpanel" aria-label="Hooks" hidden><div class="list" id="list-hooks"></div></section>
+  <section data-view="memory" role="tabpanel" aria-label="Memory" hidden><div class="card-grid" id="grid-memory"></div></section>
+  <section data-view="loops" role="tabpanel" aria-label="Loops" hidden><div class="card-grid" id="grid-loops"></div></section>
+  <section data-view="maps" role="tabpanel" aria-label="Maps" hidden><div class="tree" id="tree-maps"></div></section>
+  <div class="gen" id="gen"></div>
+</main>
+
+<nav class="tabbar" role="tablist" aria-label="Views">
+  <button role="tab" data-go="skills" aria-selected="true">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    <span class="lab">Skills</span>
+  </button>
+  <button role="tab" data-go="artifacts" aria-selected="false">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="4" height="8" rx="1"/></svg>
+    <span class="lab">Tricks</span>
+  </button>
+  <button role="tab" data-go="hooks" aria-selected="false">
+    <svg viewBox="0 0 24 24"><path d="M18 6v6a6 6 0 0 1-12 0V9a3 3 0 0 1 6 0v6a1 1 0 0 0 2 0"/></svg>
+    <span class="lab">Hooks</span>
+  </button>
+  <button role="tab" data-go="memory" aria-selected="false">
+    <svg viewBox="0 0 24 24"><path d="M9 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H9"/><path d="M9 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3"/><path d="M13 8h3M13 12h3"/></svg>
+    <span class="lab">Memory</span>
+  </button>
+  <button role="tab" data-go="more" aria-selected="false">
+    <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+    <span class="lab">More</span>
+  </button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="sheet" id="moreSheet" role="dialog" aria-modal="true" aria-label="More views" hidden>
+  <div class="grip"></div>
+  <h2>More views</h2>
+  <div class="morelist">
+    <button class="moreitem" data-go="loops">
+      <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 14-5"/><path d="M20 12a8 8 0 0 1-14 5"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>
+      Loops <span class="mcount" id="cnt-loops"></span>
+    </button>
+    <button class="moreitem" data-go="maps">
+      <svg viewBox="0 0 24 24"><path d="M9 5l-5 2v12l5-2 6 2 5-2V5l-5 2-6-2z"/><path d="M9 5v12M15 7v12"/></svg>
+      Maps <span class="mcount" id="cnt-maps"></span>
+    </button>
+  </div>
+</div>
+
+<div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Global search" hidden>
+  <input id="paletteInput" role="combobox" aria-expanded="true" aria-controls="presults" aria-autocomplete="list" placeholder="Search the whole kit…  (try @hook, #plan)">
+  <div class="presults" id="presults" role="listbox"></div>
+  <div class="phint"><span><kbd>↑↓</kbd> move</span><span><kbd>↵</kbd> jump to view</span><span><kbd>esc</kbd> close</span></div>
+</div>
+
+<script id="kit-data" type="application/json">
+{
+  "generatedAt": "2026-06-21T00:00:00.000Z",
+  "skills": [
+    {
+      "type": "skill",
+      "id": "using-superpowers",
+      "title": "/using-superpowers",
+      "subtitle": "The superpowers dispatcher. Establishes how the agent finds and uses skills — invoked at the start of a conversation so the right skill fires before any other response. Install from the superpowers marketplace.",
+      "tags": ["skill", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "brainstorming",
+      "title": "/brainstorming",
+      "subtitle": "Use before any creative work — building a feature, adding functionality, or modifying behavior. Explores intent, requirements, and design before implementation. Part of superpowers.",
+      "tags": ["plan", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "writing-plans",
+      "title": "/writing-plans",
+      "subtitle": "Turn a spec or set of requirements into an ordered, step-by-step implementation plan before touching code. Part of superpowers.",
+      "tags": ["plan", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "executing-plans",
+      "title": "/executing-plans",
+      "subtitle": "Execute a written implementation plan in a separate session with review checkpoints between steps. Part of superpowers.",
+      "tags": ["plan", "review", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "subagent-driven-development",
+      "title": "/subagent-driven-development",
+      "subtitle": "Execute implementation plans with independent tasks in the current session by dispatching purpose-built sub-agents. Part of superpowers.",
+      "tags": ["workflow", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "test-driven-development",
+      "title": "/test-driven-development",
+      "subtitle": "Write the failing test first, then the implementation, for any feature or bugfix. Part of superpowers.",
+      "tags": ["testing", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "systematic-debugging",
+      "title": "/systematic-debugging",
+      "subtitle": "A disciplined process for any bug, test failure, or unexpected behavior — reproduce, isolate, hypothesize, verify — before proposing a fix. Part of superpowers.",
+      "tags": ["testing", "debug", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "verification-before-completion",
+      "title": "/verification-before-completion",
+      "subtitle": "Before claiming work is done, fixed, or passing, run the verification commands and confirm the output. Evidence before assertions. Part of superpowers.",
+      "tags": ["git", "review", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "requesting-code-review",
+      "title": "/requesting-code-review",
+      "subtitle": "Request a structured review of completed work or a major feature before merging, to verify it meets the requirements. Part of superpowers.",
+      "tags": ["review", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "receiving-code-review",
+      "title": "/receiving-code-review",
+      "subtitle": "Process code-review feedback with technical rigor and verification before implementing suggestions, especially when feedback seems unclear or questionable. Part of superpowers.",
+      "tags": ["review", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "using-git-worktrees",
+      "title": "/using-git-worktrees",
+      "subtitle": "Set up an isolated workspace via a git worktree before feature work that needs isolation from the current checkout. Part of superpowers.",
+      "tags": ["git", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "finishing-a-development-branch",
+      "title": "/finishing-a-development-branch",
+      "subtitle": "When implementation is complete and tests pass, decide how to integrate — presents structured options for merge, PR, or cleanup. Part of superpowers.",
+      "tags": ["git", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "writing-skills",
+      "title": "/writing-skills",
+      "subtitle": "Create, edit, and pressure-test skills before deployment. The skill that helps you write more skills. Part of superpowers.",
+      "tags": ["skill", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "grill-me",
+      "title": "/grill-me",
+      "subtitle": "Interview the user relentlessly, one question at a time, about a plan or design until reaching shared understanding. Install from source.",
+      "tags": ["plan", "review", "web-installed"]
+    },
+    {
+      "type": "skill",
+      "id": "deep-search",
+      "title": "/deep-search",
+      "subtitle": "Multi-step web research with query fan-out, iterative deepening, human-authored sources, and inline citations. Use for any question needing 3+ sources or subjective judgment.",
+      "tags": ["research", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "make-playbook",
+      "title": "/make-playbook",
+      "subtitle": "After completing a task, extract the reusable pattern into a structured playbook. Suggest it proactively after a significant debugging arc, a first-time deploy, or a new tool setup.",
+      "tags": ["memory", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "parallelize",
+      "title": "/parallelize",
+      "subtitle": "Decompose a multi-part task into parallel sub-agent dispatches with explicit objectives, output contracts, and scope boundaries. Use when a task has 3+ independent sub-parts.",
+      "tags": ["workflow", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "rollover",
+      "title": "/rollover",
+      "subtitle": "End-of-session handoff: gather live git/file state, update CURRENT-TASK.md, and seed memory files so the next session resumes cleanly.",
+      "tags": ["git", "memory", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "build-tracker",
+      "title": "/build-tracker",
+      "subtitle": "Build a personal deadline/application tracker (calendar, cards, table, map views + iCal + localStorage notes) for any domain that tracks items with deadlines, status, and notes.",
+      "tags": ["build", "data", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "build-graph-explorer",
+      "title": "/build-graph-explorer",
+      "subtitle": "Build a force-directed knowledge-graph explorer SPA from a corpus of nodes and edges, with zoom levels (survey → cluster → detail).",
+      "tags": ["build", "data", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "map-field",
+      "title": "/map-field",
+      "subtitle": "Map a domain from a corpus of newsletters, papers, or discourse into a structured \"schools of thought\" site. Use to organize competing views on a topic.",
+      "tags": ["build", "data", "research", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "capability-report",
+      "title": "/capability-report",
+      "subtitle": "Build a \"state of a technical capability\" report with an embedded color-coded pipeline diagram, maturity landscape, file formats, standards, readiness gates, and a glossary. Adapt the placeholders to your setup.",
+      "tags": ["build", "research", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "groq-transcribe",
+      "title": "/groq-transcribe",
+      "subtitle": "Pull the newest audio file from a cloud drive, transcribe it via Groq Whisper, auto-format the transcript, and trim trailing off-topic content. Requires a GROQ key.",
+      "tags": ["data", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "hue",
+      "title": "/hue",
+      "subtitle": "Meta-skill that generates new design-language skills — from a description, a screenshot, or an existing skill to remix. Install from source.",
+      "tags": ["build", "plan", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "daily-activity",
+      "title": "/daily-activity",
+      "subtitle": "Daily \"what I built yesterday\" summary — walks the sessions and files touched yesterday, groups them into themed threads, and writes a prose report. Adapt the paths to your setup.",
+      "tags": ["memory", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "daily-review",
+      "title": "/daily-review",
+      "subtitle": "Daily analysis across repos and sessions — identifies debugging patterns, learned lessons, and automation candidates, and edits playbooks for patterns it can improve. Adapt to your setup.",
+      "tags": ["memory", "review", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "fellowship-review",
+      "title": "/fellowship-review",
+      "subtitle": "Review a fellowship or scholarship application draft against type-specific rubrics and common winning patterns. Adapt the rubric source to your own guide.",
+      "tags": ["research", "review", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "context-update",
+      "title": "/context-update",
+      "subtitle": "Scan a \"context dropbox\" folder for new files, research each one, create notes, update a map file, and archive processed raw files into organized subfolders. Adapt the paths to your setup.",
+      "tags": ["research", "memory", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "process-linkedin-inbox",
+      "title": "/process-linkedin-inbox",
+      "subtitle": "Categorize pasted social-feed posts, extract links, and propose edits to a field-map site. Adapt the inbox + target paths to your setup.",
+      "tags": ["data", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "codex-brief",
+      "title": "/codex-brief",
+      "subtitle": "Draft and dispatch a self-contained brief to a secondary coding model. Enforces a two-question test, an avoidance checklist, and a verification protocol before delegating. Adapt the endpoint to your provider.",
+      "tags": ["testing", "review", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "bridge-status",
+      "title": "/bridge-status",
+      "subtitle": "Inspect a local handoff \"bridge\" folder used to coordinate with a secondary agent — report pending requests, review drafts, and released results. Adapt the folder path to your setup.",
+      "tags": ["research", "review", "vendored"]
+    },
+    {
+      "type": "skill",
+      "id": "json-generator",
+      "title": "/json-generator",
+      "subtitle": "Generate or fix a domain-specific structured JSON payload for a generative-design workflow. Loads a system prompt and a schema, then assumes the generator role. Adapt the schema to your domain.",
+      "tags": ["build", "data", "vendored"]
+    }
+  ],
+  "hooks": [
+    {
+      "type": "hook",
+      "id": "check-secret-exposure.js",
+      "title": "check-secret-exposure",
+      "subtitle": "PreToolUse · Bash. Blocks commands whose primary purpose is to reveal secrets or env-var values (env dumps, registry dumps, cloud-CLI secret fetches, reads of .env/.aws/.ssh). High precision — tells the agent to pivot to a metadata-only probe.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "scan-output-for-secrets.js",
+      "title": "scan-output-for-secrets",
+      "subtitle": "PostToolUse · Bash. Backstop: scans command output for credential formats (provider API keys, JWTs, PEM) and a validated NAME=VALUE heuristic; blocks the result from entering context if a real secret is found.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "scan-write-for-secrets.js",
+      "title": "scan-write-for-secrets",
+      "subtitle": "PreToolUse · Write|Edit. Blocks writing a hardcoded credential into a file so a key can't get committed. Placeholder values (YOUR_KEY, EXAMPLE, <...>) are allowed.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "block-dangerous-bash.js",
+      "title": "block-dangerous-bash",
+      "subtitle": "PreToolUse · Bash. Blocks rm -rf on root/home, force-push (allows --force-with-lease), reset --hard, clean -f, checkout -- ., branch -D, interactive rebase, and live DROP/TRUNCATE SQL.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "block-egress-exfil.js",
+      "title": "block-egress-exfil",
+      "subtitle": "PreToolUse · Bash. Cuts the exfiltration leg of the lethal trifecta: file uploads to non-approved hosts, curl|bash RCE, netcat exfil, scp/rsync to unapproved hosts. Config: ALLOWED_UPLOAD_HOSTS, ALLOWED_SCP_HOSTS.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "block-sensitive-file-read.js",
+      "title": "block-sensitive-file-read",
+      "subtitle": "PreToolUse · Read|Grep|Glob. Warns when the native file tools target a secret-bearing file (.env, cloud creds, SSH keys, *.pem). Allows .example/.sample/-template variants.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "block-secret-file.js",
+      "title": "block-secret-file",
+      "subtitle": "PreToolUse · Read|Grep|Glob. Hard-blocks named files/folders that hold live keys (e.g. a personal notes file). Config: SECRET_FILE_PATTERNS.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "protect-security-config.js",
+      "title": "protect-security-config",
+      "subtitle": "PreToolUse · Bash + Write|Edit. Warns when an action targets the guards themselves (settings.json, hooks/, .mcp.json, CLAUDE.md, MEMORY.md, memory dir) — a prompt-injection's first move is to disable defenses.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "protect-firmware.js",
+      "title": "protect-firmware",
+      "subtitle": "PreToolUse · Write|Edit. Blocks edits to firmware files (.hex, .elf, .srec, bootloader). Drop it if you don't do embedded work.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "block-web-egress-in-protected-dir.js",
+      "title": "block-web-egress-in-protected-dir",
+      "subtitle": "PreToolUse · WebFetch|WebSearch. When the session cwd is inside a sensitive folder, warns before sending context to public web services. Config: PROTECTED_DIR_PATTERNS, ALLOWED_DOMAINS. Off by default (empty config).",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "block-vault-delete.js",
+      "title": "block-vault-delete",
+      "subtitle": "PreToolUse · notes-vault MCP. Blocks delete/remove/trash through a notes-vault MCP server unless explicitly confirmed. Drop it if you don't use a vault MCP.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "session-primer.js",
+      "title": "session-primer",
+      "subtitle": "SessionStart. Injects CURRENT-TASK.md + BACKGROUND-TASKS.md as boot context so a new session resumes where the last left off. Walks up from cwd to the nearest task/status files.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "task-state-reminder.js",
+      "title": "task-state-reminder",
+      "subtitle": "UserPromptSubmit. If CURRENT-TASK.md (cwd or home) has unchecked - [ ] items, surfaces them and nudges to update the task file before coding.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "check-session-size.js",
+      "title": "check-session-size",
+      "subtitle": "Stop. Warns when the session transcript is getting heavy — time to run a rollover.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "stop-toast-gate.js",
+      "title": "stop-toast-gate",
+      "subtitle": "Stop. Shows an \"Agent finished\" message, but stays quiet while CURRENT-TASK.md still has open items.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "format-on-edit.js",
+      "title": "format-on-edit",
+      "subtitle": "PostToolUse · Write|Edit. Runs prettier --write on edited JS/TS/JSON/CSS/HTML/MD if prettier is available (silent otherwise).",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "audit-bash-log.js",
+      "title": "audit-bash-log",
+      "subtitle": "PostToolUse · Bash. Appends a redacted record of every Bash command to a local audit log for incident review. Never blocks; credential formats are redacted so the log can't become a secret store.",
+      "wired": true
+    },
+    {
+      "type": "hook",
+      "id": "log-agent-dispatch.js",
+      "title": "log-agent-dispatch",
+      "subtitle": "PostToolUse · Agent. Appends a one-line record of every sub-agent dispatch to BACKGROUND-TASKS.md so you can track what's been fanned out.",
+      "wired": true
+    }
+  ],
+  "memory": [
+    {
+      "type": "memory",
+      "id": "_example-feedback.md",
+      "title": "Minimal feedback note",
+      "subtitle": "The minimal format for a feedback memory — a terse correction or confirmed-good approach. Save BOTH so the agent doesn't drift toward over-caution and forget what already worked."
+    },
+    {
+      "type": "memory",
+      "id": "_example-reference-voice.md",
+      "title": "Voice profile (reference)",
+      "subtitle": "How to build a reusable voice guide from a sample of your real writing — sentence rhythm, vocabulary, constructions to use and avoid — so any session writes in your register."
+    },
+    {
+      "type": "memory",
+      "id": "_example-feedback-publishable-prose.md",
+      "title": "Docs are publishable prose",
+      "subtitle": "READMEs, guides, and site copy count as publishable prose — read the voice guide first, then self-audit. Broadens \"publishable\" beyond essays and emails."
+    },
+    {
+      "type": "memory",
+      "id": "_example-feedback-headless-testing.md",
+      "title": "Headless HTML testing",
+      "subtitle": "Ways to view local HTML and when to use each; to prove a page renders, use headless Playwright over file:// and read the screenshots."
+    },
+    {
+      "type": "memory",
+      "id": "_example-feedback-hook-precision.md",
+      "title": "Hook precision philosophy",
+      "subtitle": "Security hooks stay high-precision and env-var-focused, not broad \"might leak\" blocking — a broad blocker generates false positives you learn to ignore. Keep the test suite green after edits."
+    },
+    {
+      "type": "memory",
+      "id": "_example-reference-project-facts.md",
+      "title": "Anchoring research facts",
+      "subtitle": "For any project with primary research, store every verified number anchored to its exact source — plus a NOT-IN list of plausible-but-never-published figures the agent might fabricate."
+    },
+    {
+      "type": "memory",
+      "id": "_example-reference-repo-contacts.md",
+      "title": "Repo map + contacts",
+      "subtitle": "A local-path → remote-repo map (so the agent never pushes to the wrong remote) plus the contacts that belong with it, kept in one reference note."
+    },
+    {
+      "type": "memory",
+      "id": "MEMORY.md",
+      "title": "MEMORY.md — the index",
+      "subtitle": "The thin, always-loaded index. One line per memory: a title, a link, and a hook telling the agent when to read the full note. Detail lives in the linked file, never in the index."
+    }
+  ],
+  "artifacts": [
+    {
+      "type": "artifact",
+      "id": "TRICK-plan-first-then-auto-execute",
+      "title": "Plan first, then auto-execute",
+      "subtitle": "Iterate in plan mode until the plan is solid before letting the agent write a line, then switch to auto-accept and let it run. Once the plan is right, the execution is mostly mechanical.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "workflow"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-senior-engineer-plan-critique",
+      "title": "Ask for a senior-engineer critique",
+      "subtitle": "Before approving a plan, ask: \"If you were a senior engineer, what are the flaws in this plan?\" Having the model critique its own design as fresh eyes surfaces problems before any code is written.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "workflow"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-parallel-instances-worktrees",
+      "title": "Parallel instances in worktrees",
+      "subtitle": "Run multiple agent instances in parallel, each in its own git checkout or worktree, so they make changes without conflicts. Number your terminal tabs for quick reference.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "workflow"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-claude-md-shared-memory",
+      "title": "CLAUDE.md as shared memory",
+      "subtitle": "Use CLAUDE.md as the team's shared institutional memory — the things that would otherwise live in a senior engineer's head: anti-patterns to avoid, best practices, code style, and project conventions.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "config"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-subagents-via-slash-commands",
+      "title": "Sub-agents as modular roles",
+      "subtitle": "Treat sub-agents as modular roles, not one monolithic generalist. Run daily workflows — commits, PRs, simplification, verification — by invoking slash commands that spin up purpose-built agents.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "workflow"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-postooluse-autoformat-hook",
+      "title": "Auto-format with a PostToolUse hook",
+      "subtitle": "Run a PostToolUse hook that auto-formats code after every edit. The agent is usually well-formatted; the hook fixes the remaining ~10% to avoid CI failures — a lightweight, deterministic guard.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "hooks"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-permissions-allowlist",
+      "title": "Allowlist safe commands",
+      "subtitle": "Allowlist commonly-used safe commands (build, test, standard dev-cycle commands) via /permissions to cut unnecessary prompts. Reserve skip-permissions for sandboxed, throwaway environments.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "config"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-give-a-verification-loop",
+      "title": "Give the agent a verification loop",
+      "subtitle": "The highest-leverage tip: give the agent a way to verify its own work — a bash command, a test suite, or driving the app in a browser. A feedback signal lets it iterate to a correct result.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "verify"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-prototype-is-the-spec",
+      "title": "The prototype is the spec",
+      "subtitle": "When a prototype takes minutes instead of days, the prototype becomes the spec — build the thing and react to it rather than writing a long doc up front.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "workflow"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-conditional-over-absolutes",
+      "title": "Conditional logic over absolutes",
+      "subtitle": "Newer models treat ALWAYS/NEVER/MUST as inputs to reasoning, not hard constraints, and override them when they infer it serves the goal. Replace absolutes with conditional \"if X then Y\" rules.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "prompting"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-externalize-state",
+      "title": "Externalize state to files",
+      "subtitle": "For long-horizon loops, manage context deliberately: compact at subtask boundaries and externalize persistent state to a session-state file (completed steps, decisions, next action) so a reset loses nothing.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "workflow"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-scope-blocks-and-invariants",
+      "title": "Scope blocks + invariants",
+      "subtitle": "Curb out-of-scope \"slop\" in long loops by scoping tightly: an in-scope/out-of-scope file list and a \"Do Not Change These\" invariants block, with large refactors split into reviewable stages.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "prompting"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-treat-tool-output-as-untrusted",
+      "title": "Treat tool output as untrusted",
+      "subtitle": "For any agent that reads files, scrapes, or browses, treat all tool results as untrusted — prompt injection via tool output is the primary failure surface. State the rule explicitly in the system prompt.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "security"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-avoid-pressure-language",
+      "title": "Avoid pressure language",
+      "subtitle": "Don't use emotionally pressured language in prompts (\"This is CRITICAL. You MUST solve this NOW.\"). It can degrade behavior. State the task plainly and let the model work.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "prompting"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-mandate-structured-step-output",
+      "title": "Mandate a structured status block",
+      "subtitle": "Counter silent failures by mandating a structured status block after each action: completed / rationale / next step / blockers. Keeps long autonomous runs legible and catches skipped steps.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "prompting"
+    },
+    {
+      "type": "artifact",
+      "id": "TRICK-pin-model-and-reasoning-effort",
+      "title": "Pin model + reasoning effort",
+      "subtitle": "Agent behavior is sensitive to infrastructure default changes that aren't surfaced as version bumps — a perceived \"regression\" may be a client-side default change. Pin model strings and reasoning effort explicitly.",
+      "kind": "trick",
+      "status": "open",
+      "atype": "config"
+    }
+  ],
+  "loops": [
+    {
+      "type": "loop",
+      "id": "heartbeat",
+      "title": "Heartbeat / continuous loop",
+      "subtitle": "An agent that sleeps and wakes on a short fixed interval, does one small unit of work, then sleeps again. Each beat is stateless with fresh context, so errors don't accumulate. For constant-vigilance monitoring. Stop: usually never (add a circuit breaker)."
+    },
+    {
+      "type": "loop",
+      "id": "cron",
+      "title": "Cron / scheduled loop",
+      "subtitle": "A prompt that fires at wall-clock times — daily, nightly, weekly. The most deterministic operational loop; reliable when coupled with a state file so it doesn't redo work. For recurring deliverables on a predictable clock."
+    },
+    {
+      "type": "loop",
+      "id": "hook",
+      "title": "Hook / event-triggered loop",
+      "subtitle": "An agent that runs in response to an event — a file change or a lifecycle hook. A Stop hook that re-drives the agent turns an event into a loop (\"don't stop until tests pass\"). Guard against the infinite Stop-loop. Zero wasted cycles."
+    },
+    {
+      "type": "loop",
+      "id": "goal",
+      "title": "Goal / while-not-done loop",
+      "subtitle": "An agent that re-invokes itself toward an objective until a written, machine-checkable success condition is true. Highest cost and drift risk — reliability comes entirely from a crisp done-condition plus externalized state."
+    },
+    {
+      "type": "loop",
+      "id": "plan-execute-verify",
+      "title": "Plan → execute → verify",
+      "subtitle": "A reasoning loop inside one task: decompose into a plan, execute the steps, then verify — ideally with an independent checker so the implementer doesn't grade its own work. The backbone of the superpowers framework."
+    },
+    {
+      "type": "loop",
+      "id": "generator-verifier",
+      "title": "Generator–verifier",
+      "subtitle": "One agent produces, a separate agent (or a deterministic gate) judges, and the result feeds back until it passes. The single most reliable correctness pattern — never let the generator be its own verifier."
+    },
+    {
+      "type": "loop",
+      "id": "reflexion",
+      "title": "Reflexion / self-critique",
+      "subtitle": "After an attempt, the agent writes a short critique of what went wrong and retries with that critique in context. Cheap quality lift for tasks where the failure is legible to the model."
+    },
+    {
+      "type": "loop",
+      "id": "map-reduce",
+      "title": "Map-reduce / parallel workers",
+      "subtitle": "An orchestration loop: fan independent sub-tasks out to parallel workers, then merge their outputs. Use only for genuinely independent parts; never two workers writing the same file."
+    }
+  ],
+  "maps": [
+    {
+      "type": "map",
+      "id": "CLAUDE.md",
+      "title": "CLAUDE.md",
+      "subtitle": "The always-on behavioral contract + a harness map. Loaded every session. Keep it lean (~100 lines): voice, anti-fabrication, secret-safety, file-safety, autonomy, plan-means-plan.",
+      "depth": 0
+    },
+    {
+      "type": "map",
+      "id": "CLAUDE-delegation.md",
+      "title": "CLAUDE-delegation.md",
+      "subtitle": "Read-on-demand sibling of CLAUDE.md: model tiers (cheap/default/heavy), the two-question delegation test, and when to spawn parallel sub-agents.",
+      "depth": 1
+    },
+    {
+      "type": "map",
+      "id": "MEMORY.md",
+      "title": "MEMORY.md",
+      "subtitle": "The thin, always-loaded memory index — one line per note pointing at the full file. The detail lives in the linked notes, never in the index.",
+      "depth": 0
+    },
+    {
+      "type": "map",
+      "id": "VERIFY.md",
+      "title": "VERIFY.md",
+      "subtitle": "Verification modes per output type — the Verify gate of every loop. Defines how each kind of deliverable (code, prose, HTML, data) is proven before it's called done.",
+      "depth": 0
+    },
+    {
+      "type": "map",
+      "id": "CURRENT-TASK.md",
+      "title": "CURRENT-TASK.md",
+      "subtitle": "The active-work handoff: a one-line goal, done steps with paths, remaining steps in order, and the exact next command. Read first on resume; deleted when done.",
+      "depth": 0
+    },
+    {
+      "type": "map",
+      "id": "BACKBURNER.md",
+      "title": "BACKBURNER.md",
+      "subtitle": "The backlog — parked work, promoted into a CURRENT-TASK when started.",
+      "depth": 0
+    },
+    {
+      "type": "map",
+      "id": "STATUS.md",
+      "title": "STATUS.md",
+      "subtitle": "Durable per-project state — what works and where things stand. Survives across sessions.",
+      "depth": 0
+    },
+    {
+      "type": "map",
+      "id": "LOG.md",
+      "title": "LOG.md",
+      "subtitle": "The append-only worklog: one line per bulk of work (date | what). Read the last few before starting; append before stopping.",
+      "depth": 0
+    }
+  ]
+}
+</script>
+
+<script>
+(function(){
+  "use strict";
+  const kit = JSON.parse(document.getElementById('kit-data').textContent || '{}');
+  const S = kit.skills||[], H = kit.hooks||[], M = kit.memory||[],
+        A = kit.artifacts||[], L = kit.loops||[], MP = kit.maps||[];
+
+  const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const $ = s => document.querySelector(s);
+
+  /* ---------- merged Fuse index (global search) ---------- */
+  const merged = [
+    ...S.map(s => ({type:'skill',    id:s.id, title:s.title, subtitle:s.subtitle, tags:s.tags||[], go:'skills'})),
+    ...H.map(h => ({type:'hook',     id:h.id, title:h.title, subtitle:h.subtitle, tags:[h.wired?'wired':'unwired'], go:'hooks'})),
+    ...M.map(m => ({type:'memory',   id:m.id, title:m.title, subtitle:m.subtitle, tags:[], go:'memory'})),
+    ...A.map(a => ({type:'artifact', id:a.id, title:a.title, subtitle:a.subtitle, tags:[a.kind,a.status].filter(Boolean), go:'artifacts'})),
+    ...L.map(l => ({type:'loop',     id:l.id, title:l.title, subtitle:l.subtitle, tags:[], go:'loops'})),
+    ...MP.map(p => ({type:'map',     id:p.id, title:p.title, subtitle:p.subtitle, tags:[], go:'maps'})),
+  ];
+  const fuse = new Fuse(merged, {
+    keys:[{name:'title',weight:.6},{name:'tags',weight:.3},{name:'subtitle',weight:.1}],
+    threshold:.3, ignoreLocation:true, includeScore:true
+  });
+
+  /* ---------- per-view local search (own Fuse per typed array) ---------- */
+  const mkFuse = arr => new Fuse(arr, {
+    keys:[{name:'title',weight:.6},{name:'tags',weight:.3},{name:'subtitle',weight:.1}],
+    threshold:.3, ignoreLocation:true
+  });
+  const fuses = { skills:mkFuse(S), hooks:mkFuse(H), memory:mkFuse(M), loops:mkFuse(L), maps:mkFuse(MP) };
+
+  const state = { view:'skills', q:'', skillTags:new Set(), hookFilter:'all' };
+
+  /* ---------- badge helpers ---------- */
+  function statusBadge(status){
+    const map = {open:['warn','open'], todo:['warn','todo'], 'in-progress':['ok','in-progress'],
+                 done:['ok','done'], blocked:['off','blocked']};
+    const [cls,label] = map[status] || ['neutral', status||'—'];
+    return `<span class="badge ${cls}"><span class="dot"></span>${esc(label)}</span>`;
+  }
+
+  /* ================= SKILLS ================= */
+  function allSkillTags(){
+    const set = new Set(); S.forEach(s => (s.tags||[]).forEach(t => set.add(t)));
+    return [...set].sort();
+  }
+  function renderSkills(){
+    let items = S;
+    if(state.q) { const ids=new Set(fuses.skills.search(state.q).map(r=>r.item.id)); items=items.filter(s=>ids.has(s.id)); }
+    if(state.skillTags.size) items = items.filter(s => [...state.skillTags].every(t => (s.tags||[]).includes(t)));
+    const grid = $('#grid-skills');
+    grid.innerHTML = items.length ? items.map(s => `
+      <article class="card">
+        <h3 class="ct">${esc(s.title)}</h3>
+        <p class="cs">${esc(s.subtitle)}</p>
+        ${(s.tags||[]).length?`<div class="tagrow">${s.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+      </article>`).join('') : `<p class="emptyhint">No skills match.</p>`;
+  }
+
+  /* ================= HOOKS ================= */
+  function renderHooks(){
+    let items = H;
+    if(state.q){ const ids=new Set(fuses.hooks.search(state.q).map(r=>r.item.id)); items=items.filter(h=>ids.has(h.id)); }
+    if(state.hookFilter==='wired') items = items.filter(h=>h.wired);
+    if(state.hookFilter==='unwired') items = items.filter(h=>!h.wired);
+    const el = $('#list-hooks');
+    el.innerHTML = items.length ? items.map(h => `
+      <div class="row">
+        <span class="led ${h.wired?'ok':'off'}" aria-hidden="true"></span>
+        <div class="rmain">
+          <p class="rt">${esc(h.title)}</p>
+          <p class="rs">${esc(h.subtitle||'')}</p>
+        </div>
+        <span class="rtrail badge ${h.wired?'ok':'neutral'}">${h.wired?'wired':'not wired'}</span>
+      </div>`).join('') : `<p class="emptyhint">No hooks match.</p>`;
+  }
+
+  /* ================= MEMORY ================= */
+  function renderMemory(){
+    let items = M;
+    if(state.q){ const ids=new Set(fuses.memory.search(state.q).map(r=>r.item.id)); items=items.filter(m=>ids.has(m.id)); }
+    const grid = $('#grid-memory');
+    grid.innerHTML = items.length ? items.map(m => `
+      <article class="card">
+        <h3 class="ct">${esc(m.title)}</h3>
+        <p class="cs">${esc(m.subtitle)}</p>
+        <div class="tagrow"><span class="tag">${esc(m.id)}</span></div>
+      </article>`).join('') : `<p class="emptyhint">No memory notes match.</p>`;
+  }
+
+  /* ================= LOOPS ================= */
+  function renderLoops(){
+    let items = L;
+    if(state.q){ const ids=new Set(fuses.loops.search(state.q).map(r=>r.item.id)); items=items.filter(l=>ids.has(l.id)); }
+    const grid = $('#grid-loops');
+    grid.innerHTML = items.length ? items.map(l => `
+      <article class="card">
+        <h3 class="ct">${esc(l.title)}</h3>
+        <p class="cs">${esc(l.subtitle)}</p>
+      </article>`).join('') : `<p class="emptyhint">No loops match.</p>`;
+  }
+
+  /* ================= MAPS ================= */
+  function renderMaps(){
+    let items = MP;
+    if(state.q){ const ids=new Set(fuses.maps.search(state.q).map(r=>r.item.id)); items=items.filter(p=>ids.has(p.id)); }
+    const el = $('#tree-maps');
+    el.innerHTML = items.length ? items.map(p => `
+      <div class="row" data-depth="${p.depth||0}">
+        <span class="caret" aria-hidden="true">${(p.depth||0)?'└':'▸'}</span>
+        <div class="rmain">
+          <p class="rt">${esc(p.title)}</p>
+          <p class="rs">${esc(p.subtitle)}</p>
+        </div>
+      </div>`).join('') : `<p class="emptyhint">No maps match.</p>`;
+  }
+
+  /* ================= ARTIFACTS (KANBAN) ================= */
+  const COLUMNS = [
+    {key:'todo',        label:'To do'},
+    {key:'in-progress', label:'In progress'},
+    {key:'open',        label:'Open'},
+    {key:'done',        label:'Done'},
+    {key:'blocked',     label:'Blocked'},
+  ];
+  const BOARD_KEY = 'agentKit.board.v1';
+  const OPEN_KEY  = 'agentKit.boardOpen.v1';
+
+  function defaultBoard(){
+    const b = {}; COLUMNS.forEach(c => b[c.key]=[]);
+    A.forEach(a => { const col = b[a.status] ? a.status : (COLUMNS.find(c=>c.key===a.status)?a.status:'open'); (b[col]||b.open).push(a.id); });
+    return b;
+  }
+  // merge saved order with current kit (new artifacts → default column; removed → dropped)
+  function loadBoard(){
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(BOARD_KEY)||'null'); } catch{}
+    const live = new Map(A.map(a=>[a.id,a]));
+    const board = {}; COLUMNS.forEach(c=>board[c.key]=[]);
+    const placed = new Set();
+    if(saved){
+      COLUMNS.forEach(c => {
+        (saved[c.key]||[]).forEach(id => { if(live.has(id)){ board[c.key].push(id); placed.add(id); } });
+      });
+    }
+    A.forEach(a => { if(!placed.has(a.id)){ const col = board[a.status]?a.status:'open'; board[col].push(a.id); } });
+    return board;
+  }
+  function persistBoard(){
+    const board = {};
+    document.querySelectorAll('#kanban .col-list').forEach(list => {
+      board[list.dataset.status] = [...list.querySelectorAll('.kcard')].map(c=>c.dataset.id);
+    });
+    try { localStorage.setItem(BOARD_KEY, JSON.stringify(board)); } catch{}
+    updateCounts();
+  }
+  function loadOpen(){ try{ return new Set(JSON.parse(localStorage.getItem(OPEN_KEY)||'[]')); }catch{ return new Set(); } }
+  function saveOpen(set){ try{ localStorage.setItem(OPEN_KEY, JSON.stringify([...set])); }catch{} }
+  const openCards = loadOpen();
+
+  const byId = new Map(A.map(a=>[a.id,a]));
+  function kcardHTML(a){
+    const open = openCards.has(a.id);
+    const opts = COLUMNS.map(c=>`<option value="${c.key}"${c.key===a.status?' selected':''}>${esc(c.label)}</option>`).join('');
+    return `<div class="kcard${open?' open':''}" data-id="${esc(a.id)}">
+      <div class="ktitle">${esc(a.title)}</div>
+      <div class="ksub">${esc(a.subtitle||'')}</div>
+      <div class="kfoot">
+        <span class="badge neutral">${esc(a.kind)}</span>
+        ${a.atype?`<span class="badge neutral">${esc(a.atype)}</span>`:''}
+        <select aria-label="Move ${esc(a.id)} to column">${opts}</select>
+      </div>
+    </div>`;
+  }
+  function renderKanban(){
+    const board = loadBoard();
+    const q = state.q ? new Set(fuse.search(state.q).filter(r=>r.item.type==='artifact').map(r=>r.item.id)) : null;
+    const kb = $('#kanban');
+    kb.innerHTML = COLUMNS.map(c => {
+      let ids = board[c.key]||[];
+      const cards = ids.filter(id=>byId.has(id) && (!q || q.has(id)))
+                       .map(id=>kcardHTML(byId.get(id))).join('');
+      return `<div class="column">
+        <div class="colhead"><span class="ctitle">${esc(c.label)}</span><span class="count" data-col="${c.key}">${ids.filter(id=>byId.has(id)).length}</span></div>
+        <div class="col-list" data-status="${c.key}">${cards}</div>
+      </div>`;
+    }).join('');
+    wireKanban();
+    updateCounts();
+  }
+  function updateCounts(){
+    document.querySelectorAll('#kanban .col-list').forEach(list => {
+      const n = list.querySelectorAll('.kcard').length;
+      const badge = document.querySelector(`.count[data-col="${list.dataset.status}"]`);
+      if(badge) badge.textContent = n;
+    });
+  }
+  let sortables = [];
+  function wireKanban(){
+    sortables.forEach(s=>{try{s.destroy()}catch{}}); sortables = [];
+    document.querySelectorAll('#kanban .col-list').forEach(list => {
+      sortables.push(new Sortable(list, {
+        group:'artifacts', animation:150,
+        delay:160, delayOnTouchOnly:true, touchStartThreshold:5,
+        forceFallback:true, fallbackOnBody:true, fallbackTolerance:4, swapThreshold:.65,
+        filter:'select', preventOnFilter:false,
+        onEnd: persistBoard
+      }));
+    });
+    // tap to expand (not on the select)
+    document.querySelectorAll('#kanban .kcard').forEach(card => {
+      card.addEventListener('click', e => {
+        if(e.target.closest('select')) return;
+        const id = card.dataset.id;
+        card.classList.toggle('open');
+        if(card.classList.contains('open')) openCards.add(id); else openCards.delete(id);
+        saveOpen(openCards);
+      });
+    });
+    // status select → move card
+    document.querySelectorAll('#kanban .kcard select').forEach(sel => {
+      sel.addEventListener('change', e => {
+        const card = sel.closest('.kcard');
+        const target = document.querySelector(`.col-list[data-status="${sel.value}"]`);
+        if(target){ target.appendChild(card); persistBoard(); }
+        e.stopPropagation();
+      });
+      sel.addEventListener('click', e => e.stopPropagation());
+    });
+  }
+
+  /* ================= FILTER BAR (per view) ================= */
+  function renderFilterBar(){
+    const fb = $('#filterbar'); fb.innerHTML='';
+    if(state.view==='skills'){
+      allSkillTags().forEach(t => {
+        const b = document.createElement('button');
+        b.className='chip'; b.textContent=t;
+        b.setAttribute('aria-pressed', state.skillTags.has(t));
+        b.onclick = () => { state.skillTags.has(t)?state.skillTags.delete(t):state.skillTags.add(t); renderFilterBar(); renderSkills(); };
+        fb.appendChild(b);
+      });
+    } else if(state.view==='hooks'){
+      [['all','All'],['wired','Wired'],['unwired','Not wired']].forEach(([k,lab])=>{
+        const b=document.createElement('button'); b.className='chip'; b.textContent=lab;
+        b.setAttribute('aria-pressed', state.hookFilter===k);
+        b.onclick=()=>{ state.hookFilter=k; renderFilterBar(); renderHooks(); };
+        fb.appendChild(b);
+      });
+    }
+  }
+
+  /* ================= ROUTER ================= */
+  const PLACE = {skills:'Skills', artifacts:'Tricks', hooks:'Hooks', memory:'Memory', loops:'Loops', maps:'Maps'};
+  const PH = {skills:'Search skills…', artifacts:'Search tricks…', hooks:'Search hooks…',
+              memory:'Search memory…', loops:'Search loops…', maps:'Search maps…'};
+  const RENDER = {skills:renderSkills, artifacts:renderKanban, hooks:renderHooks,
+                  memory:renderMemory, loops:renderLoops, maps:renderMaps};
+  function show(view){
+    if(view==='more'){ openSheet(); return; }
+    state.view = view;
+    document.querySelectorAll('[data-view]').forEach(s => s.hidden = s.dataset.view !== view);
+    document.querySelectorAll('.tabbar [role=tab]').forEach(t => t.setAttribute('aria-selected', t.dataset.go===view));
+    $('#viewlabel').textContent = PLACE[view];
+    $('#search').placeholder = PH[view];
+    $('#search').value = state.q = '';
+    renderFilterBar();
+    RENDER[view]();
+    try{ localStorage.setItem('agentKit.view', view); }catch{}
+    window.scrollTo({top:0});
+  }
+
+  /* ================= SHEET ================= */
+  const scrim = $('#scrim'), moreSheet = $('#moreSheet');
+  function openSheet(){ moreSheet.hidden=false; requestAnimationFrame(()=>{ scrim.classList.add('show'); moreSheet.classList.add('show'); }); }
+  function closeSheet(){ scrim.classList.remove('show'); moreSheet.classList.remove('show'); setTimeout(()=>moreSheet.hidden=true,220); }
+  document.querySelectorAll('.moreitem').forEach(b => b.onclick = () => { closeSheet(); show(b.dataset.go); });
+
+  /* ================= PALETTE ================= */
+  const palette=$('#palette'), pInput=$('#paletteInput'), pResults=$('#presults');
+  let pActive=-1, pFlat=[];
+  function openPalette(){ palette.hidden=false; requestAnimationFrame(()=>{ scrim.classList.add('show'); palette.classList.add('show'); pInput.value=''; pInput.focus(); paletteSearch(''); }); }
+  function closePalette(){ scrim.classList.remove('show'); palette.classList.remove('show'); setTimeout(()=>palette.hidden=true,160); }
+  function paletteSearch(q){
+    q=q.trim();
+    let typeFilter=null, tagFilter=null, term=q;
+    const at=q.match(/@(\w+)/); if(at){ typeFilter=at[1].replace(/s$/,''); term=q.replace(at[0],'').trim(); }
+    const hash=q.match(/#(\w[\w-]*)/); if(hash){ tagFilter=hash[1].toLowerCase(); term=term.replace(hash[0],'').trim(); }
+    let res = term ? fuse.search(term).map(r=>r.item) : merged.slice();
+    if(typeFilter) res = res.filter(r=>r.type===typeFilter);
+    if(tagFilter) res = res.filter(r=>(r.tags||[]).some(t=>String(t).toLowerCase().includes(tagFilter)));
+    res = res.slice(0,40);
+    pFlat = res; pActive = res.length?0:-1;
+    const groups={};
+    res.forEach(r=>{ (groups[r.type]=groups[r.type]||[]).push(r); });
+    const order=['skill','artifact','hook','memory','loop','map'];
+    pResults.innerHTML = res.length ? order.filter(t=>groups[t]).map(t=>`
+      <div class="pgroup">${t}s</div>
+      ${groups[t].map(r=>{
+        const gi=pFlat.indexOf(r);
+        return `<div class="pitem" role="option" data-i="${gi}" data-go="${r.go}">
+          <span class="ptype">${esc(r.type)}</span>
+          <div class="pmain"><div class="ptitle">${esc(r.title)}</div><div class="psub">${esc(r.subtitle||'')}</div></div>
+        </div>`;}).join('')}
+    `).join('') : `<p class="pempty">Nothing matches “${esc(q)}”.</p>`;
+    paintActive();
+    pResults.querySelectorAll('.pitem').forEach(el=>{
+      el.onmouseenter=()=>{ pActive=+el.dataset.i; paintActive(); };
+      el.onclick=()=>choose(+el.dataset.i);
+    });
+  }
+  function paintActive(){
+    pResults.querySelectorAll('.pitem').forEach(el=>el.classList.toggle('active', +el.dataset.i===pActive));
+    const a=pResults.querySelector('.pitem.active'); if(a) a.scrollIntoView({block:'nearest'});
+  }
+  function choose(i){ const r=pFlat[i]; if(!r) return; closePalette(); show(r.go); state.q=''; }
+  pInput.addEventListener('input', e=>paletteSearch(e.target.value));
+  pInput.addEventListener('keydown', e=>{
+    if(e.key==='ArrowDown'){ e.preventDefault(); if(pFlat.length){ pActive=(pActive+1)%pFlat.length; paintActive(); } }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); if(pFlat.length){ pActive=(pActive-1+pFlat.length)%pFlat.length; paintActive(); } }
+    else if(e.key==='Home'){ e.preventDefault(); pActive=0; paintActive(); }
+    else if(e.key==='End'){ e.preventDefault(); pActive=pFlat.length-1; paintActive(); }
+    else if(e.key==='Enter'){ e.preventDefault(); if(pActive>=0) choose(pActive); }
+    else if(e.key==='Escape'){ e.preventDefault(); closePalette(); }
+  });
+
+  /* ================= GLOBAL EVENTS ================= */
+  document.querySelectorAll('.tabbar [role=tab]').forEach(b => b.onclick = () => show(b.dataset.go));
+  $('#paletteBtn').onclick = openPalette;
+  $('#search').addEventListener('input', e => {
+    state.q = e.target.value;
+    RENDER[state.view]();
+  });
+  scrim.onclick = () => { closeSheet(); closePalette(); };
+  document.addEventListener('keydown', e=>{
+    if((e.metaKey||e.ctrlKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); palette.hidden?openPalette():closePalette(); }
+    else if(e.key==='Escape'){ if(!palette.hidden) closePalette(); if(!moreSheet.hidden) closeSheet(); }
+  });
+
+  /* ================= INIT ================= */
+  $('#cnt-loops').textContent = L.length;
+  $('#cnt-maps').textContent  = MP.length;
+  $('#gen').textContent = `${S.length} skills · ${H.length} hooks · ${M.length} memory · ${A.length} tricks · ${L.length} loop types · ${MP.length} maps`;
+  let start='skills'; try{ const v=localStorage.getItem('agentKit.view'); if(v && PLACE[v]) start=v; }catch{}
+  show(start);
+})();
+</script>
+</body>
+</html>
