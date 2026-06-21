@@ -10,7 +10,7 @@ Build a structured capability-landscape report in Obsidian with an embedded canv
 
 ## Argument
 
-`[topic]` = the capability/pipeline to research (e.g., "text-to-truss", "automated FEA meshing", "RAG over engineering docs"). If omitted, ask for the topic + the specific questions to answer in ONE message, then proceed.
+`[topic]` = the capability/pipeline to research (e.g., "generative part design", "automated FEA meshing", "RAG over engineering docs"). If omitted, ask for the topic + the specific questions to answer in ONE message, then proceed.
 
 ---
 

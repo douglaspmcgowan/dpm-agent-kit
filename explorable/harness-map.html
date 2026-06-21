@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="tokyo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dpm-agent-kit — the harness, traced</title>
+<meta name="description" content="The agentic harness as architecture: the layers an agent runs inside, and the path a single turn takes through them — context, guardrails, memory, skills, and the loop.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== theme tokens (shared with the other explorables) ===== */
+  :root,[data-theme="tokyo"]{
+    --bg:#15161e; --panel:#1b1d29; --panel2:#191b25; --text:#c8d0f0; --muted:#6b73a0;
+    --line:#262a40; --accent:#9ece6a; --accent2:#7aa2f7; --cyan:#7dcfff; --magenta:#bb9af7;
+    --danger:#f7768e; --warn:#e0af68; --body:#aeb6df;
+    --disp:'Sora',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,monospace; --r:6px;
+  }
+  [data-theme="brutalist"]{
+    --bg:#fafafa; --panel:#ffffff; --panel2:#f2f2f2; --text:#0d0d0d; --muted:#5a5a5a;
+    --line:#0d0d0d; --accent:#c81e00; --accent2:#0a58ff; --cyan:#0a58ff; --magenta:#7a3cff;
+    --danger:#c81e00; --warn:#9a5a00; --body:#2a2a2a;
+    --disp:'Space Mono',monospace; --mono:'Space Mono',monospace; --r:0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:clamp(12.9px,1.17vw,15px);line-height:1.55;
+       min-height:100vh;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--accent);color:var(--bg)}
+  a{color:var(--accent2)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* ---- top bar (shared chrome) ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;
+          padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel2);
+          position:sticky;top:0;z-index:20}
+  .topbar a.back{color:var(--muted);text-decoration:none;font-size:clamp(11.2px,1.02vw,13px)}
+  .topbar a.back:hover{color:var(--cyan)}
+  .xnav{display:flex;gap:14px;flex-wrap:wrap}
+  .xnav a{color:var(--muted);text-decoration:none;font-size:clamp(11.2px,1.02vw,13px)}
+  .xnav a:hover,.xnav a.on{color:var(--accent)}
+  .theme-pill{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);
+       border-radius:999px;padding:5px 12px;font-size:clamp(10.3px,0.94vw,12px);color:var(--text);cursor:pointer;font-family:var(--mono)}
+  .theme-pill:hover{border-color:var(--accent)}
+  .theme-pill .sw{width:11px;height:11px;border-radius:50%;background:var(--accent)}
+  [data-theme="brutalist"] .theme-pill{border-radius:0}
+
+  /* ---- header ---- */
+  header.h{padding:26px 28px 6px;max-width:1080px}
+  header.h h1{margin:0;font-family:var(--disp);font-size:clamp(22px,3.4vw,32px);font-weight:800;letter-spacing:-.01em}
+  header.h p{margin:12px 0 0;color:var(--muted);max-width:860px;font-size:clamp(14px,1.5vw,15.5px)}
+  .hint{color:var(--cyan)}
+
+  main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:0;min-height:0;align-items:start}
+  .cols{padding:22px 28px 40px;display:grid;grid-template-columns:300px minmax(0,1fr);gap:26px;align-items:start}
+
+  /* ---- section labels ---- */
+  .seclabel{font-family:var(--disp);font-size:clamp(10.3px,0.94vw,12px);text-transform:uppercase;letter-spacing:1.5px;
+       color:var(--muted);margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  .seclabel .ln{flex:1;height:1px;background:var(--line)}
+
+  /* ---- the stack (nested layers) ---- */
+  .stack{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:var(--r);
+       background:var(--panel2);padding:10px}
+  .layer{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:11px 13px;
+       cursor:pointer;transition:border-color .18s,transform .12s,box-shadow .18s;position:relative}
+  .layer + .layer{margin-top:8px}
+  .layer:hover{border-color:var(--accent);transform:translateX(3px)}
+  .layer.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+  .layer .lt{font-family:var(--disp);font-weight:700;font-size:clamp(11.6px,1.05vw,13.5px);display:flex;align-items:center;gap:8px}
+  .layer .lt .gi{width:9px;height:9px;border-radius:2px;flex:0 0 auto}
+  .layer .ls{font-size:clamp(9.9px,0.9vw,11.5px);color:var(--muted);margin-top:3px;line-height:1.4}
+  .layer .lf{font-family:var(--mono);font-size:clamp(9px,0.82vw,10.5px);color:var(--accent2);margin-top:5px;word-break:break-all}
+  /* the agent core */
+  .core{margin-top:8px;border:1px dashed var(--accent);border-radius:var(--r);background:transparent;
+       padding:11px 13px;text-align:center}
+  .core .ct{font-family:var(--disp);font-weight:700;font-size:clamp(11.2px,1.02vw,13px);color:var(--accent)}
+  .core .cs{font-size:clamp(9.5px,0.86vw,11px);color:var(--muted);margin-top:2px}
+
+  /* ---- trace a turn (lifecycle) ---- */
+  .tracehead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+  .controls{display:flex;gap:8px}
+  .btn{font-family:var(--mono);font-size:clamp(10.8px,0.98vw,12.5px);background:var(--panel);color:var(--text);
+       border:1px solid var(--line);border-radius:var(--r);padding:7px 13px;cursor:pointer;
+       transition:border-color .15s,color .15s;display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{border-color:var(--accent);color:var(--accent)}
+  .btn[disabled]{opacity:.4;cursor:default}
+
+  .pipe{position:relative;padding-left:34px}
+  .pipe .rail{position:absolute;left:14px;top:14px;bottom:14px;width:2px;background:var(--line)}
+  .pipe .marker{position:absolute;left:8px;width:14px;height:14px;border-radius:50%;
+       background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 26%, transparent);
+       transition:top .5s cubic-bezier(.5,.05,.2,1);z-index:3}
+  .stage{position:relative;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);
+       padding:11px 14px;margin-bottom:10px;cursor:pointer;transition:border-color .18s,opacity .25s,box-shadow .18s}
+  .stage::before{content:"";position:absolute;left:-26px;top:18px;width:10px;height:10px;border-radius:50%;
+       background:var(--panel);border:2px solid var(--line);transition:background .2s,border-color .2s}
+  .stage:hover{border-color:var(--accent2)}
+  .stage.sel{border-color:var(--accent)}
+  .stage.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .stage.active::before{background:var(--accent);border-color:var(--accent)}
+  .stage.done::before{background:var(--accent2);border-color:var(--accent2)}
+  .stage .st{font-family:var(--disp);font-weight:700;font-size:clamp(11.6px,1.05vw,13.5px);display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .stage .badge{font-family:var(--mono);font-size:clamp(8.6px,0.78vw,10px);text-transform:uppercase;letter-spacing:.5px;
+       padding:2px 7px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+  .stage .badge.hook{color:var(--magenta);border-color:color-mix(in srgb,var(--magenta) 50%,var(--line))}
+  .stage .badge.gate{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 50%,var(--line))}
+  .stage .ss{font-size:clamp(9.9px,0.9vw,11.5px);color:var(--muted);margin-top:4px;line-height:1.45}
+  [data-theme="brutalist"] .stage .badge{border-radius:0}
+
+  /* ---- detail panel ---- */
+  aside{background:var(--panel2);border-left:1px solid var(--line);padding:24px;align-self:start;
+       position:sticky;top:49px;max-height:calc(100vh - 49px);overflow-y:auto}
+  aside .dkind{font-size:clamp(9.5px,0.86vw,11px);text-transform:uppercase;letter-spacing:1.4px;color:var(--muted)}
+  aside h2{margin:5px 0 2px;font-family:var(--disp);font-size:clamp(17.2px,1.56vw,20px);color:var(--text)}
+  aside .lead{color:var(--body);margin:12px 0 0;font-size:clamp(12px,1.09vw,14px)}
+  aside h4{font-family:var(--disp);font-size:clamp(10.3px,0.94vw,12px);text-transform:uppercase;letter-spacing:1px;
+       color:var(--accent);margin:20px 0 7px}
+  aside ul{margin:0;padding-left:18px;color:var(--body);font-size:clamp(11.2px,1.02vw,13px)}
+  aside li{margin:5px 0}
+  aside code{color:var(--cyan);background:var(--panel);padding:1px 6px;border-radius:5px;font-size:clamp(10.8px,0.98vw,12.5px);
+       word-break:break-all}
+  [data-theme="brutalist"] aside code{border-radius:0;border:1px solid var(--line)}
+  .why{border:1px solid var(--line);border-radius:var(--r);
+       background:color-mix(in srgb,var(--accent) 8%,var(--panel));padding:11px 13px;margin-top:18px;font-size:clamp(10.8px,0.98vw,12.5px);color:var(--body)}
+  .why b{color:var(--text)}
+  [data-theme="brutalist"] .why{border-radius:0}
+
+  footer{padding:11px 28px;border-top:1px solid var(--line);color:var(--muted);font-size:clamp(10.3px,0.94vw,12px);
+       display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 5px 0 14px;vertical-align:middle}
+
+  @media(max-width:1000px){
+    main{grid-template-columns:1fr}
+    aside{position:static;height:auto;border-left:none;border-top:1px solid var(--line)}
+  }
+  @media(max-width:680px){
+    .cols{grid-template-columns:1fr;padding:18px 18px 32px}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important}
+    .pipe .marker{transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="index.html">← intro</a>
+  <nav class="xnav">
+    <a href="option-2-scrollytelling.html">walkthrough</a>
+    <a href="option-1-node-map.html">map</a>
+    <a href="option-3-terminal.html">terminal</a>
+    <a href="option-4-dashboard.html">panel</a>
+    <a href="skills-library.html">library</a>
+    <a class="on" href="harness-map.html">harness</a>
+  </nav>
+  <button class="theme-pill" id="themeBtn" title="switch theme"><span class="sw"></span><span id="theme-label">tokyo</span></button>
+</div>
+
+<header class="h">
+  <h1>The harness, traced</h1>
+  <p>A <b>prompt</b> is one instruction. A <b>harness</b> is everything standing around the agent so that instruction
+  lands the same way every time — the context it always reads, the guardrails it can't step past, the memory it
+  writes back to, and the rhythm that keeps it going. Two views below: the <span class="hint">stack</span> it runs
+  inside, and the <span class="hint">path a single turn takes</span> through it. Click any layer or stage.</p>
+</header>
+
+<main>
+  <div class="cols">
+    <!-- left: the stack -->
+    <section>
+      <p class="seclabel">The stack <span class="ln"></span></p>
+      <div class="stack" id="stack"></div>
+    </section>
+
+    <!-- right: trace a turn -->
+    <section>
+      <div class="tracehead">
+        <p class="seclabel" style="margin:0">Trace a turn <span class="ln"></span></p>
+        <div class="controls">
+          <button class="btn" id="stepBtn">step ▸</button>
+          <button class="btn primary" id="runBtn">▶ run a turn</button>
+        </div>
+      </div>
+      <div class="pipe" id="pipe">
+        <div class="rail"></div>
+        <div class="marker" id="marker" style="top:14px"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- detail panel -->
+  <aside id="panel">
+    <div class="dkind" id="d-kind">how to read this</div>
+    <h2 id="d-title">Start anywhere</h2>
+    <p class="lead" id="d-lead">The agent doesn't keep state between chats and will act on almost anything. The
+    harness supplies what it lacks: standing rules, guardrails, memory, reusable know-how, and a loop. Pick a
+    layer on the left to see what it holds, or hit <b>run a turn</b> to watch a request travel the path.</p>
+    <div id="d-body"></div>
+  </aside>
+</main>
+
+<footer>
+  <span class="legend">layers:
+    <i style="background:var(--accent2)"></i>always loaded
+    <i style="background:var(--magenta)"></i>guardrail
+    <i style="background:var(--accent)"></i>the loop
+  </span>
+  <span>self-contained HTML · the scaffolding around the model</span>
+</footer>
+
+<script>
+/* ---------- theme (shared key with the other explorables) ---------- */
+const THEMES=['tokyo','brutalist'];
+let ti=Math.max(0,THEMES.indexOf(localStorage.getItem('dpmkit-theme')));
+function applyTheme(){document.documentElement.dataset.theme=THEMES[ti];
+  localStorage.setItem('dpmkit-theme',THEMES[ti]);
+  const l=document.getElementById('theme-label');if(l)l.textContent=THEMES[ti];}
+document.getElementById('themeBtn').onclick=()=>{ti=(ti+1)%THEMES.length;applyTheme();};
+applyTheme();
+
+/* ---------- data: the stack ---------- */
+const LAYERS=[
+  {id:'rules',cls:'accent2',gi:'var(--accent2)',t:'Standing rules',f:'CLAUDE.md',
+    s:'The contract loaded into every session.',
+    kind:'always loaded · layer 1',
+    lead:'CLAUDE.md is the one file the agent reads at the start of every session. It carries the rules that should never have to be re-explained — how to behave, what to never touch, how you like work delivered.',
+    body:[['What lives here',['Behaviour rules and house style','Safety lines ("never overwrite a file in place")','A map of where everything else is']],
+      ['Why it exists','An agent with no memory re-learns nothing on its own. CLAUDE.md is the memory that is always in the room.']]},
+  {id:'maps',cls:'accent2',gi:'var(--accent2)',t:'Maps',f:'MAP · DELEGATE · VERIFY · TOOLS',
+    s:'Pointers the agent follows instead of guessing.',
+    kind:'loaded on demand · layer 1',
+    lead:'Maps keep CLAUDE.md short. Each one answers a single "where do I look for X?" — the device setup, the delegation policy, how to verify a result, what tools are installed — and is read only when the task needs it.',
+    body:[['Typical maps',['<code>MAP.md</code> — this machine\'s paths and endpoints','<code>VERIFY.md</code> — how to check each kind of output','<code>TOOLS.md</code> — every installed tool + a "reach for X → use Y" table']],
+      ['Why it exists','Splitting reference out of the always-on file keeps the context window lean while still putting the right page one hop away.']]},
+  {id:'memory',cls:'accent2',gi:'var(--accent2)',t:'Memory',f:'memory/*.md + MEMORY.md index',
+    s:'Durable facts the agent writes back to.',
+    kind:'recall · layer 2',
+    lead:'Memory is how a lesson survives the end of a chat. One fact per file, a lean index on top. The agent recalls before repeating past work and writes a new note when it learns something that should outlast the session.',
+    body:[['What gets saved',['Who you are and how you work','Corrections you\'ve given (with the why)','Project state the code doesn\'t record']],
+      ['Why it exists','Without it, every session starts from zero and you re-give the same feedback forever.']]},
+  {id:'skills',cls:'magenta',gi:'var(--magenta)',t:'Skills',f:'commands/*.md · plugins',
+    s:'Reusable procedures, invoked by name.',
+    kind:'know-how · layer 2',
+    lead:'A skill is a packaged way of doing a recurring job — a research sweep, a deploy, a review. Instead of re-describing the steps each time, you invoke the skill and the agent follows the procedure it already knows.',
+    body:[['Examples',['A landscape-recon workflow','A "compare these options" routine','A frontend design + critique pass']],
+      ['Why it exists','Good procedures shouldn\'t live in your head. A skill turns "the way we do X" into something the agent can run.']]},
+  {id:'hooks',cls:'magenta',gi:'var(--magenta)',t:'Hooks',f:'hooks/*.js',
+    s:'Deterministic code that wraps every action.',
+    kind:'guardrail · layer 3',
+    lead:'Hooks are the one part that does not depend on the model behaving. They are plain code that fires on events — before a tool runs, after it runs, at session start, when the agent tries to stop — and can allow, block, or inject.',
+    body:[['What they do',['Block dangerous commands and secret reads <span class="badge hook">PreToolUse</span>','Format and scan output after edits <span class="badge hook">PostToolUse</span>','Inject context at startup <span class="badge hook">SessionStart</span>','Keep the loop going until work is done <span class="badge hook">Stop</span>']],
+      ['Why it exists','Rules in prose are advisory; the model can reason around them. A hook is a hard stop — the seatbelt that does not negotiate.']]},
+  {id:'loop',cls:'accent',gi:'var(--accent)',t:'The loop',f:'CURRENT-TASK · STATUS · LOG',
+    s:'The rhythm that drives work to done.',
+    kind:'the loop · layer 4',
+    lead:'The loop is what turns one-shot prompting into self-driving work: a trigger, a place to track state, and a way to verify each step — so the agent keeps going on its own, turn after turn, until the task is finished.',
+    body:[['The files',['<code>CURRENT-TASK.md</code> — the active goal + next step','<code>STATUS.md</code> — durable "where it stands"','<code>LOG.md</code> — append-only worklog']],
+      ['Why it exists','State held in the chat is lost at compaction. State held in files lets a loop survive restarts and run for hours.']]},
+];
+
+/* ---------- data: trace a turn ---------- */
+const STAGES=[
+  {id:'start',t:'Session starts',badge:['SessionStart','hook'],
+    s:'A startup hook injects the standing context before you type a word.',
+    kind:'stage 1 of 7',
+    lead:'Before the first prompt, a SessionStart hook loads the contract and the current state of play, so the agent opens already knowing the rules and where the work left off.',
+    body:[['Loaded now',['CLAUDE.md rules + the maps','The nearest CURRENT-TASK / STATUS','Recent memory + worklog tail']],
+      ['Touches','Standing rules · Maps · Memory · The loop']]},
+  {id:'prompt',t:'You send a prompt',badge:['UserPromptSubmit','hook'],
+    s:'Your instruction arrives; a hook can surface task state alongside it.',
+    kind:'stage 2 of 7',
+    lead:'Your message is one input among several. A UserPromptSubmit hook can attach a reminder of the active task so the agent never loses the thread mid-session.',
+    body:[['What rides along',['The active task state','Any standing reminders']],
+      ['Touches','The loop']]},
+  {id:'plan',t:'The agent plans',badge:['model'],
+    s:'It reads the rules and reaches for a skill or a tool.',
+    kind:'stage 3 of 7',
+    lead:'The model decides how to act — and the harness has already shaped that decision. It checks installed skills and the tool map before hand-rolling anything.',
+    body:[['Where it looks',['Skills it can invoke by name','<code>TOOLS.md</code> for the right tool','Memory for prior lessons']],
+      ['Touches','Skills · Maps · Memory']]},
+  {id:'pre',t:'Guardrail check',badge:['PreToolUse','hook'],
+    s:'Before the tool runs, a hook can allow, block, or rewrite it.',
+    kind:'stage 4 of 7',
+    lead:'Every tool call passes through the guardrail first. Dangerous commands, secret reads, and protected-file overwrites are stopped here by deterministic code that runs no matter how the model reasons.',
+    body:[['Can block',['Destructive shell commands','Reads of secret-bearing files','In-place overwrites of authored files']],
+      ['Touches','Hooks <span class="badge gate">allow / block</span>']]},
+  {id:'tool',t:'The tool runs',badge:['action'],
+    s:'Edit, command, search, browse — the actual work happens.',
+    kind:'stage 5 of 7',
+    lead:'Only after the guardrail clears does the tool execute: an edit to a file, a shell command, a web fetch, a render. This is the one stage that changes the world.',
+    body:[['Typical actions',['Write or edit a file','Run a build or test','Search the codebase or the web']],
+      ['Touches','—']]},
+  {id:'post',t:'After the tool',badge:['PostToolUse','hook'],
+    s:'A hook formats, audits, and scans the result before the agent sees it.',
+    kind:'stage 6 of 7',
+    lead:'The result is cleaned up on the way back: auto-format an edited file, log the command, scan output so a secret never lands in the transcript.',
+    body:[['Runs now',['Format the edited file','Append to the audit log','Scrub secrets from output']],
+      ['Touches','Hooks']]},
+  {id:'stop',t:'Stop, or keep going',badge:['Stop','hook'],
+    s:'A hook checks the queue and the verifier — then loops back or finishes.',
+    kind:'stage 7 of 7',
+    lead:'When the agent tries to end its turn, a Stop hook asks two questions: is the work actually verified, and is the task list empty? If not, it sends the agent back to planning. That return arrow is the loop.',
+    body:[['The gate',['Did the verifier pass? <span class="badge gate">VERIFY.md</span>','Are there unfinished task items?','If yes → back to plan. If no → done.']],
+      ['Touches','Hooks · The loop · Maps (VERIFY)']]},
+];
+
+/* ---------- render ---------- */
+const stackEl=document.getElementById('stack');
+LAYERS.forEach(L=>{
+  const d=document.createElement('div');
+  d.className='layer';d.dataset.id=L.id;
+  d.innerHTML=`<div class="lt"><span class="gi" style="background:${L.gi}"></span>${L.t}</div>
+    <div class="ls">${L.s}</div><div class="lf">${L.f}</div>`;
+  d.onclick=()=>selLayer(L.id);
+  stackEl.appendChild(d);
+});
+const core=document.createElement('div');
+core.className='core';
+core.innerHTML=`<div class="ct">▟ the agent</div><div class="cs">reads files · runs commands · acts</div>`;
+stackEl.appendChild(core);
+
+const pipe=document.getElementById('pipe');
+STAGES.forEach((S,i)=>{
+  const d=document.createElement('div');
+  d.className='stage';d.dataset.id=S.id;d.dataset.idx=i;
+  const badges=S.badge.map(b=>{
+    if(b==='hook')return '';if(b==='model'||b==='action')return `<span class="badge">${b}</span>`;
+    return '';
+  });
+  let badgeHTML='';
+  if(S.badge.length===2 && S.badge[1]==='hook') badgeHTML=`<span class="badge hook">${S.badge[0]}</span>`;
+  else if(S.badge[0]==='model'||S.badge[0]==='action') badgeHTML=`<span class="badge">${S.badge[0]}</span>`;
+  d.innerHTML=`<div class="st">${S.t} ${badgeHTML}</div><div class="ss">${S.s}</div>`;
+  d.onclick=()=>{selStage(S.id);setActive(i,false);};
+  pipe.appendChild(d);
+});
+
+/* ---------- detail panel ---------- */
+const dKind=document.getElementById('d-kind'),dTitle=document.getElementById('d-title'),
+      dLead=document.getElementById('d-lead'),dBody=document.getElementById('d-body');
+function renderDetail(o){
+  dKind.textContent=o.kind;dTitle.textContent=o.t||o.title;dLead.innerHTML=o.lead;
+  let h='';
+  (o.body||[]).forEach(sec=>{
+    h+=`<h4>${sec[0]}</h4>`;
+    if(Array.isArray(sec[1])){h+='<ul>'+sec[1].map(x=>`<li>${x}</li>`).join('')+'</ul>';}
+    else{h+=`<div class="why">${sec[1]}</div>`;}
+  });
+  dBody.innerHTML=h;
+}
+function selLayer(id){
+  document.querySelectorAll('.layer').forEach(e=>e.classList.toggle('sel',e.dataset.id===id));
+  document.querySelectorAll('.stage').forEach(e=>e.classList.remove('sel'));
+  renderDetail(LAYERS.find(L=>L.id===id));
+}
+function selStage(id){
+  document.querySelectorAll('.stage').forEach(e=>e.classList.toggle('sel',e.dataset.id===id));
+  document.querySelectorAll('.layer').forEach(e=>e.classList.remove('sel'));
+  renderDetail(STAGES.find(S=>S.id===id));
+}
+
+/* ---------- the run animation ---------- */
+const marker=document.getElementById('marker'),stageEls=[...document.querySelectorAll('.stage')];
+let cur=-1,timer=null;
+function moveMarker(i){
+  const s=stageEls[i];marker.style.top=(s.offsetTop+8)+'px';
+}
+function setActive(i,advancePanel){
+  cur=i;
+  stageEls.forEach((e,j)=>{e.classList.toggle('active',j===i);e.classList.toggle('done',j<i);});
+  moveMarker(i);
+  if(advancePanel){selStage(STAGES[i].id);}
+}
+function step(){
+  let next=cur+1;
+  if(next>=STAGES.length){ // wrap: show the loop-back, then reset
+    stageEls.forEach(e=>e.classList.remove('active','done'));
+    cur=-1;next=0;
+  }
+  setActive(next,true);
+  return next;
+}
+document.getElementById('stepBtn').onclick=()=>{stopRun();step();};
+function stopRun(){if(timer){clearInterval(timer);timer=null;runBtn.innerHTML='▶ run a turn';runBtn.classList.add('primary');}}
+const runBtn=document.getElementById('runBtn');
+runBtn.onclick=()=>{
+  if(timer){stopRun();return;}
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(cur>=STAGES.length-1||cur<0){stageEls.forEach(e=>e.classList.remove('active','done'));cur=-1;}
+  runBtn.innerHTML='❚❚ pause';runBtn.classList.remove('primary');
+  step();
+  timer=setInterval(()=>{
+    if(cur>=STAGES.length-1){ // finished a full pass
+      clearInterval(timer);timer=null;runBtn.innerHTML='↻ run again';
+      return;
+    }
+    step();
+  }, reduce?700:1150);
+};
+
+/* recompute marker position on resize */
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(cur>=0)moveMarker(cur);},120);});
+</script>
+</body>
+</html>
