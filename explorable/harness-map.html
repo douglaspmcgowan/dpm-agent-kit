@@ -100,7 +100,7 @@
   .stage:hover{border-color:var(--accent2)}
   .stage.sel{border-color:var(--accent)}
   .stage.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-  .stage.active::before{background:var(--accent);border-color:var(--accent)}
+  .stage.active::before,.stage.sel::before{background:var(--accent);border-color:var(--accent)}
   .stage.done::before{background:var(--accent2);border-color:var(--accent2)}
   .stage .st{font-family:var(--disp);font-weight:700;font-size:clamp(11.6px,1.05vw,13.5px);display:flex;align-items:center;gap:9px;flex-wrap:wrap}
   .stage .badge{font-family:var(--mono);font-size:clamp(8.6px,0.78vw,10px);text-transform:uppercase;letter-spacing:.5px;
@@ -179,14 +179,9 @@
     <section>
       <div class="tracehead">
         <p class="seclabel" style="margin:0">Trace a turn <span class="ln"></span></p>
-        <div class="controls">
-          <button class="btn" id="stepBtn">step ▸</button>
-          <button class="btn primary" id="runBtn">▶ run a turn</button>
-        </div>
       </div>
       <div class="pipe" id="pipe">
         <div class="rail"></div>
-        <div class="marker" id="marker" style="top:14px"></div>
       </div>
     </section>
   </div>
@@ -197,7 +192,7 @@
     <h2 id="d-title">Start anywhere</h2>
     <p class="lead" id="d-lead">The agent doesn't keep state between chats and will act on almost anything. The
     harness supplies what it lacks: standing rules, guardrails, memory, reusable know-how, and a loop. Pick a
-    layer on the left to see what it holds, or hit <b>run a turn</b> to watch a request travel the path.</p>
+    layer on the left to see what it holds, or click a <b>stage</b> on the right to read what happens at each step of a turn.</p>
     <div id="d-body"></div>
   </aside>
 </main>
@@ -334,7 +329,7 @@ STAGES.forEach((S,i)=>{
   if(S.badge.length===2 && S.badge[1]==='hook') badgeHTML=`<span class="badge hook">${S.badge[0]}</span>`;
   else if(S.badge[0]==='model'||S.badge[0]==='action') badgeHTML=`<span class="badge">${S.badge[0]}</span>`;
   d.innerHTML=`<div class="st">${S.t} ${badgeHTML}</div><div class="ss">${S.s}</div>`;
-  d.onclick=()=>{selStage(S.id);setActive(i,false);};
+  d.onclick=()=>selStage(S.id);
   pipe.appendChild(d);
 });
 
@@ -362,47 +357,7 @@ function selStage(id){
   renderDetail(STAGES.find(S=>S.id===id));
 }
 
-/* ---------- the run animation ---------- */
-const marker=document.getElementById('marker'),stageEls=[...document.querySelectorAll('.stage')];
-let cur=-1,timer=null;
-function moveMarker(i){
-  const s=stageEls[i];marker.style.top=(s.offsetTop+8)+'px';
-}
-function setActive(i,advancePanel){
-  cur=i;
-  stageEls.forEach((e,j)=>{e.classList.toggle('active',j===i);e.classList.toggle('done',j<i);});
-  moveMarker(i);
-  if(advancePanel){selStage(STAGES[i].id);}
-}
-function step(){
-  let next=cur+1;
-  if(next>=STAGES.length){ // wrap: show the loop-back, then reset
-    stageEls.forEach(e=>e.classList.remove('active','done'));
-    cur=-1;next=0;
-  }
-  setActive(next,true);
-  return next;
-}
-document.getElementById('stepBtn').onclick=()=>{stopRun();step();};
-function stopRun(){if(timer){clearInterval(timer);timer=null;runBtn.innerHTML='▶ run a turn';runBtn.classList.add('primary');}}
-const runBtn=document.getElementById('runBtn');
-runBtn.onclick=()=>{
-  if(timer){stopRun();return;}
-  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(cur>=STAGES.length-1||cur<0){stageEls.forEach(e=>e.classList.remove('active','done'));cur=-1;}
-  runBtn.innerHTML='❚❚ pause';runBtn.classList.remove('primary');
-  step();
-  timer=setInterval(()=>{
-    if(cur>=STAGES.length-1){ // finished a full pass
-      clearInterval(timer);timer=null;runBtn.innerHTML='↻ run again';
-      return;
-    }
-    step();
-  }, reduce?700:1150);
-};
-
-/* recompute marker position on resize */
-let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(cur>=0)moveMarker(cur);},120);});
+/* stages are click-to-explain; the diagram does not pretend to execute */
 </script>
 </body>
 </html>

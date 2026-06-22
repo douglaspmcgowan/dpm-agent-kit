@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="paper">
+<html lang="en" data-theme="tokyo">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,30 +16,31 @@
 <meta name="twitter:image" content="https://dpm-agent-kit.vercel.app/explorable/preview.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   /* Light editorial default — true off-white at chroma 0, deep ink, one committed
      forest-teal accent. Escapes the dark-neon "AI coding tool" reflex. */
-  :root,[data-theme="paper"]{
-    --bg:#f4f3ef; --panel:#fffefb; --panel2:#eceae3;
-    --ink:#1a1c1a; --text:#262a27; --body:#3d423d; --muted:#6c726b;
-    --line:#dcdacf; --line2:#cbc9bc;
-    --accent:#1f5d52; --accent-deep:#163f38; --accent-soft:#e0ece8;
-    --thread:#9a5a2b;            /* warm secondary, used once for the bonus link */
-    --disp:'Fraunces',Georgia,'Times New Roman',serif;
-    --sans:'IBM Plex Sans',system-ui,sans-serif;
+  /* Tokyo-Night dark default + brutalist light — one theme system shared with every page. */
+  :root,[data-theme="tokyo"]{
+    --bg:#15161e; --panel:#1b1d29; --panel2:#191b25;
+    --ink:#e9edff; --text:#c8d0f0; --body:#aeb6df; --muted:#6b73a0;
+    --line:#262a40; --line2:#363b58;
+    --accent:#9ece6a; --accent-deep:#b8e89a; --accent-soft:#1e2a17;
+    --thread:#e0af68;
+    --disp:'Sora',system-ui,sans-serif;
+    --sans:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
     --mono:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
-    --r:4px; --shadow:0 1px 2px rgba(26,28,26,.04), 0 10px 30px rgba(26,28,26,.06);
+    --r:6px; --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.34);
     --z-base:0;
   }
-  /* Ink dark — a real warm-black study, not neon Tokyo Night. */
-  [data-theme="ink"]{
-    --bg:#16181a; --panel:#1e2123; --panel2:#202325;
-    --ink:#f1efe9; --text:#dcdad3; --body:#b6b8b3; --muted:#80847f;
-    --line:#2c2f31; --line2:#3a3e40;
-    --accent:#5fb3a3; --accent-deep:#7cc6b8; --accent-soft:#1c2b29;
-    --thread:#d39b6e;
-    --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 36px rgba(0,0,0,.34);
+  [data-theme="brutalist"]{
+    --bg:#fafafa; --panel:#ffffff; --panel2:#f2f2f2;
+    --ink:#0d0d0d; --text:#0d0d0d; --body:#2a2a2a; --muted:#5a5a5a;
+    --line:#0d0d0d; --line2:#0d0d0d;
+    --accent:#c81e00; --accent-deep:#c81e00; --accent-soft:#ffe2dc;
+    --thread:#0a58ff;
+    --disp:'Space Mono',monospace; --sans:'Space Mono',monospace; --mono:'Space Mono',monospace;
+    --r:0; --shadow:none;
   }
   *{box-sizing:border-box}
   html,body{margin:0}
@@ -52,10 +53,10 @@
 
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;
           padding:15px 28px;border-bottom:1px solid var(--line);background:transparent}
-  .topbar .mid{font-family:var(--mono);font-weight:500;letter-spacing:0;font-size:13.5px;color:var(--text)}
+  .topbar .mid{font-family:var(--mono);font-weight:500;letter-spacing:0;font-size:clamp(11.6px,1.05vw,13.5px);color:var(--text)}
   .topbar .mid b{color:var(--accent-deep);font-weight:600}
   .theme-pill{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line2);
-       border-radius:999px;padding:6px 13px 6px 11px;font-size:12px;font-family:var(--mono);color:var(--body);cursor:pointer;
+       border-radius:999px;padding:6px 13px 6px 11px;font-size:clamp(10.3px,0.94vw,12px);font-family:var(--mono);color:var(--body);cursor:pointer;
        transition:border-color .16s ease, color .16s ease}
   .theme-pill:hover{border-color:var(--accent);color:var(--ink)}
   .theme-pill .sw{width:10px;height:10px;border-radius:50%;background:var(--accent);
@@ -74,7 +75,7 @@
   /* ---- thin rule that separates lede from the choices ---- */
   .lede-rule{display:flex;align-items:center;gap:16px;margin:48px 0 26px;color:var(--muted)}
   .lede-rule .ln{flex:1;height:1px;background:var(--line2)}
-  .lede-rule span{font-family:var(--mono);font-size:12.5px;letter-spacing:0;white-space:nowrap}
+  .lede-rule span{font-family:var(--mono);font-size:clamp(10.8px,0.98vw,12.5px);letter-spacing:0;white-space:nowrap}
 
   /* ---- the primary card: a wide editorial banner, distinct from the trio ---- */
   a.feature{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:22px;
@@ -82,12 +83,12 @@
     border-radius:var(--r);padding:26px 28px;margin-bottom:14px;box-shadow:var(--shadow);
     transition:border-color .18s ease, box-shadow .22s ease}
   a.feature:hover{border-color:var(--accent);box-shadow:0 2px 4px rgba(26,28,26,.05),0 16px 40px rgba(26,28,26,.1)}
-  a.feature .mark{font-family:var(--disp);font-size:30px;font-weight:500;color:var(--accent);
+  a.feature .mark{font-family:var(--disp);font-size:clamp(25.8px,2.34vw,30px);font-weight:500;color:var(--accent);
     width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--accent);
     border-radius:50%;flex:0 0 auto;font-variation-settings:'opsz' 144}
-  a.feature .ftext h2{font-family:var(--disp);font-size:23px;font-weight:500;margin:0 0 5px;color:var(--ink);letter-spacing:-.01em}
-  a.feature .ftext p{font-size:14.5px;color:var(--body);margin:0;max-width:60ch;line-height:1.55}
-  a.feature .arr{font-family:var(--mono);font-size:13px;color:var(--accent-deep);white-space:nowrap;
+  a.feature .ftext h2{font-family:var(--disp);font-size:clamp(19.8px,1.8vw,23px);font-weight:500;margin:0 0 5px;color:var(--ink);letter-spacing:-.01em}
+  a.feature .ftext p{font-size:clamp(12.5px,1.13vw,14.5px);color:var(--body);margin:0;max-width:60ch;line-height:1.55}
+  a.feature .arr{font-family:var(--mono);font-size:clamp(11.2px,1.02vw,13px);color:var(--accent-deep);white-space:nowrap;
     transition:transform .2s cubic-bezier(.2,.8,.2,1)}
   a.feature:hover .arr{transform:translateX(4px)}
 
@@ -97,19 +98,19 @@
     border:1px solid var(--line);border-radius:var(--r);padding:20px 20px 18px;
     transition:border-color .18s ease, transform .2s cubic-bezier(.2,.8,.2,1)}
   a.path:hover{border-color:var(--accent);transform:translateY(-3px)}
-  a.path .verb{font-family:var(--mono);font-size:12px;color:var(--muted)}
-  a.path h3{font-family:var(--disp);font-size:18px;font-weight:500;margin:6px 0 7px;color:var(--ink);letter-spacing:-.01em}
-  a.path p{font-size:13px;color:var(--body);margin:0 0 14px;line-height:1.5;flex:1}
-  a.path .go{font-family:var(--mono);font-size:12px;color:var(--accent-deep)}
+  a.path .verb{font-family:var(--mono);font-size:clamp(10.3px,0.94vw,12px);color:var(--muted)}
+  a.path h3{font-family:var(--disp);font-size:clamp(15.5px,1.41vw,18px);font-weight:500;margin:6px 0 7px;color:var(--ink);letter-spacing:-.01em}
+  a.path p{font-size:clamp(11.2px,1.02vw,13px);color:var(--body);margin:0 0 14px;line-height:1.5;flex:1}
+  a.path .go{font-family:var(--mono);font-size:clamp(10.3px,0.94vw,12px);color:var(--accent-deep)}
   a.path:hover .go{text-decoration:underline;text-underline-offset:3px}
 
   /* ---- bonus row ---- */
   .bonus{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
     margin-top:34px;padding-top:22px;border-top:1px solid var(--line)}
-  .bonus a{color:var(--thread);text-decoration:none;font-family:var(--mono);font-size:13px;
+  .bonus a{color:var(--thread);text-decoration:none;font-family:var(--mono);font-size:clamp(11.2px,1.02vw,13px);
     display:inline-flex;align-items:center;gap:7px}
   .bonus a:hover{text-decoration:underline;text-underline-offset:3px}
-  footer{color:var(--muted);font-family:var(--mono);font-size:11.5px}
+  footer{color:var(--muted);font-family:var(--mono);font-size:clamp(9.9px,0.9vw,11.5px)}
 
   @media(max-width:760px){
     .wrap{padding:48px 20px 60px}
@@ -122,12 +123,13 @@
     a.feature:hover .arr{transform:none}
     a.path:hover{transform:none}
   }
+  [data-theme="brutalist"] .theme-pill{border-radius:0}
 </style>
 </head>
 <body>
 <div class="topbar">
   <span class="mid">dpm-<b>agent</b>-kit</span>
-  <button class="theme-pill" id="themeBtn" title="switch theme"><span class="sw"></span><span id="theme-label">paper</span></button>
+  <button class="theme-pill" id="themeBtn" title="switch theme"><span class="sw"></span><span id="theme-label">tokyo</span></button>
 </div>
 <div class="wrap">
   <div class="hero">
@@ -196,7 +198,7 @@
   </div>
 </div>
 <script>
-const THEMES=['paper','ink'];
+const THEMES=['tokyo','brutalist'];
 let ti=Math.max(0,THEMES.indexOf(localStorage.getItem('dpmkit-theme')));
 function applyTheme(){document.documentElement.dataset.theme=THEMES[ti];
   localStorage.setItem('dpmkit-theme',THEMES[ti]);
