@@ -1,399 +1,1458 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="tokyo">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>dpm-agent-kit — control panel</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  /* ===== shared theme tokens (whole-site toggle target) ===== */
-  :root,[data-theme="tokyo"]{
-    --bg:#15161e; --panel:#1b1d29; --panel2:#191b25; --side:#14151c; --text:#c8d0f0; --muted:#6b73a0;
-    --line:#262a40; --accent:#9ece6a; --accent2:#7aa2f7; --cyan:#7dcfff; --magenta:#bb9af7;
-    --danger:#f7768e; --warn:#e0af68;
-    --disp:'Sora',system-ui,sans-serif;
-    --mono:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,monospace; --r:6px;
-  }
-  [data-theme="brutalist"]{--bg:#fafafa;--panel:#ffffff;--panel2:#f2f2f2;--side:#0d0d0d;--text:#0d0d0d;--muted:#5a5a5a;--line:#0d0d0d;--accent:#c81e00;--accent2:#0d0d0d;--cyan:#0a58ff;--magenta:#7a3cff;--danger:#c81e00;--warn:#9a5a00;--disp:'Space Mono',monospace;--mono:'Space Mono',monospace;--r:0;}
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
-  body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.6;
-       display:grid;grid-template-rows:auto 1fr;min-height:100vh}
-  /* ---- top bar (shared chrome) ---- */
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;
-          padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel2)}
-  .topbar a.back{color:var(--muted);text-decoration:none;font-size:13px}
-  .topbar a.back:hover{color:var(--accent)}
-  .xnav{display:flex;gap:14px;flex-wrap:wrap}
-  .xnav a{color:var(--muted);text-decoration:none;font-size:13px}
-  .xnav a:hover,.xnav a.on{color:var(--accent)}
-  .theme-pill{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);
-       border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text);cursor:pointer}
-  .theme-pill:hover{border-color:var(--accent)}
-  .theme-pill .sw{width:11px;height:11px;border-radius:50%;background:var(--accent)}
-  /* ---- sidebar + main grid (below the topbar) ---- */
-  .shell{display:grid;grid-template-columns:248px 1fr;min-height:0}
-  nav{background:var(--side);border-right:1px solid var(--line);padding:24px 14px;overflow-y:auto;color:var(--text)}
-  /* brutalist: the sidebar block stays dark, so re-scope it to light-on-dark text */
-  [data-theme="brutalist"] nav{--text:#e8e8e8;--muted:#9aa0b5;--accent:#ff5a3c;--line:#3a3a3a}
-  nav .brand{font-family:var(--disp);font-size:15px;font-weight:700;letter-spacing:-.01em;
-    padding:0 8px 16px;border-bottom:1px solid var(--line);margin-bottom:14px}
-  nav .brand .g{color:var(--accent)}
-  nav .grp{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:18px 8px 8px}
-  nav button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:transparent;border:1px solid transparent;
-    color:var(--text);font-family:var(--mono);font-size:13px;padding:9px 10px;border-radius:var(--r);cursor:pointer;transition:.15s}
-  nav button:hover{background:var(--panel)}
-  nav button.on{background:var(--panel);border:1px solid var(--line)}
-  nav button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-  nav button .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
-  main{padding:34px 40px;overflow-y:auto}
-  .head h2{font-family:var(--disp);font-size:27px;font-weight:800;letter-spacing:-.015em;margin:0}
-  .head .tag{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1.5px;margin:10px 0 0}
-  .head p{color:var(--text);opacity:.82;max-width:720px;margin:14px 0 0}
-  .stats{display:flex;gap:14px;flex-wrap:wrap;margin:26px 0 30px}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px;min-width:118px}
-  .stat .v{font-family:var(--disp);font-size:24px;font-weight:700;color:var(--accent);line-height:1.1}
-  .stat .l{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:1px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-  .item{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;
-    transition:border-color .15s}
-  .item:hover{border-color:var(--accent)}
-  .item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .item .row{padding:14px 16px;cursor:pointer;user-select:none}
-  .item .it{font-family:var(--disp);font-weight:600;font-size:14px;color:var(--text);
-    display:flex;align-items:center;gap:8px}
-  .item .it .b{font-family:var(--mono);font-weight:500;font-size:10px;padding:2px 8px;border-radius:20px;
-    border:1px solid var(--line);color:var(--muted);letter-spacing:.5px}
-  .item .it .b.block{color:var(--danger);border-color:var(--danger)}
-  .item .it .b.warn{color:var(--warn);border-color:var(--warn)}
-  .item .it .b.flow{color:var(--cyan);border-color:var(--cyan)}
-  .item .it .b.gen{color:var(--accent);border-color:var(--accent)}
-  .item .it .caret{margin-left:auto;color:var(--muted);transition:transform .2s,color .2s;font-size:15px}
-  .item.open .it .caret{transform:rotate(90deg);color:var(--accent)}
-  .item .d{color:var(--text);opacity:.82;font-size:13px;margin-top:7px}
-  .item .body{max-height:0;overflow:hidden;transition:max-height .28s ease}
-  .item.open .body{max-height:640px}
-  .item .body .inner{padding:0 16px 16px;border-top:1px solid var(--line);margin-top:2px}
-  .item .body .inner p{margin:12px 0 0;color:var(--text);opacity:.82;font-size:13px}
-  .item .body .inner code{color:var(--cyan);background:var(--bg);padding:1px 6px;border-radius:5px;font-size:12px}
-  .item .body .inner .src{margin-top:14px;font-size:11px;color:var(--muted);letter-spacing:.3px}
-  .showmore{margin-top:14px}
-  .showmore button{background:var(--panel);border:1px solid var(--line);color:var(--text);
-    font-family:var(--mono);font-size:12px;padding:8px 16px;border-radius:var(--r);cursor:pointer}
-  .showmore button:hover{border-color:var(--accent);color:var(--accent)}
-  .showmore button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-  .extbox{margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
-  .extbox h3{font-family:var(--disp);font-size:14px;margin:0 0 10px;letter-spacing:.3px}
-  .extbox p{margin:0 0 12px;color:var(--text);opacity:.82;font-size:13px}
-  .extbox p:last-child{margin-bottom:0}
-  .extbox code{color:var(--cyan);background:var(--bg);padding:2px 8px;border-radius:5px;font-size:13px}
-  .extbtns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
-  .extbtn{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--accent);
-    border-radius:var(--r);padding:9px 16px;color:var(--accent);text-decoration:none;font-size:13px;font-weight:600}
-  .extbtn:hover{background:var(--accent);color:var(--bg)}
-  .extbtn.sub{border-color:var(--line);color:var(--muted)}
-  .extbtn.sub:hover{background:var(--panel2);color:var(--text)}
-  .extbtn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-  .demo{background:var(--panel2);border:1px dashed var(--line);border-radius:var(--r);padding:16px 18px;margin-top:24px;
-        white-space:pre-wrap;font-size:13px;color:var(--muted);line-height:1.7}
-  .demo .err{color:var(--danger)}.demo .ok{color:var(--accent)}.demo .key{color:var(--cyan)}
-  @media(max-width:760px){.shell{grid-template-columns:1fr}nav{border-right:none;border-bottom:1px solid var(--line)}}
-</style>
-</head>
-<body>
-<div class="topbar"><a class="back" href="index.html">← intro</a><nav class="xnav"><a href="option-2-scrollytelling.html">walkthrough</a><a href="option-1-node-map.html">map</a><a href="option-3-terminal.html">terminal</a><a class="on" href="option-4-dashboard.html">panel</a>    <a href="skills-library.html">library</a>
-    <a href="harness-map.html">harness</a>
-  </nav><button class="theme-pill" id="themeBtn"><span class="sw"></span><span id="theme-label">tokyo</span></button></div>
-<div class="shell">
-<nav>
-  <div class="brand">dpm-agent-kit <span class="g">▴</span></div>
-  <div class="grp">Pillars</div>
-  <div id="nav-pillars"></div>
-  <div class="grp">Plugged-in tools</div>
-  <div id="nav-tools"></div>
-</nav>
-<main id="main"></main>
-</div>
-<script>
-/* ---------- theme toggle (cycle THEMES, persist to localStorage, pill shows name) ---------- */
-const THEMES=['tokyo','brutalist'];
-let ti=Math.max(0,THEMES.indexOf(localStorage.getItem('dpmkit-theme')));
-function applyTheme(){document.documentElement.dataset.theme=THEMES[ti];
-  localStorage.setItem('dpmkit-theme',THEMES[ti]);
-  const l=document.getElementById('theme-label');if(l)l.textContent=THEMES[ti];}
-document.getElementById('themeBtn').onclick=()=>{ti=(ti+1)%THEMES.length;applyTheme();};
-applyTheme();
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dpm-agent-kit — control panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===== shared theme tokens (whole-site toggle target) ===== */
+      :root,
+      [data-theme="tokyo"] {
+        --bg: #15161e;
+        --panel: #1b1d29;
+        --panel2: #191b25;
+        --side: #14151c;
+        --text: #c8d0f0;
+        --muted: #6b73a0;
+        --line: #262a40;
+        --accent: #9ece6a;
+        --accent2: #7aa2f7;
+        --cyan: #7dcfff;
+        --magenta: #bb9af7;
+        --danger: #f7768e;
+        --warn: #e0af68;
+        --disp: "Sora", system-ui, sans-serif;
+        --body-font: "IBM Plex Sans", system-ui, sans-serif;
+        --mono:
+          "IBM Plex Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+        --r: 6px;
+      }
+      [data-theme="brutalist"] {
+        --bg: #fafafa;
+        --panel: #ffffff;
+        --panel2: #f2f2f2;
+        --side: #0d0d0d;
+        --text: #0d0d0d;
+        --muted: #5a5a5a;
+        --line: #0d0d0d;
+        --accent: #c81e00;
+        --accent2: #0d0d0d;
+        --cyan: #0a58ff;
+        --magenta: #7a3cff;
+        --danger: #c81e00;
+        --warn: #9a5a00;
+        --disp: "Space Mono", monospace;
+        --mono: "Space Mono", monospace;
+        --body-font: "Space Mono", monospace;
+        --r: 0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--body-font);
+        font-size: 14px;
+        line-height: 1.6;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        min-height: 100vh;
+      }
+      /* ---- top bar (shared chrome) ---- */
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel2);
+      }
+      .topbar a.back {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .topbar a.back:hover {
+        color: var(--accent);
+      }
+      .xnav {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .xnav a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .xnav a:hover,
+      .xnav a.on {
+        color: var(--accent);
+      }
+      .theme-pill {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 12px;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .theme-pill:hover {
+        border-color: var(--accent);
+      }
+      .theme-pill:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 2px var(--bg),
+          0 0 0 3px var(--accent);
+      }
+      .theme-pill .sw {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      /* ---- sidebar + main grid (below the topbar) ---- */
+      .shell {
+        display: grid;
+        grid-template-columns: 248px 1fr;
+        min-height: 0;
+      }
+      nav {
+        background: var(--side);
+        border-right: 1px solid var(--line);
+        padding: 24px 14px;
+        overflow-y: auto;
+        color: var(--text);
+      }
+      /* brutalist: the sidebar block stays dark, so re-scope it to light-on-dark text */
+      [data-theme="brutalist"] nav {
+        --text: #e8e8e8;
+        --muted: #9aa0b5;
+        --accent: #ff5a3c;
+        --line: #3a3a3a;
+      }
+      nav .brand {
+        font-family: var(--disp);
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        padding: 0 8px 16px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 14px;
+      }
+      nav .brand .g {
+        color: var(--accent);
+      }
+      nav .grp {
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 18px 8px 8px;
+      }
+      nav button {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 9px 10px;
+        border-radius: var(--r);
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      nav button:hover {
+        background: var(--panel);
+      }
+      nav button.on {
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+      nav button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+      nav button .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex: 0 0 auto;
+      }
+      main {
+        padding: 34px 40px;
+        overflow-y: auto;
+      }
+      .head h2 {
+        font-family: var(--disp);
+        font-size: 27px;
+        font-weight: 800;
+        letter-spacing: -0.015em;
+        margin: 0;
+      }
+      .head .tag {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin: 10px 0 0;
+      }
+      .head p {
+        color: var(--text);
+        opacity: 0.82;
+        max-width: 720px;
+        margin: 14px 0 0;
+      }
+      .stats {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin: 26px 0 30px;
+      }
+      .stat {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 14px 18px;
+        min-width: 118px;
+      }
+      .stat .v {
+        font-family: var(--disp);
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--accent);
+        line-height: 1.1;
+      }
+      .stat .l {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+      }
+      .item {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        transition: border-color 0.15s;
+      }
+      .item:hover {
+        border-color: var(--accent);
+      }
+      .item:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .item .row {
+        padding: 14px 16px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .item .it {
+        font-family: var(--disp);
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .item .it .b {
+        font-family: var(--mono);
+        font-weight: 500;
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        border: 1px solid var(--line);
+        color: var(--muted);
+        letter-spacing: 0.5px;
+      }
+      .item .it .b.block {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+      .item .it .b.warn {
+        color: var(--warn);
+        border-color: var(--warn);
+      }
+      .item .it .b.flow {
+        color: var(--cyan);
+        border-color: var(--cyan);
+      }
+      .item .it .b.gen {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .item .it .caret {
+        margin-left: auto;
+        color: var(--muted);
+        transition:
+          transform 0.2s,
+          color 0.2s;
+        font-size: 15px;
+      }
+      .item.open .it .caret {
+        transform: rotate(90deg);
+        color: var(--accent);
+      }
+      .item .d {
+        color: var(--text);
+        opacity: 0.82;
+        font-size: 13px;
+        margin-top: 7px;
+      }
+      .item .body {
+        display: grid;
+        grid-template-rows: 0fr;
+        overflow: hidden;
+        transition: grid-template-rows 0.28s ease;
+      }
+      .item.open .body {
+        grid-template-rows: 1fr;
+      }
+      .item .body .inner {
+        min-height: 0;
+        padding: 0 16px 16px;
+        border-top: 1px solid var(--line);
+        margin-top: 2px;
+      }
+      .item .body .inner p {
+        margin: 12px 0 0;
+        color: var(--text);
+        opacity: 0.82;
+        font-size: 13px;
+      }
+      .item .body .inner code {
+        color: var(--cyan);
+        background: var(--bg);
+        padding: 1px 6px;
+        border-radius: 5px;
+        font-size: 12px;
+      }
+      .item .body .inner .src {
+        margin-top: 14px;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.3px;
+      }
+      .showmore {
+        margin-top: 14px;
+      }
+      .showmore button {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 12px;
+        padding: 8px 16px;
+        border-radius: var(--r);
+        cursor: pointer;
+      }
+      .showmore button:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .showmore button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+      .extbox {
+        margin-top: 26px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 18px 20px;
+      }
+      .extbox h3 {
+        font-family: var(--disp);
+        font-size: 14px;
+        margin: 0 0 10px;
+        letter-spacing: 0.3px;
+      }
+      .extbox p {
+        margin: 0 0 12px;
+        color: var(--text);
+        opacity: 0.82;
+        font-size: 13px;
+      }
+      .extbox p:last-child {
+        margin-bottom: 0;
+      }
+      .extbox code {
+        color: var(--cyan);
+        background: var(--bg);
+        padding: 2px 8px;
+        border-radius: 5px;
+        font-size: 13px;
+      }
+      .extbtns {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 6px;
+      }
+      .extbtn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--bg);
+        border: 1px solid var(--accent);
+        border-radius: var(--r);
+        padding: 9px 16px;
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .extbtn:hover {
+        background: var(--accent);
+        color: var(--bg);
+      }
+      .extbtn.sub {
+        border-color: var(--line);
+        color: var(--muted);
+      }
+      .extbtn.sub:hover {
+        background: var(--panel2);
+        color: var(--text);
+      }
+      .extbtn:focus-visible {
+        outline: 2px solid var(--cyan);
+        outline-offset: 2px;
+      }
+      .demo {
+        background: var(--panel2);
+        border: 1px dashed var(--line);
+        border-radius: var(--r);
+        padding: 16px 18px;
+        margin-top: 24px;
+        white-space: pre-wrap;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .demo .err {
+        color: var(--danger);
+      }
+      .demo .ok {
+        color: var(--accent);
+      }
+      .demo .key {
+        color: var(--cyan);
+      }
+      @media (max-width: 760px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+        nav {
+          border-right: none;
+          border-bottom: 1px solid var(--line);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="back" href="index.html">← intro</a>
+      <nav class="xnav">
+        <a href="option-2-scrollytelling.html">walkthrough</a
+        ><a href="option-1-node-map.html">map</a
+        ><a href="option-3-terminal.html">terminal</a
+        ><a class="on" href="option-4-dashboard.html">panel</a>
+        ><a href="skills-library.html">library</a
+        ><a href="harness-map.html">harness</a>
+      </nav>
+      <button class="theme-pill" id="themeBtn" title="switch theme">
+        <span class="sw"></span><span id="theme-label">tokyo</span>
+      </button>
+    </div>
+    <div class="shell">
+      <nav>
+        <div class="brand">dpm-agent-kit <span class="g">▴</span></div>
+        <div class="grp">Pillars</div>
+        <div id="nav-pillars"></div>
+        <div class="grp">Plugged-in tools</div>
+        <div id="nav-tools"></div>
+      </nav>
+      <main id="main"></main>
+    </div>
+    <script>
+      /* ---------- theme toggle (cycle THEMES, persist to localStorage, pill shows name) ---------- */
+      const THEMES = ["tokyo", "brutalist"];
+      let ti = Math.max(
+        0,
+        THEMES.indexOf(localStorage.getItem("dpmkit-theme")),
+      );
+      function applyTheme() {
+        document.documentElement.dataset.theme = THEMES[ti];
+        localStorage.setItem("dpmkit-theme", THEMES[ti]);
+        const l = document.getElementById("theme-label");
+        if (l) l.textContent = THEMES[ti];
+      }
+      document.getElementById("themeBtn").onclick = () => {
+        ti = (ti + 1) % THEMES.length;
+        applyTheme();
+      };
+      applyTheme();
 
-/* ---------- sections (preserved data + per-item expand bodies) ----------
+      /* ---------- sections (preserved data + per-item expand bodies) ----------
    each item: [name, badge, short-desc, {body, src}]  — body matches the kit's reference detail content
    sections may set initial:N to collapse a long list behind a "show all" toggle. */
-const V={accent:'var(--accent)',cyan:'var(--cyan)',green:'var(--accent)',magenta:'var(--magenta)',
-  blue:'var(--accent2)',yellow:'var(--warn)',red:'var(--danger)'};
-const SECTIONS={
-  skills:{nav:'Skills',color:V.magenta,group:'pillar',tag:'reusable expertise',
-    desc:'A skill is a markdown file with a name and a one-line description; the description is what triggers it. The agent reads your request, notices a skill that fits, and pulls in that expertise on its own — or you type /name to call it directly. The kit layers three sets: the superpowers framework, grill-me, and your own custom skills. They compose: brainstorm a design, plan it, execute it, verify it.',
-    stats:[['35','skills total'],['14','superpowers'],['19','your custom']],
-    initial:8,
-    items:[
-      ['using-superpowers','gen','Dispatcher — routes your request to the right skills in order.',
-        {body:`<p>The entry point to the superpowers framework. It reads what you asked for and reaches for the right phase on its own, so you do not have to remember which of the ~14 skills fits.</p><p>Think of it as a switchboard: one skill that hands work to <code>brainstorming</code>, then planning, then execution, then verification.</p>`,src:'github.com/obra/superpowers'}],
-      ['brainstorming','gen','Design-first dialogue; hard-gates code until you approve a design.',
-        {body:`<p>The flagship of the superpowers framework. It opens a design conversation and will not write any code until you have approved a direction.</p><p>That gate is the point: it forces the "what are we actually building" question before a single line gets typed, so you catch the holes early.</p>`,src:'github.com/obra/superpowers'}],
-      ['grill-me','flow','Relentless one-question-at-a-time interrogation of your plan.',
-        {body:`<p>Relentless, one-question-at-a-time interrogation of a plan. It walks the whole decision tree, resolving dependencies one by one, and gives a recommended answer with each question.</p><p>Reach for it when an idea is still fuzzy and you want the holes found before any code gets written.</p>`,src:'a custom skill in the kit'}],
-      ['test-driven-development','gen','Red-green-refactor: failing test first, then minimum code.',
-        {body:`<p>Walks the classic red-green-refactor loop: write a failing test, write the minimum code to pass it, then clean up. The test comes first so the code has something to answer to.</p><p>It keeps the agent honest about what "done" means, since the bar is a passing test you can read.</p>`,src:'github.com/obra/superpowers'}],
-      ['systematic-debugging','gen','Root-cause before any fix; kills shotgun debugging.',
-        {body:`<p>Forces a root-cause pass before any fix lands. The agent forms a hypothesis, confirms it, and only then changes code.</p><p>It exists to kill shotgun debugging, where you change five things at once and never learn which one mattered.</p>`,src:'github.com/obra/superpowers'}],
-      ['writing-plans','gen','Turn a spec into a step-by-step implementation plan.',
-        {body:`<p>Takes a spec or set of requirements and writes a step-by-step implementation plan before any code is touched. The plan becomes the thing you review and the worker executes.</p><p>Pairs with <code>executing-plans</code>: one writes the map, the other follows it with checkpoints.</p>`,src:'github.com/obra/superpowers'}],
-      ['executing-plans','gen','Run a written plan in a fresh session with review checkpoints.',
-        {body:`<p>Executes a written implementation plan in a separate session, pausing at review checkpoints so you can confirm each phase landed before the next starts.</p><p>It is how a long build survives context limits: the plan is the memory, the session just works the next step.</p>`,src:'github.com/obra/superpowers'}],
-      ['verification-before-completion','gen','No "it works" until a command proves it. Evidence before claims.',
-        {body:`<p>Before the agent says a thing is fixed, done, or passing, this makes it run the actual verification command and show you the output. Evidence first, claim second.</p><p>It is the antidote to the agent cheerfully reporting success on something it never ran.</p>`,src:'github.com/obra/superpowers'}],
-      ['requesting-code-review','gen','Ask for a structured review before merging a change.',
-        {body:`<p>Bundles a finished change into a structured review request, so the work gets checked against the original requirements before it merges.</p>`,src:'github.com/obra/superpowers'}],
-      ['receiving-code-review','gen','Take review feedback with rigor, not performative agreement.',
-        {body:`<p>How to take review feedback: verify each suggestion technically before implementing it, push back on the questionable ones, and skip the reflexive "great catch!" agreement.</p>`,src:'github.com/obra/superpowers'}],
-      ['dispatching-parallel-agents','gen','Fan out 2+ independent tasks to separate workers.',
-        {body:`<p>When you face two or more tasks with no shared state and no ordering between them, this dispatches them to separate workers at once instead of grinding through them in series.</p>`,src:'github.com/obra/superpowers'}],
-      ['subagent-driven-development','gen','Execute plan tasks as sub-agents inside the current session.',
-        {body:`<p>Runs the independent tasks of a plan as sub-agents within your current session, so the main thread stays the coordinator and the workers do the legwork.</p>`,src:'github.com/obra/superpowers'}],
-      ['using-git-worktrees','gen','Isolate feature work in its own checkout before you start.',
-        {body:`<p>Sets up an isolated workspace (a git worktree, or a native equivalent) so feature work does not collide with whatever is in your main checkout.</p><p>It is the "don't break the thing you're standing on" step before a big change.</p>`,src:'github.com/obra/superpowers'}],
-      ['finishing-a-development-branch','gen','Decide how to integrate finished work: merge, PR, or clean up.',
-        {body:`<p>When the implementation is done and the tests pass, this lays out the integration options — merge, open a pull request, or tear the branch down — so the close-out is deliberate.</p>`,src:'github.com/obra/superpowers'}],
-      ['writing-skills','gen','Author and pressure-test a new skill so it actually triggers.',
-        {body:`<p>Helps you write a new skill and pressure-test its description, since the description is the trigger and a vague one never fires.</p><p>This is the skill you use to grow the rest of the set.</p>`,src:'github.com/obra/superpowers'}],
-      ['deep-search','gen','Multi-step web research with fan-out + inline citations.',
-        {body:`<p>Multi-step web research with fan-out and inline citations. It plans sub-questions, dispatches parallel searches, leans on human practitioner sources (Reddit, HN, recognized blogs), and brings back a sourced synthesis instead of a single-shot answer.</p>`,src:'a custom skill in the kit'}],
-      ['make-playbook','gen','Capture a reusable pattern after a task.',
-        {body:`<p>After you finish a task worth repeating, this captures it as a reusable playbook so the next run is faster. The way the setup compounds: when you re-explain a workflow, you turn it into a skill.</p>`,src:'a custom skill in the kit'}],
-      ['parallelize','gen','Decompose work into parallel sub-agent dispatches.',
-        {body:`<p>Decomposes work into independent parts and dispatches them as parallel sub-agents in one message. Guard rails: 3+ genuinely independent parts, no two workers writing the same file.</p>`,src:'a custom skill in the kit'}],
-      ['rollover','flow','End-of-session handoff: write CURRENT-TASK.md and seed memory.',
-        {body:`<p>The end-of-session ritual as a skill: gather diagnostics, write a clean baton-pass into CURRENT-TASK.md, and seed memory with the session's lessons so tomorrow boots clean.</p>`,src:'a custom skill in the kit'}],
-      ['build-tracker','gen','Generate a deadline/application tracker (calendar, cards, table, iCal).',
-        {body:`<p>Builds a personal deadline tracker from a reference implementation: calendar, cards, table, and map views, plus an iCal export and local notes. Point it at a new domain (fellowships, jobs, conferences) and it adapts.</p>`,src:'a custom skill in the kit'}],
-      ['build-graph-explorer','gen','Build a force-directed knowledge-graph explorer from a corpus.',
-        {body:`<p>Turns a corpus of nodes and edges into a single-file graph explorer with survey, cluster, and detail zoom levels. Built off a working reference, so you get a real interactive map instead of a static picture.</p>`,src:'a custom skill in the kit'}],
-      ['groq-transcribe','gen','Pull newest audio, transcribe, clean and trim the transcript.',
-        {body:`<p>Grabs the most recent audio file, transcribes it with a Whisper model, auto-formats the result, and trims the tail once the speaker drifts off-topic. A voice-note to clean-text pipeline.</p>`,src:'a custom skill in the kit'}],
-      ['hue','gen','Meta-skill: generate a new design-language skill.',
-        {body:`<p>A meta-skill that writes other skills — specifically design-language skills. Describe a look (or hand it a screenshot) and it produces a reusable styling skill.</p>`,src:'a custom skill in the kit'}],
-      ['map-field','gen','Map a domain corpus into a "schools of thought" site.',
-        {body:`<p>Takes a pile of newsletters, papers, or discourse and organizes it into competing positions — a "schools of thought" site that shows who believes what and why.</p>`,src:'a custom skill in the kit'}],
-      ['fellowship-review','gen','Review a fellowship/scholarship draft against rubrics.',
-        {body:`<p>Reviews a fellowship or scholarship draft against type-specific rubrics and the patterns of winning applications. Also preps you for the interview.</p>`,src:'a custom skill in the kit'}],
-      ['capability-report','gen','Build a "state of a capability" report with a pipeline canvas.',
-        {body:`<p>Researches the current state of a technical capability and lays it out as a report with an embedded color-coded pipeline canvas, a maturity landscape, and readiness gates.</p>`,src:'a custom skill in the kit'}],
-      ['codex-brief','gen','Draft and dispatch a self-contained brief to a second model.',
-        {body:`<p>Drafts a stand-alone brief and hands it to a secondary coding model, enforcing a two-question gate (can you brief it in a paragraph, can you verify it without judgment) and a verification protocol on the way back.</p>`,src:'a custom skill in the kit'}],
-      ['daily-activity','flow','Prose "what I built yesterday," grouped into themes.',
-        {body:`<p>Walks yesterday's sessions and touched files and writes a prose "here's what I made" report, grouped into themed threads. The output-side daily habit.</p>`,src:'a custom skill in the kit'}],
-      ['daily-review','flow','Debugging-arc + automation-candidate audit; edits playbooks.',
-        {body:`<p>Reviews yesterday's debugging arcs across repos and sessions, spots automation candidates, and directly improves the playbooks it can. The learning-side daily habit.</p>`,src:'a custom skill in the kit'}],
-      ['bridge-status','flow','Inspect a research-bridge handoff folder; report state.',
-        {body:`<p>Inspects a local handoff folder used to pass work to a second agent and reports what is pending, in review, or released. A status check on an agent-to-agent bridge.</p>`,src:'an adapted custom skill in the kit'}],
-      ['json-generator','gen','Generate or fix a structured-payload JSON for a workflow.',
-        {body:`<p>Generates or repairs a domain structured-payload JSON for a generative-design workflow, loading the workflow's own system prompt and acting as that generator for the rest of the chat.</p>`,src:'an adapted custom skill in the kit'}],
-      ['process-linkedin-inbox','gen','Categorize pasted posts, propose site edits.',
-        {body:`<p>Takes pasted social posts dropped in an inbox folder, categorizes them, extracts links, and proposes edits to a field-map site. An adapted ingest-and-file workflow.</p>`,src:'an adapted custom skill in the kit'}],
-      ['context-update','gen','Process a dropbox folder into researched notes + an archive.',
-        {body:`<p>Scans a context-dropbox folder for new material, researches each item, writes a note, updates a map file, and archives the raw input into organized subfolders. An adapted ingest-research-file pipeline.</p>`,src:'an adapted custom skill in the kit'}],
-    ],
-    demo:'<span class="key">/brainstorming</span>\n  ? What problem does this solve, and for whom?\n  <span class="ok">⛔ no code until a design is approved.</span>'},
-  hooks:{nav:'Hooks',color:V.red,group:'pillar',tag:'the guardrails',
-    desc:'A hook is a small Node script that runs automatically at a lifecycle event — before a tool runs, after it returns, when a session starts, when the agent stops. The kit ships 18 of them, all dependency-free. They block secret leaks, data exfiltration, and destruction; they warn on risky edits; they handle workflow chores. Tuned high-precision: only the genuinely dangerous gets stopped, so normal work never hits friction.',
-    stats:[['18','hooks'],['2','tiers for secrets'],['0','npm deps']],
-    initial:8,
-    items:[
-      ['check-secret-exposure','block','Blocks commands whose purpose is to reveal secrets/env values.',
-        {body:`<p>Blocks shell commands whose primary purpose is to reveal environment values or secrets into the agent's context (think <code>printenv</code>, <code>env</code>, echoing a token).</p><p>Why it matters: once a secret lands in the transcript, the only safe fix is rotation. So the kit keeps it out in the first place.</p>`,src:'templates/hooks/check-secret-exposure.js'}],
-      ['scan-output-for-secrets','block','Backstop: scans command output for real key formats.',
-        {body:`<p>The backstop for the layer above. It scans Bash command output for known key shapes (API tokens, private keys) and a validated NAME=VALUE heuristic, and stops the result reaching the agent if a real secret is found.</p><p>Two tiers for secrets means a slip past the first check still gets caught here.</p>`,src:'templates/hooks/scan-output-for-secrets.js'}],
-      ['scan-write-for-secrets','block','Stops a hardcoded credential being written to a file.',
-        {body:`<p>Catches a credential on its way into a file via Write or Edit. If a write would hardcode a key or token, this stops it so the secret never lands on disk and gets committed. Placeholder and example values are allowed.</p><p>It pairs with the output scanner: one guards the transcript, this one guards the repo.</p>`,src:'templates/hooks/scan-write-for-secrets.js'}],
-      ['block-secret-file','block','Hard-blocks reading named files that hold live keys.',
-        {body:`<p>Hard-blocks the agent from opening specific named files or folders you know hold live secrets — say a personal notes file where you keep API keys. You list the path fragments at the top of the script.</p><p>The generic <code>.env</code> and credential patterns are handled elsewhere; this is for your named vaults.</p>`,src:'templates/hooks/block-secret-file.js'}],
-      ['block-sensitive-file-read','block','Stops the Read tool opening .env, creds, SSH keys.',
-        {body:`<p>Closes a gap: the secret-exposure hook only guards Bash, so the Read, Grep, and Glob tools could otherwise pull a <code>.env</code>, cloud credentials, or an SSH private key straight into context. This blocks that. Template and example variants stay allowed.</p>`,src:'templates/hooks/block-sensitive-file-read.js'}],
-      ['block-egress-exfil','block','Cuts uploads to unapproved hosts, curl|bash, netcat.',
-        {body:`<p>Cuts off file uploads to hosts you have not whitelisted, plus <code>curl | bash</code>, <code>iwr | iex</code>, and netcat-style egress. You configure <code>ALLOWED_UPLOAD_HOSTS</code> at the top of the file. Normal API calls and downloads run freely.</p><p>This is the defense against the lethal trifecta: private data + untrusted content + a way out.</p>`,src:'templates/hooks/block-egress-exfil.js'}],
-      ['block-web-egress-in-protected-dir','warn','Gates web tools when working in a sensitive folder.',
-        {body:`<p>When the session is working inside a folder you marked protected (sensitive or regulated material), this gates the public web tools so that context never gets sent to a search or fetch service. Domains you approve stay allowed.</p><p>It warns rather than hard-blocks, so you can confirm and continue on a false alarm.</p>`,src:'templates/hooks/block-web-egress-in-protected-dir.js'}],
-      ['block-dangerous-bash','block','rm -rf ~, force-push, reset --hard, live DROP TABLE.',
-        {body:`<p>Stops the handful of commands that are hard to walk back: <code>rm -rf ~</code>, <code>git push --force</code>, <code>git reset --hard</code>, <code>git clean -f</code>, and live <code>DROP</code>/<code>TRUNCATE</code> against a real database. The safe <code>--force-with-lease</code> variant is allowed. Everything reversible runs freely.</p>`,src:'templates/hooks/block-dangerous-bash.js'}],
-      ['block-vault-delete','block','Blocks MCP delete/trash against a notes vault.',
-        {body:`<p>Prevents accidental delete, remove, or trash operations against a notes vault reached through an MCP server (such as an Obsidian MCP). Bind it to the MCP matcher in settings.json. Deletes then require explicit confirmation.</p>`,src:'templates/hooks/block-vault-delete.js'}],
-      ['protect-security-config','warn','Warns when an action targets the guards themselves.',
-        {body:`<p>Warns when an action targets the guards themselves — the hooks, settings.json, keybindings, CLAUDE.md, the memory dir. A prompt-injection attack's first move is often to disable the guards.</p><p>It warns rather than hard-blocks, since you do sometimes need to edit these; it makes sure the edit is deliberate.</p>`,src:'templates/hooks/protect-security-config.js'}],
-      ['protect-firmware','warn','Guards against accidental edits to firmware files.',
-        {body:`<p>Stops accidental edits to firmware-shaped files (<code>.hex</code>, <code>.bin</code>, <code>.elf</code>, bootloader images). You confirm explicitly to proceed.</p><p>Cheap insurance if the agent ever shares a workspace with embedded artifacts.</p>`,src:'templates/hooks/protect-firmware.js'}],
-      ['session-primer','flow','SessionStart: injects CURRENT-TASK.md as boot context.',
-        {body:`<p>At session start it injects CURRENT-TASK.md and the background-tasks ledger as boot context, so a new chat resumes where the last one left off. The first half of the handoff loop.</p>`,src:'templates/hooks/session-primer.js'}],
-      ['task-state-reminder','flow','UserPromptSubmit: surfaces CURRENT-TASK.md if present.',
-        {body:`<p>On each user message it checks the current directory and home for a CURRENT-TASK.md and surfaces it, so an in-flight task stays in view rather than getting lost mid-thread.</p>`,src:'templates/hooks/task-state-reminder.js'}],
-      ['audit-bash-log','flow','PostToolUse: redacted ledger of every Bash command.',
-        {body:`<p>After each Bash run it appends a redacted line to an audit ledger, so you have a record of what the agent actually executed. It strips anything secret-shaped before writing, so the log itself stays safe to read.</p>`,src:'templates/hooks/audit-bash-log.js'}],
-      ['log-agent-dispatch','flow','PostToolUse: ledger of every sub-agent dispatch.',
-        {body:`<p>Every time a sub-agent is dispatched, this appends a one-line record to a background-tasks ledger, so you and the next session (via the primer) can see what was delegated. Never blocks.</p>`,src:'templates/hooks/log-agent-dispatch.js'}],
-      ['format-on-edit','flow','PostToolUse: auto-format JS/TS/JSON/CSS/HTML/MD via prettier.',
-        {body:`<p>After a Write or Edit to a formattable file, it runs prettier (local first, then global) so the code stays tidy without you asking. Silently skips if prettier is not installed.</p>`,src:'templates/hooks/format-on-edit.js'}],
-      ['check-session-size','flow','Stop: warns when the transcript is getting large.',
-        {body:`<p>A Stop-hook that watches the session transcript size and warns when it is getting large, a nudge to wrap up or run a handoff before a compaction loses context.</p>`,src:'templates/hooks/check-session-size.js'}],
-      ['stop-toast-gate','flow','Stop: "finished" toast, suppressed if tasks remain.',
-        {body:`<p>Shows an "agent finished" system notification when the agent stops — but suppresses it if CURRENT-TASK.md still has unchecked items, so you are not told it is done when it is not.</p>`,src:'templates/hooks/stop-toast-gate.js'}],
-    ],
-    demo:'<span class="key">$ printenv</span>\n<span class="err">⛔ BLOCKED — would print env values into the transcript.</span>\n<span class="key">$ git commit -m "fix"</span>\n<span class="ok">✓ allowed (normal, reversible).</span>'},
-  memory:{nav:'Memory',color:V.green,group:'pillar',tag:'continuity across sessions',
-    desc:'An agent forgets everything between chats. Memory fixes that: a file store with a thin, always-loaded index (MEMORY.md) that points to detail files read on demand. Four types. It saves corrections AND confirmed-good approaches, so the agent does not drift toward over-caution. It keeps OUT anything you can re-derive from the repo or git history.',
-    stats:[['4','memory types'],['1','always-loaded index'],['∞','sessions bridged']],
-    items:[
-      ['user','gen','Who you are — role, expertise. Tailors explanations to your level.',
-        {body:`<p>Who you are: role, expertise, how you like things explained. Lets the agent tailor a Go-veteran-new-to-React explanation differently from a first-timer's.</p>`,src:'templates/memory/MEMORY-SYSTEM.md'}],
-      ['feedback','gen','How to work. Corrections + confirmations. Lead with rule, then Why + How.',
-        {body:`<p>How to work. It saves corrections <em>and</em> confirmed-good approaches; each entry leads with the rule, then a <code>Why:</code> and a <code>How to apply:</code> line. Saving only corrections makes the agent drift toward over-caution.</p>`,src:'templates/memory/MEMORY-SYSTEM.md'}],
-      ['project','gen','Who/why/when. Decays fast; uses absolute dates.',
-        {body:`<p>Who/why/when on the current work. It decays fast, so dates are stored absolute ("2026-03-05", never "Thursday").</p>`,src:'templates/memory/MEMORY-SYSTEM.md'}],
-      ['reference','gen','Where info lives in external systems (dashboards, trackers).',
-        {body:`<p>Where information lives in other systems: the Linear project for pipeline bugs, the Grafana board oncall watches. Pointers, so the agent knows where to look.</p>`,src:'templates/memory/MEMORY-SYSTEM.md'}],
-    ],
-    demo:'<span class="key">MEMORY.md</span>  (index, loaded every session)\n  - [feedback] keep responses terse → ...\n  - [reference] bugs tracked in Linear:INGEST\n<span class="ok">bodies read on demand; index stays small.</span>'},
-  claudemd:{nav:'CLAUDE.md',color:V.blue,group:'pillar',tag:'the standing contract',
-    desc:'The always-loaded behavioral contract — the rules the agent reads at the top of every session. Keep it lean; push deep detail into sibling CLAUDE-*.md files read on demand. Most rules here are scar tissue: each one exists because its absence broke something once.',
-    stats:[['1','always-on file'],['N','sibling files'],['lean','by design']],
-    items:[
-      ['voice','gen','Sound like you. (e.g. ban the "X, not Y" antithesis tell.)',
-        {body:`<p>Before drafting anything you will publish or send, the agent reads a <code>voice.md</code> so the writing sounds like you. The kit's headline ban: the "X, not Y" antithesis, the single most AI-sounding construction.</p>`,src:'templates/claude-md/CLAUDE.md'}],
-      ['never fabricate','gen','If it is not in the source, say so. Cite which source.',
-        {body:`<p>If it is not in the source, the agent says so and asks, rather than filling the gap with a plausible guess. It also names which source a fact came from. A made-up number is worse than an admitted gap.</p>`,src:'templates/claude-md/CLAUDE.md'}],
-      ['backup + new file','gen','Never overwrite a user file in place.',
-        {body:`<p>When editing a file you authored, the agent saves a timestamped backup first and writes output to a new versioned file. It never overwrites in place, because an in-place save once destroyed unsaved edits.</p>`,src:'templates/claude-md/CLAUDE.md'}],
-      ['proceed, dont ask','gen','State assumptions, run multi-step work, report once. Batch questions.',
-        {body:`<p>State one line of assumptions and run the whole multi-step task, reporting once at the end. Batch any real questions into a single message. The agent stops only for a hard blocker or a costly wrong guess.</p>`,src:'templates/claude-md/CLAUDE.md'}],
-      ['plan means plan','gen','"Plan" produces only a plan — implement on an explicit verb.',
-        {body:`<p>When you say "plan", the only output is a written plan. No files created or edited, nothing run, until you reply with an explicit action verb ("do it", "build", "implement").</p>`,src:'templates/claude-md/CLAUDE.md'}],
-      ['careful actions','warn','Confirm before hard-to-reverse / shared-state actions.',
-        {body:`<p>Before a hard-to-reverse or shared-state action, the agent pauses and confirms. Things like a force-push, a destructive migration, or touching a resource other people depend on.</p><p>Everything reversible runs freely; the friction is reserved for the moves you cannot take back.</p>`,src:'templates/claude-md/CLAUDE.md'}],
-    ],
-    demo:'<span class="key">~/.claude/CLAUDE.md</span> + <span class="key">CLAUDE-delegation.md</span> (on demand)\n<span class="ok">merged at session start; lean main file = cheap context.</span>'},
-  workflow:{nav:'Workflow',color:V.yellow,group:'pillar',tag:'how you drive it',
-    desc:'The operating rhythm no template can hand you: one long thread ridden through compaction, CURRENT-TASK.md handoffs, the /rollover ritual, delegation via the two-question test, and parallel sub-agents. This is the part you learn by doing.',
-    stats:[['1','long thread / project'],['2','question delegation test'],['3+','parts → parallelize']],
-    items:[
-      ['CURRENT-TASK.md','flow','The handoff: goal, done steps, next steps, verifier. Read first on resume.',
-        {body:`<p>The handoff file: one-sentence goal, completed steps with paths, remaining steps in order, and the exact command to run next. On resume the agent reads it first and continues. Deleted when the task is done.</p>`,src:'docs/DETAILED-GUIDE.md'}],
-      ['/rollover','flow','End-of-session: diagnostics gathered, agent writes a clean baton pass.',
-        {body:`<p>The end-of-session ritual: gather diagnostics (task file, memory dir, files changed, git status), write a clean baton-pass into CURRENT-TASK.md, and seed memory with the session's lessons. Next session boots clean.</p>`,src:'a custom skill in the kit'}],
-      ['two-question test','gen','Delegate only if you can brief it in a paragraph AND verify without judgment.',
-        {body:`<p>Delegate a task only if you can (1) brief a worker in a paragraph and (2) verify the result without judgment calls. If either fails, keep it yourself or break it down further.</p>`,src:'templates/claude-md/CLAUDE-delegation.md'}],
-      ['the bridge','warn','A markdown handoff FILE between agents that you review before anything runs.',
-        {body:`<p>A markdown handoff file passed between agents (say Claude and Codex), so you can read and approve the brief before any code runs.</p><p>It keeps a second agent's work in your review loop, instead of letting it act unseen.</p>`,src:'docs/DETAILED-GUIDE.md'}],
-      ['parallel sub-agents','gen','3+ independent parts, one dispatch message, no shared file writes.',
-        {body:`<p>For 3+ genuinely independent parts, dispatch all the workers in one message so they run at once. Never point two workers at the same file. If one is stuck after three tries, stop and re-plan.</p>`,src:'templates/claude-md/CLAUDE-delegation.md'}],
-      ['daily rituals','flow','daily-activity ("what I built") + daily-review (debugging-arc audit).',
-        {body:`<p>Two light habits: a "what did I build" activity pass and a debugging-arc review that turns yesterday's fixes into memory. They keep the setup learning over time.</p>`,src:'custom skills in the kit'}],
-    ],
-    demo:'<span class="key">SessionStart</span> → primer injects CURRENT-TASK.md\n<span class="key">work…</span> → fan out sub-agents for independent parts\n<span class="key">/rollover</span> → <span class="ok">handoff written. tomorrow resumes clean.</span>'},
-  obsidian:{nav:'Obsidian',color:V.magenta,group:'tool',tag:'notes vault',
-    desc:'Obsidian is a free app that stores your notes as plain markdown files in a folder on your own disk — that folder is called a vault. Because the notes are just files, an agent can read and write them directly (often through an MCP server, a small bridge that exposes the vault as tools the agent can call). The kit guards the vault with block-vault-delete so nothing gets trashed by accident.',
-    stats:[['1','vault'],['MCP','access'],['guarded','deletes']],items:[],
-    ext:{intro:`<p>The vault, its plugins, and your working strategy fit together as one system. The vault holds the notes; plugins (Dataview, Canvas, MCP servers) turn those notes into queryable, visual, agent-readable surfaces; and the strategy is keeping agent-related material — setup docs, the superpowers guide, memory notes — in a dedicated <code>Claude/</code> subfolder so the agent always knows where to look. Read everything once, then let the agent maintain it.</p><p>Because everything is local markdown, the same notes power your reading, the agent's writing, and any tooling you point at them — one source, many readers.</p>`,
-      links:[['Open ↗','https://obsidian.md','obsidian.md']],
-      doc:'docs/OBSIDIAN-VAULT-AND-MEMORY.md'},
-    demo:'<span class="key">mcp__obsidian__delete_note</span>\n<span class="err">⛔ blocked — vault deletes need explicit confirmation.</span>'},
-  wispr:{nav:'Wispr Flow',color:V.magenta,group:'tool',tag:'voice input',
-    desc:'Voice dictation built for prompts: you talk, it types clean text. You speak at roughly 150 words a minute against about 60 typing, so a long brief that would take five minutes to type takes one to say. It strips the "um"s and false starts, adds punctuation, and chunks a long ramble into something that pastes cleanly into Claude Code.',
-    stats:[['~150','wpm spoken'],['~60','wpm typed'],['4','platforms']],items:[],
-    ext:{intro:`<p>Here is why it fits an agent setup so well: the bottleneck in driving an agent is how fast you can get a complete, specific brief out of your head and into the prompt. Typing throttles that. Talking does not. You describe the whole feature — the views you want, the edge cases, the constraints — in one breath, and Wispr Flow hands the agent a clean, punctuated version instead of a wall of run-on speech.</p><p>It runs on Mac, Windows, iOS, and Android, so the same dictation works at your desk or on your phone. For longer prompts it auto-chunks the text so nothing gets truncated on the way in.</p>`,
-      links:[['Open ↗','https://wisprflow.ai','wisprflow.ai'],['Blog ↗','https://wisprflow.ai/blog','wisprflow.ai/blog']]},
-    demo:'<span class="ok">🎙</span> "build me a tracker with a calendar and an iCal export, and..."\n<span class="key">→ cleaned, punctuated, chunked, pasted into the agent.</span>'},
-  wmux:{nav:'wmux',color:V.magenta,group:'tool',tag:'multi-agent terminal',
-    desc:'A Windows-native terminal multiplexer built for AI agents. It splits one window into panes, each running its own agent (Claude Code, Codex, Gemini) over a shared repo. The agents can message each other, and a browser-automation MCP toolset (mcp__wmux__*) lets them drive a browser. It is how you run a small team of agents side by side instead of one at a time.',
-    stats:[['N','agents in panes'],['A2A','messaging'],['mcp__wmux__','tools']],items:[],
-    ext:{intro:`<p>Think of it as splitting your terminal into rooms, each with its own agent working the same codebase. One pane implements while another reviews; a message-passing layer lets them coordinate ("I changed the schema, re-run your tests") without you relaying by hand.</p><p>There is no marketing site to link; install it from the command line.</p>`,
-      install:'winget install openwong2kim.wmux'},
-    demo:'┌ pane 1: claude ─┬ pane 2: codex ─┐\n│ implementing... │ reviewing...   │\n└─────────────────┴────────────────┘\n<span class="key">a2a_task_send</span> <span class="ok">→ agents coordinate over one repo.</span>'},
-  globalcfg:{nav:'global-config',color:V.magenta,group:'tool',tag:'~/.claude as a repo',
-    desc:'Your entire ~/.claude directory kept as a portable git repo — the source of truth for how the agent behaves across every machine you use. Clone it onto a new laptop and your whole agent comes with you: contract, hooks, skills, settings. A .gitignore keeps secrets and transcripts out. This kit is its public, scrubbed, explained sibling.',
-    stats:[['1','source of truth'],['git','versioned'],['gitignore','secrets out']],items:[],
-    demo:'<span class="key">git clone …/claude-global-config ~/.claude</span>\n<span class="ok">→ your whole agent reproduced on a new machine.</span>'},
-  dpmsites:{nav:'dpm-sites hub',color:V.magenta,group:'tool',tag:'profile + site index',
-    desc:'A personal landing/index page plus a profile knowledge base (bio, stories, signature numbers) that any agent reads before it writes about you — the anti-fabrication backstop. When outreach or portfolio copy pulls from one factual source, the numbers stop getting invented. A blank skeleton ships in templates/profile/ for you to fill in.',
-    stats:[['1','hub page'],['8','profile files'],['0','fabricated facts']],items:[],
-    demo:'<span class="key">read profile/signature-numbers.md before drafting</span>\n<span class="ok">→ every number cited has a source; none invented.</span>'},
-};
-const main=document.getElementById('main');
-const BADGE={block:'blocks',warn:'warns',flow:'workflow',gen:'general'};
+      const V = {
+        accent: "var(--accent)",
+        cyan: "var(--cyan)",
+        green: "var(--accent)",
+        magenta: "var(--magenta)",
+        blue: "var(--accent2)",
+        yellow: "var(--warn)",
+        red: "var(--danger)",
+      };
+      const SECTIONS = {
+        skills: {
+          nav: "Skills",
+          color: V.magenta,
+          group: "pillar",
+          tag: "reusable expertise",
+          desc: "A skill is a markdown file with a name and a one-line description; the description is what triggers it. The agent reads your request, notices a skill that fits, and pulls in that expertise on its own — or you type /name to call it directly. The kit layers three sets: the superpowers framework, grill-me, and your own custom skills. They compose: brainstorm a design, plan it, execute it, verify it.",
+          stats: [
+            ["35", "skills total"],
+            ["14", "superpowers"],
+            ["19", "your custom"],
+          ],
+          initial: 8,
+          items: [
+            [
+              "using-superpowers",
+              "gen",
+              "Dispatcher — routes your request to the right skills in order.",
+              {
+                body: `<p>The entry point to the superpowers framework. It reads what you asked for and reaches for the right phase on its own, so you do not have to remember which of the ~14 skills fits.</p><p>Think of it as a switchboard: one skill that hands work to <code>brainstorming</code>, then planning, then execution, then verification.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "brainstorming",
+              "gen",
+              "Design-first dialogue; hard-gates code until you approve a design.",
+              {
+                body: `<p>The flagship of the superpowers framework. It opens a design conversation and will not write any code until you have approved a direction.</p><p>That gate is the point: it forces the "what are we actually building" question before a single line gets typed, so you catch the holes early.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "grill-me",
+              "flow",
+              "Relentless one-question-at-a-time interrogation of your plan.",
+              {
+                body: `<p>Relentless, one-question-at-a-time interrogation of a plan. It walks the whole decision tree, resolving dependencies one by one, and gives a recommended answer with each question.</p><p>Reach for it when an idea is still fuzzy and you want the holes found before any code gets written.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "test-driven-development",
+              "gen",
+              "Red-green-refactor: failing test first, then minimum code.",
+              {
+                body: `<p>Walks the classic red-green-refactor loop: write a failing test, write the minimum code to pass it, then clean up. The test comes first so the code has something to answer to.</p><p>It keeps the agent honest about what "done" means, since the bar is a passing test you can read.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "systematic-debugging",
+              "gen",
+              "Root-cause before any fix; kills shotgun debugging.",
+              {
+                body: `<p>Forces a root-cause pass before any fix lands. The agent forms a hypothesis, confirms it, and only then changes code.</p><p>It exists to kill shotgun debugging, where you change five things at once and never learn which one mattered.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "writing-plans",
+              "gen",
+              "Turn a spec into a step-by-step implementation plan.",
+              {
+                body: `<p>Takes a spec or set of requirements and writes a step-by-step implementation plan before any code is touched. The plan becomes the thing you review and the worker executes.</p><p>Pairs with <code>executing-plans</code>: one writes the map, the other follows it with checkpoints.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "executing-plans",
+              "gen",
+              "Run a written plan in a fresh session with review checkpoints.",
+              {
+                body: `<p>Executes a written implementation plan in a separate session, pausing at review checkpoints so you can confirm each phase landed before the next starts.</p><p>It is how a long build survives context limits: the plan is the memory, the session just works the next step.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "verification-before-completion",
+              "gen",
+              'No "it works" until a command proves it. Evidence before claims.',
+              {
+                body: `<p>Before the agent says a thing is fixed, done, or passing, this makes it run the actual verification command and show you the output. Evidence first, claim second.</p><p>It is the antidote to the agent cheerfully reporting success on something it never ran.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "requesting-code-review",
+              "gen",
+              "Ask for a structured review before merging a change.",
+              {
+                body: `<p>Bundles a finished change into a structured review request, so the work gets checked against the original requirements before it merges.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "receiving-code-review",
+              "gen",
+              "Take review feedback with rigor, not performative agreement.",
+              {
+                body: `<p>How to take review feedback: verify each suggestion technically before implementing it, push back on the questionable ones, and skip the reflexive "great catch!" agreement.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "dispatching-parallel-agents",
+              "gen",
+              "Fan out 2+ independent tasks to separate workers.",
+              {
+                body: `<p>When you face two or more tasks with no shared state and no ordering between them, this dispatches them to separate workers at once instead of grinding through them in series.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "subagent-driven-development",
+              "gen",
+              "Execute plan tasks as sub-agents inside the current session.",
+              {
+                body: `<p>Runs the independent tasks of a plan as sub-agents within your current session, so the main thread stays the coordinator and the workers do the legwork.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "using-git-worktrees",
+              "gen",
+              "Isolate feature work in its own checkout before you start.",
+              {
+                body: `<p>Sets up an isolated workspace (a git worktree, or a native equivalent) so feature work does not collide with whatever is in your main checkout.</p><p>It is the "don't break the thing you're standing on" step before a big change.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "finishing-a-development-branch",
+              "gen",
+              "Decide how to integrate finished work: merge, PR, or clean up.",
+              {
+                body: `<p>When the implementation is done and the tests pass, this lays out the integration options — merge, open a pull request, or tear the branch down — so the close-out is deliberate.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "writing-skills",
+              "gen",
+              "Author and pressure-test a new skill so it actually triggers.",
+              {
+                body: `<p>Helps you write a new skill and pressure-test its description, since the description is the trigger and a vague one never fires.</p><p>This is the skill you use to grow the rest of the set.</p>`,
+                src: "github.com/obra/superpowers",
+              },
+            ],
+            [
+              "deep-search",
+              "gen",
+              "Multi-step web research with fan-out + inline citations.",
+              {
+                body: `<p>Multi-step web research with fan-out and inline citations. It plans sub-questions, dispatches parallel searches, leans on human practitioner sources (Reddit, HN, recognized blogs), and brings back a sourced synthesis instead of a single-shot answer.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "make-playbook",
+              "gen",
+              "Capture a reusable pattern after a task.",
+              {
+                body: `<p>After you finish a task worth repeating, this captures it as a reusable playbook so the next run is faster. The way the setup compounds: when you re-explain a workflow, you turn it into a skill.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "parallelize",
+              "gen",
+              "Decompose work into parallel sub-agent dispatches.",
+              {
+                body: `<p>Decomposes work into independent parts and dispatches them as parallel sub-agents in one message. Guard rails: 3+ genuinely independent parts, no two workers writing the same file.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "rollover",
+              "flow",
+              "End-of-session handoff: write CURRENT-TASK.md and seed memory.",
+              {
+                body: `<p>The end-of-session ritual as a skill: gather diagnostics, write a clean baton-pass into CURRENT-TASK.md, and seed memory with the session's lessons so tomorrow boots clean.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "build-tracker",
+              "gen",
+              "Generate a deadline/application tracker (calendar, cards, table, iCal).",
+              {
+                body: `<p>Builds a personal deadline tracker from a reference implementation: calendar, cards, table, and map views, plus an iCal export and local notes. Point it at a new domain (fellowships, jobs, conferences) and it adapts.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "build-graph-explorer",
+              "gen",
+              "Build a force-directed knowledge-graph explorer from a corpus.",
+              {
+                body: `<p>Turns a corpus of nodes and edges into a single-file graph explorer with survey, cluster, and detail zoom levels. Built off a working reference, so you get a real interactive map instead of a static picture.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "groq-transcribe",
+              "gen",
+              "Pull newest audio, transcribe, clean and trim the transcript.",
+              {
+                body: `<p>Grabs the most recent audio file, transcribes it with a Whisper model, auto-formats the result, and trims the tail once the speaker drifts off-topic. A voice-note to clean-text pipeline.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "hue",
+              "gen",
+              "Meta-skill: generate a new design-language skill.",
+              {
+                body: `<p>A meta-skill that writes other skills — specifically design-language skills. Describe a look (or hand it a screenshot) and it produces a reusable styling skill.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "map-field",
+              "gen",
+              'Map a domain corpus into a "schools of thought" site.',
+              {
+                body: `<p>Takes a pile of newsletters, papers, or discourse and organizes it into competing positions — a "schools of thought" site that shows who believes what and why.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "fellowship-review",
+              "gen",
+              "Review a fellowship/scholarship draft against rubrics.",
+              {
+                body: `<p>Reviews a fellowship or scholarship draft against type-specific rubrics and the patterns of winning applications. Also preps you for the interview.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "capability-report",
+              "gen",
+              'Build a "state of a capability" report with a pipeline canvas.',
+              {
+                body: `<p>Researches the current state of a technical capability and lays it out as a report with an embedded color-coded pipeline canvas, a maturity landscape, and readiness gates.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "codex-brief",
+              "gen",
+              "Draft and dispatch a self-contained brief to a second model.",
+              {
+                body: `<p>Drafts a stand-alone brief and hands it to a secondary coding model, enforcing a two-question gate (can you brief it in a paragraph, can you verify it without judgment) and a verification protocol on the way back.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "daily-activity",
+              "flow",
+              'Prose "what I built yesterday," grouped into themes.',
+              {
+                body: `<p>Walks yesterday's sessions and touched files and writes a prose "here's what I made" report, grouped into themed threads. The output-side daily habit.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "daily-review",
+              "flow",
+              "Debugging-arc + automation-candidate audit; edits playbooks.",
+              {
+                body: `<p>Reviews yesterday's debugging arcs across repos and sessions, spots automation candidates, and directly improves the playbooks it can. The learning-side daily habit.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "bridge-status",
+              "flow",
+              "Inspect a research-bridge handoff folder; report state.",
+              {
+                body: `<p>Inspects a local handoff folder used to pass work to a second agent and reports what is pending, in review, or released. A status check on an agent-to-agent bridge.</p>`,
+                src: "an adapted custom skill in the kit",
+              },
+            ],
+            [
+              "json-generator",
+              "gen",
+              "Generate or fix a structured-payload JSON for a workflow.",
+              {
+                body: `<p>Generates or repairs a domain structured-payload JSON for a generative-design workflow, loading the workflow's own system prompt and acting as that generator for the rest of the chat.</p>`,
+                src: "an adapted custom skill in the kit",
+              },
+            ],
+            [
+              "process-linkedin-inbox",
+              "gen",
+              "Categorize pasted posts, propose site edits.",
+              {
+                body: `<p>Takes pasted social posts dropped in an inbox folder, categorizes them, extracts links, and proposes edits to a field-map site. An adapted ingest-and-file workflow.</p>`,
+                src: "an adapted custom skill in the kit",
+              },
+            ],
+            [
+              "context-update",
+              "gen",
+              "Process a dropbox folder into researched notes + an archive.",
+              {
+                body: `<p>Scans a context-dropbox folder for new material, researches each item, writes a note, updates a map file, and archives the raw input into organized subfolders. An adapted ingest-research-file pipeline.</p>`,
+                src: "an adapted custom skill in the kit",
+              },
+            ],
+          ],
+          demo: '<span class="key">/brainstorming</span>\n  ? What problem does this solve, and for whom?\n  <span class="ok">⛔ no code until a design is approved.</span>',
+        },
+        hooks: {
+          nav: "Hooks",
+          color: V.red,
+          group: "pillar",
+          tag: "the guardrails",
+          desc: "A hook is a small Node script that runs automatically at a lifecycle event — before a tool runs, after it returns, when a session starts, when the agent stops. The kit ships 18 of them, all dependency-free. They block secret leaks, data exfiltration, and destruction; they warn on risky edits; they handle workflow chores. Tuned high-precision: only the genuinely dangerous gets stopped, so normal work never hits friction.",
+          stats: [
+            ["18", "hooks"],
+            ["2", "tiers for secrets"],
+            ["0", "npm deps"],
+          ],
+          initial: 8,
+          items: [
+            [
+              "check-secret-exposure",
+              "block",
+              "Blocks commands whose purpose is to reveal secrets/env values.",
+              {
+                body: `<p>Blocks shell commands whose primary purpose is to reveal environment values or secrets into the agent's context (think <code>printenv</code>, <code>env</code>, echoing a token).</p><p>Why it matters: once a secret lands in the transcript, the only safe fix is rotation. So the kit keeps it out in the first place.</p>`,
+                src: "templates/hooks/check-secret-exposure.js",
+              },
+            ],
+            [
+              "scan-output-for-secrets",
+              "block",
+              "Backstop: scans command output for real key formats.",
+              {
+                body: `<p>The backstop for the layer above. It scans Bash command output for known key shapes (API tokens, private keys) and a validated NAME=VALUE heuristic, and stops the result reaching the agent if a real secret is found.</p><p>Two tiers for secrets means a slip past the first check still gets caught here.</p>`,
+                src: "templates/hooks/scan-output-for-secrets.js",
+              },
+            ],
+            [
+              "scan-write-for-secrets",
+              "block",
+              "Stops a hardcoded credential being written to a file.",
+              {
+                body: `<p>Catches a credential on its way into a file via Write or Edit. If a write would hardcode a key or token, this stops it so the secret never lands on disk and gets committed. Placeholder and example values are allowed.</p><p>It pairs with the output scanner: one guards the transcript, this one guards the repo.</p>`,
+                src: "templates/hooks/scan-write-for-secrets.js",
+              },
+            ],
+            [
+              "block-secret-file",
+              "block",
+              "Hard-blocks reading named files that hold live keys.",
+              {
+                body: `<p>Hard-blocks the agent from opening specific named files or folders you know hold live secrets — say a personal notes file where you keep API keys. You list the path fragments at the top of the script.</p><p>The generic <code>.env</code> and credential patterns are handled elsewhere; this is for your named vaults.</p>`,
+                src: "templates/hooks/block-secret-file.js",
+              },
+            ],
+            [
+              "block-sensitive-file-read",
+              "block",
+              "Stops the Read tool opening .env, creds, SSH keys.",
+              {
+                body: `<p>Closes a gap: the secret-exposure hook only guards Bash, so the Read, Grep, and Glob tools could otherwise pull a <code>.env</code>, cloud credentials, or an SSH private key straight into context. This blocks that. Template and example variants stay allowed.</p>`,
+                src: "templates/hooks/block-sensitive-file-read.js",
+              },
+            ],
+            [
+              "block-egress-exfil",
+              "block",
+              "Cuts uploads to unapproved hosts, curl|bash, netcat.",
+              {
+                body: `<p>Cuts off file uploads to hosts you have not whitelisted, plus <code>curl | bash</code>, <code>iwr | iex</code>, and netcat-style egress. You configure <code>ALLOWED_UPLOAD_HOSTS</code> at the top of the file. Normal API calls and downloads run freely.</p><p>This is the defense against the lethal trifecta: private data + untrusted content + a way out.</p>`,
+                src: "templates/hooks/block-egress-exfil.js",
+              },
+            ],
+            [
+              "block-web-egress-in-protected-dir",
+              "warn",
+              "Gates web tools when working in a sensitive folder.",
+              {
+                body: `<p>When the session is working inside a folder you marked protected (sensitive or regulated material), this gates the public web tools so that context never gets sent to a search or fetch service. Domains you approve stay allowed.</p><p>It warns rather than hard-blocks, so you can confirm and continue on a false alarm.</p>`,
+                src: "templates/hooks/block-web-egress-in-protected-dir.js",
+              },
+            ],
+            [
+              "block-dangerous-bash",
+              "block",
+              "rm -rf ~, force-push, reset --hard, live DROP TABLE.",
+              {
+                body: `<p>Stops the handful of commands that are hard to walk back: <code>rm -rf ~</code>, <code>git push --force</code>, <code>git reset --hard</code>, <code>git clean -f</code>, and live <code>DROP</code>/<code>TRUNCATE</code> against a real database. The safe <code>--force-with-lease</code> variant is allowed. Everything reversible runs freely.</p>`,
+                src: "templates/hooks/block-dangerous-bash.js",
+              },
+            ],
+            [
+              "block-vault-delete",
+              "block",
+              "Blocks MCP delete/trash against a notes vault.",
+              {
+                body: `<p>Prevents accidental delete, remove, or trash operations against a notes vault reached through an MCP server (such as an Obsidian MCP). Bind it to the MCP matcher in settings.json. Deletes then require explicit confirmation.</p>`,
+                src: "templates/hooks/block-vault-delete.js",
+              },
+            ],
+            [
+              "protect-security-config",
+              "warn",
+              "Warns when an action targets the guards themselves.",
+              {
+                body: `<p>Warns when an action targets the guards themselves — the hooks, settings.json, keybindings, CLAUDE.md, the memory dir. A prompt-injection attack's first move is often to disable the guards.</p><p>It warns rather than hard-blocks, since you do sometimes need to edit these; it makes sure the edit is deliberate.</p>`,
+                src: "templates/hooks/protect-security-config.js",
+              },
+            ],
+            [
+              "protect-firmware",
+              "warn",
+              "Guards against accidental edits to firmware files.",
+              {
+                body: `<p>Stops accidental edits to firmware-shaped files (<code>.hex</code>, <code>.bin</code>, <code>.elf</code>, bootloader images). You confirm explicitly to proceed.</p><p>Cheap insurance if the agent ever shares a workspace with embedded artifacts.</p>`,
+                src: "templates/hooks/protect-firmware.js",
+              },
+            ],
+            [
+              "session-primer",
+              "flow",
+              "SessionStart: injects CURRENT-TASK.md as boot context.",
+              {
+                body: `<p>At session start it injects CURRENT-TASK.md and the background-tasks ledger as boot context, so a new chat resumes where the last one left off. The first half of the handoff loop.</p>`,
+                src: "templates/hooks/session-primer.js",
+              },
+            ],
+            [
+              "task-state-reminder",
+              "flow",
+              "UserPromptSubmit: surfaces CURRENT-TASK.md if present.",
+              {
+                body: `<p>On each user message it checks the current directory and home for a CURRENT-TASK.md and surfaces it, so an in-flight task stays in view rather than getting lost mid-thread.</p>`,
+                src: "templates/hooks/task-state-reminder.js",
+              },
+            ],
+            [
+              "audit-bash-log",
+              "flow",
+              "PostToolUse: redacted ledger of every Bash command.",
+              {
+                body: `<p>After each Bash run it appends a redacted line to an audit ledger, so you have a record of what the agent actually executed. It strips anything secret-shaped before writing, so the log itself stays safe to read.</p>`,
+                src: "templates/hooks/audit-bash-log.js",
+              },
+            ],
+            [
+              "log-agent-dispatch",
+              "flow",
+              "PostToolUse: ledger of every sub-agent dispatch.",
+              {
+                body: `<p>Every time a sub-agent is dispatched, this appends a one-line record to a background-tasks ledger, so you and the next session (via the primer) can see what was delegated. Never blocks.</p>`,
+                src: "templates/hooks/log-agent-dispatch.js",
+              },
+            ],
+            [
+              "format-on-edit",
+              "flow",
+              "PostToolUse: auto-format JS/TS/JSON/CSS/HTML/MD via prettier.",
+              {
+                body: `<p>After a Write or Edit to a formattable file, it runs prettier (local first, then global) so the code stays tidy without you asking. Silently skips if prettier is not installed.</p>`,
+                src: "templates/hooks/format-on-edit.js",
+              },
+            ],
+            [
+              "check-session-size",
+              "flow",
+              "Stop: warns when the transcript is getting large.",
+              {
+                body: `<p>A Stop-hook that watches the session transcript size and warns when it is getting large, a nudge to wrap up or run a handoff before a compaction loses context.</p>`,
+                src: "templates/hooks/check-session-size.js",
+              },
+            ],
+            [
+              "stop-toast-gate",
+              "flow",
+              'Stop: "finished" toast, suppressed if tasks remain.',
+              {
+                body: `<p>Shows an "agent finished" system notification when the agent stops — but suppresses it if CURRENT-TASK.md still has unchecked items, so you are not told it is done when it is not.</p>`,
+                src: "templates/hooks/stop-toast-gate.js",
+              },
+            ],
+          ],
+          demo: '<span class="key">$ printenv</span>\n<span class="err">⛔ BLOCKED — would print env values into the transcript.</span>\n<span class="key">$ git commit -m "fix"</span>\n<span class="ok">✓ allowed (normal, reversible).</span>',
+        },
+        memory: {
+          nav: "Memory",
+          color: V.green,
+          group: "pillar",
+          tag: "continuity across sessions",
+          desc: "An agent forgets everything between chats. Memory fixes that: a file store with a thin, always-loaded index (MEMORY.md) that points to detail files read on demand. Four types. It saves corrections AND confirmed-good approaches, so the agent does not drift toward over-caution. It keeps OUT anything you can re-derive from the repo or git history.",
+          stats: [
+            ["4", "memory types"],
+            ["1", "always-loaded index"],
+            ["∞", "sessions bridged"],
+          ],
+          items: [
+            [
+              "user",
+              "gen",
+              "Who you are — role, expertise. Tailors explanations to your level.",
+              {
+                body: `<p>Who you are: role, expertise, how you like things explained. Lets the agent tailor a Go-veteran-new-to-React explanation differently from a first-timer's.</p>`,
+                src: "templates/memory/MEMORY-SYSTEM.md",
+              },
+            ],
+            [
+              "feedback",
+              "gen",
+              "How to work. Corrections + confirmations. Lead with rule, then Why + How.",
+              {
+                body: `<p>How to work. It saves corrections <em>and</em> confirmed-good approaches; each entry leads with the rule, then a <code>Why:</code> and a <code>How to apply:</code> line. Saving only corrections makes the agent drift toward over-caution.</p>`,
+                src: "templates/memory/MEMORY-SYSTEM.md",
+              },
+            ],
+            [
+              "project",
+              "gen",
+              "Who/why/when. Decays fast; uses absolute dates.",
+              {
+                body: `<p>Who/why/when on the current work. It decays fast, so dates are stored absolute ("2026-03-05", never "Thursday").</p>`,
+                src: "templates/memory/MEMORY-SYSTEM.md",
+              },
+            ],
+            [
+              "reference",
+              "gen",
+              "Where info lives in external systems (dashboards, trackers).",
+              {
+                body: `<p>Where information lives in other systems: the Linear project for pipeline bugs, the Grafana board oncall watches. Pointers, so the agent knows where to look.</p>`,
+                src: "templates/memory/MEMORY-SYSTEM.md",
+              },
+            ],
+          ],
+          demo: '<span class="key">MEMORY.md</span>  (index, loaded every session)\n  - [feedback] keep responses terse → ...\n  - [reference] bugs tracked in Linear:INGEST\n<span class="ok">bodies read on demand; index stays small.</span>',
+        },
+        claudemd: {
+          nav: "CLAUDE.md",
+          color: V.blue,
+          group: "pillar",
+          tag: "the standing contract",
+          desc: "The always-loaded behavioral contract — the rules the agent reads at the top of every session. Keep it lean; push deep detail into sibling CLAUDE-*.md files read on demand. Most rules here are scar tissue: each one exists because its absence broke something once.",
+          stats: [
+            ["1", "always-on file"],
+            ["N", "sibling files"],
+            ["lean", "by design"],
+          ],
+          items: [
+            [
+              "voice",
+              "gen",
+              'Sound like you. (e.g. ban the "X, not Y" antithesis tell.)',
+              {
+                body: `<p>Before drafting anything you will publish or send, the agent reads a <code>voice.md</code> so the writing sounds like you. The kit's headline ban: the "X, not Y" antithesis, the single most AI-sounding construction.</p>`,
+                src: "templates/claude-md/CLAUDE.md",
+              },
+            ],
+            [
+              "never fabricate",
+              "gen",
+              "If it is not in the source, say so. Cite which source.",
+              {
+                body: `<p>If it is not in the source, the agent says so and asks, rather than filling the gap with a plausible guess. It also names which source a fact came from. A made-up number is worse than an admitted gap.</p>`,
+                src: "templates/claude-md/CLAUDE.md",
+              },
+            ],
+            [
+              "backup + new file",
+              "gen",
+              "Never overwrite a user file in place.",
+              {
+                body: `<p>When editing a file you authored, the agent saves a timestamped backup first and writes output to a new versioned file. It never overwrites in place, because an in-place save once destroyed unsaved edits.</p>`,
+                src: "templates/claude-md/CLAUDE.md",
+              },
+            ],
+            [
+              "proceed, dont ask",
+              "gen",
+              "State assumptions, run multi-step work, report once. Batch questions.",
+              {
+                body: `<p>State one line of assumptions and run the whole multi-step task, reporting once at the end. Batch any real questions into a single message. The agent stops only for a hard blocker or a costly wrong guess.</p>`,
+                src: "templates/claude-md/CLAUDE.md",
+              },
+            ],
+            [
+              "plan means plan",
+              "gen",
+              '"Plan" produces only a plan — implement on an explicit verb.',
+              {
+                body: `<p>When you say "plan", the only output is a written plan. No files created or edited, nothing run, until you reply with an explicit action verb ("do it", "build", "implement").</p>`,
+                src: "templates/claude-md/CLAUDE.md",
+              },
+            ],
+            [
+              "careful actions",
+              "warn",
+              "Confirm before hard-to-reverse / shared-state actions.",
+              {
+                body: `<p>Before a hard-to-reverse or shared-state action, the agent pauses and confirms. Things like a force-push, a destructive migration, or touching a resource other people depend on.</p><p>Everything reversible runs freely; the friction is reserved for the moves you cannot take back.</p>`,
+                src: "templates/claude-md/CLAUDE.md",
+              },
+            ],
+          ],
+          demo: '<span class="key">~/.claude/CLAUDE.md</span> + <span class="key">CLAUDE-delegation.md</span> (on demand)\n<span class="ok">merged at session start; lean main file = cheap context.</span>',
+        },
+        workflow: {
+          nav: "Workflow",
+          color: V.yellow,
+          group: "pillar",
+          tag: "how you drive it",
+          desc: "The operating rhythm no template can hand you: one long thread ridden through compaction, CURRENT-TASK.md handoffs, the /rollover ritual, delegation via the two-question test, and parallel sub-agents. This is the part you learn by doing.",
+          stats: [
+            ["1", "long thread / project"],
+            ["2", "question delegation test"],
+            ["3+", "parts → parallelize"],
+          ],
+          items: [
+            [
+              "CURRENT-TASK.md",
+              "flow",
+              "The handoff: goal, done steps, next steps, verifier. Read first on resume.",
+              {
+                body: `<p>The handoff file: one-sentence goal, completed steps with paths, remaining steps in order, and the exact command to run next. On resume the agent reads it first and continues. Deleted when the task is done.</p>`,
+                src: "docs/DETAILED-GUIDE.md",
+              },
+            ],
+            [
+              "/rollover",
+              "flow",
+              "End-of-session: diagnostics gathered, agent writes a clean baton pass.",
+              {
+                body: `<p>The end-of-session ritual: gather diagnostics (task file, memory dir, files changed, git status), write a clean baton-pass into CURRENT-TASK.md, and seed memory with the session's lessons. Next session boots clean.</p>`,
+                src: "a custom skill in the kit",
+              },
+            ],
+            [
+              "two-question test",
+              "gen",
+              "Delegate only if you can brief it in a paragraph AND verify without judgment.",
+              {
+                body: `<p>Delegate a task only if you can (1) brief a worker in a paragraph and (2) verify the result without judgment calls. If either fails, keep it yourself or break it down further.</p>`,
+                src: "templates/claude-md/CLAUDE-delegation.md",
+              },
+            ],
+            [
+              "the bridge",
+              "warn",
+              "A markdown handoff FILE between agents that you review before anything runs.",
+              {
+                body: `<p>A markdown handoff file passed between agents (say Claude and Codex), so you can read and approve the brief before any code runs.</p><p>It keeps a second agent's work in your review loop, instead of letting it act unseen.</p>`,
+                src: "docs/DETAILED-GUIDE.md",
+              },
+            ],
+            [
+              "parallel sub-agents",
+              "gen",
+              "3+ independent parts, one dispatch message, no shared file writes.",
+              {
+                body: `<p>For 3+ genuinely independent parts, dispatch all the workers in one message so they run at once. Never point two workers at the same file. If one is stuck after three tries, stop and re-plan.</p>`,
+                src: "templates/claude-md/CLAUDE-delegation.md",
+              },
+            ],
+            [
+              "daily rituals",
+              "flow",
+              'daily-activity ("what I built") + daily-review (debugging-arc audit).',
+              {
+                body: `<p>Two light habits: a "what did I build" activity pass and a debugging-arc review that turns yesterday's fixes into memory. They keep the setup learning over time.</p>`,
+                src: "custom skills in the kit",
+              },
+            ],
+          ],
+          demo: '<span class="key">SessionStart</span> → primer injects CURRENT-TASK.md\n<span class="key">work…</span> → fan out sub-agents for independent parts\n<span class="key">/rollover</span> → <span class="ok">handoff written. tomorrow resumes clean.</span>',
+        },
+        obsidian: {
+          nav: "Obsidian",
+          color: V.magenta,
+          group: "tool",
+          tag: "notes vault",
+          desc: "Obsidian is a free app that stores your notes as plain markdown files in a folder on your own disk — that folder is called a vault. Because the notes are just files, an agent can read and write them directly (often through an MCP server, a small bridge that exposes the vault as tools the agent can call). The kit guards the vault with block-vault-delete so nothing gets trashed by accident.",
+          stats: [
+            ["1", "vault"],
+            ["MCP", "access"],
+            ["guarded", "deletes"],
+          ],
+          items: [],
+          ext: {
+            intro: `<p>The vault, its plugins, and your working strategy fit together as one system. The vault holds the notes; plugins (Dataview, Canvas, MCP servers) turn those notes into queryable, visual, agent-readable surfaces; and the strategy is keeping agent-related material — setup docs, the superpowers guide, memory notes — in a dedicated <code>Claude/</code> subfolder so the agent always knows where to look. Read everything once, then let the agent maintain it.</p><p>Because everything is local markdown, the same notes power your reading, the agent's writing, and any tooling you point at them — one source, many readers.</p>`,
+            links: [["Open ↗", "https://obsidian.md", "obsidian.md"]],
+            doc: "docs/OBSIDIAN-VAULT-AND-MEMORY.md",
+          },
+          demo: '<span class="key">mcp__obsidian__delete_note</span>\n<span class="err">⛔ blocked — vault deletes need explicit confirmation.</span>',
+        },
+        wispr: {
+          nav: "Wispr Flow",
+          color: V.magenta,
+          group: "tool",
+          tag: "voice input",
+          desc: 'Voice dictation built for prompts: you talk, it types clean text. You speak at roughly 150 words a minute against about 60 typing, so a long brief that would take five minutes to type takes one to say. It strips the "um"s and false starts, adds punctuation, and chunks a long ramble into something that pastes cleanly into Claude Code.',
+          stats: [
+            ["~150", "wpm spoken"],
+            ["~60", "wpm typed"],
+            ["4", "platforms"],
+          ],
+          items: [],
+          ext: {
+            intro: `<p>Here is why it fits an agent setup so well: the bottleneck in driving an agent is how fast you can get a complete, specific brief out of your head and into the prompt. Typing throttles that. Talking does not. You describe the whole feature — the views you want, the edge cases, the constraints — in one breath, and Wispr Flow hands the agent a clean, punctuated version instead of a wall of run-on speech.</p><p>It runs on Mac, Windows, iOS, and Android, so the same dictation works at your desk or on your phone. For longer prompts it auto-chunks the text so nothing gets truncated on the way in.</p>`,
+            links: [
+              ["Open ↗", "https://wisprflow.ai", "wisprflow.ai"],
+              ["Blog ↗", "https://wisprflow.ai/blog", "wisprflow.ai/blog"],
+            ],
+          },
+          demo: '<span class="ok">🎙</span> "build me a tracker with a calendar and an iCal export, and..."\n<span class="key">→ cleaned, punctuated, chunked, pasted into the agent.</span>',
+        },
+        wmux: {
+          nav: "wmux",
+          color: V.magenta,
+          group: "tool",
+          tag: "multi-agent terminal",
+          desc: "A Windows-native terminal multiplexer built for AI agents. It splits one window into panes, each running its own agent (Claude Code, Codex, Gemini) over a shared repo. The agents can message each other, and a browser-automation MCP toolset (mcp__wmux__*) lets them drive a browser. It is how you run a small team of agents side by side instead of one at a time.",
+          stats: [
+            ["N", "agents in panes"],
+            ["A2A", "messaging"],
+            ["mcp__wmux__", "tools"],
+          ],
+          items: [],
+          ext: {
+            intro: `<p>Think of it as splitting your terminal into rooms, each with its own agent working the same codebase. One pane implements while another reviews; a message-passing layer lets them coordinate ("I changed the schema, re-run your tests") without you relaying by hand.</p><p>There is no marketing site to link; install it from the command line.</p>`,
+            install: "winget install openwong2kim.wmux",
+          },
+          demo: '┌ pane 1: claude ─┬ pane 2: codex ─┐\n│ implementing... │ reviewing...   │\n└─────────────────┴────────────────┘\n<span class="key">a2a_task_send</span> <span class="ok">→ agents coordinate over one repo.</span>',
+        },
+        globalcfg: {
+          nav: "global-config",
+          color: V.magenta,
+          group: "tool",
+          tag: "~/.claude as a repo",
+          desc: "Your entire ~/.claude directory kept as a portable git repo — the source of truth for how the agent behaves across every machine you use. Clone it onto a new laptop and your whole agent comes with you: contract, hooks, skills, settings. A .gitignore keeps secrets and transcripts out. This kit is its public, scrubbed, explained sibling.",
+          stats: [
+            ["1", "source of truth"],
+            ["git", "versioned"],
+            ["gitignore", "secrets out"],
+          ],
+          items: [],
+          demo: '<span class="key">git clone …/claude-global-config ~/.claude</span>\n<span class="ok">→ your whole agent reproduced on a new machine.</span>',
+        },
+        dpmsites: {
+          nav: "dpm-sites hub",
+          color: V.magenta,
+          group: "tool",
+          tag: "profile + site index",
+          desc: "A personal landing/index page plus a profile knowledge base (bio, stories, signature numbers) that any agent reads before it writes about you — the anti-fabrication backstop. When outreach or portfolio copy pulls from one factual source, the numbers stop getting invented. A blank skeleton ships in templates/profile/ for you to fill in.",
+          stats: [
+            ["1", "hub page"],
+            ["8", "profile files"],
+            ["0", "fabricated facts"],
+          ],
+          items: [],
+          demo: '<span class="key">read profile/signature-numbers.md before drafting</span>\n<span class="ok">→ every number cited has a source; none invented.</span>',
+        },
+      };
+      const main = document.getElementById("main");
+      const BADGE = {
+        block: "blocks",
+        warn: "warns",
+        flow: "workflow",
+        gen: "general",
+      };
 
-function render(key){const s=SECTIONS[key];
-  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.k===key));
-  let html=`<div class="head"><h2 style="color:${s.color}">${s.nav}</h2><div class="tag">${s.tag}</div><p>${s.desc}</p></div>`;
-  html+='<div class="stats">'+s.stats.map(([v,l])=>`<div class="stat"><div class="v" style="color:${s.color}">${v}</div><div class="l">${l}</div></div>`).join('')+'</div>';
-  if(s.items.length){
-    const collapsible=s.initial&&s.items.length>s.initial;
-    html+='<div class="grid" id="grid">'+s.items.map(([t,b,d,more],i)=>{
-      const badge=b?`<span class="b ${b}">${BADGE[b]||b}</span>`:'';
-      const expandable=more&&more.body;
-      const bodyHtml=expandable?`<div class="body" id="body-${i}"><div class="inner">${more.body}${more.src?`<div class="src">source · ${more.src}</div>`:''}</div></div>`:'';
-      const caret=expandable?'<span class="caret">›</span>':'';
-      const attrs=expandable?`tabindex="0" role="button" aria-expanded="false" aria-controls="body-${i}" data-i="${i}"`:'';
-      const hidden=collapsible&&i>=s.initial?' data-extra="1"':'';
-      return `<div class="item${expandable?' expandable':''}"${hidden} ${attrs}><div class="row"><div class="it">${t}${badge}${caret}</div><div class="d">${d}</div></div>${bodyHtml}</div>`;}).join('')+'</div>';
-    if(collapsible){html+=`<div class="showmore"><button id="showMoreBtn" tabindex="0">show all ${s.items.length} ›</button></div>`;}
-  }
-  if(s.ext){html+=renderExt(s.ext);}
-  if(s.demo){html+=`<div class="demo">${s.demo}</div>`;}
-  main.innerHTML=html;main.scrollTop=0;
-  wireItems();wireShowMore(s);
-}
-function renderExt(e){
-  let h='<div class="extbox">';
-  if(e.links||e.install){
-    h+='<div class="extbtns">';
-    (e.links||[]).forEach(([label,url,sub],i)=>{h+=`<a class="extbtn${i>0?' sub':''}" href="${url}" target="_blank" rel="noopener">${label}<span style="opacity:.7;font-weight:400">${sub}</span></a>`;});
-    h+='</div>';
-  }
-  if(e.intro){h+=e.intro;}
-  if(e.install){h+=`<p>Install from the terminal: <code>${e.install}</code></p>`;}
-  if(e.doc){h+=`<p class="src" style="margin-top:14px;font-size:11px;color:var(--muted)">more · ${e.doc}</p>`;}
-  h+='</div>';
-  return h;
-}
-function toggleItem(el){
-  const open=el.classList.toggle('open');
-  el.setAttribute('aria-expanded',open?'true':'false');
-}
-function wireItems(){
-  main.querySelectorAll('.item.expandable').forEach(el=>{
-    el.addEventListener('click',()=>toggleItem(el));
-    el.addEventListener('keydown',e=>{
-      if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleItem(el);}
-      else if(e.key==='Escape'){if(el.classList.contains('open')){el.classList.remove('open');el.setAttribute('aria-expanded','false');}}
-    });
-  });
-}
-function wireShowMore(s){
-  const btn=document.getElementById('showMoreBtn');if(!btn)return;
-  let shown=false;
-  const apply=()=>{main.querySelectorAll('.item[data-extra]').forEach(el=>{el.style.display=shown?'':'none';});
-    btn.textContent=shown?'show less ‹':`show all ${s.items.length} ›`;};
-  apply();
-  btn.addEventListener('click',()=>{shown=!shown;apply();});
-}
-/* global Escape: collapse any open tile */
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){main.querySelectorAll('.item.open').forEach(el=>{
-    el.classList.remove('open');el.setAttribute('aria-expanded','false');});}
-});
-function buildNav(){const p=document.getElementById('nav-pillars'),t=document.getElementById('nav-tools');
-  Object.entries(SECTIONS).forEach(([k,s])=>{const b=document.createElement('button');b.dataset.k=k;
-    b.innerHTML=`<span class="dot" style="background:${s.color}"></span>${s.nav}`;b.onclick=()=>render(k);
-    (s.group==='pillar'?p:t).appendChild(b);});}
-buildNav();render('skills');
-</script>
-</body>
+      function render(key) {
+        const s = SECTIONS[key];
+        document
+          .querySelectorAll("nav button")
+          .forEach((b) => b.classList.toggle("on", b.dataset.k === key));
+        let html = `<div class="head"><h2 style="color:${s.color}">${s.nav}</h2><div class="tag">${s.tag}</div><p>${s.desc}</p></div>`;
+        html +=
+          '<div class="stats">' +
+          s.stats
+            .map(
+              ([v, l]) =>
+                `<div class="stat"><div class="v" style="color:${s.color}">${v}</div><div class="l">${l}</div></div>`,
+            )
+            .join("") +
+          "</div>";
+        if (s.items.length) {
+          const collapsible = s.initial && s.items.length > s.initial;
+          html +=
+            '<div class="grid" id="grid">' +
+            s.items
+              .map(([t, b, d, more], i) => {
+                const badge = b
+                  ? `<span class="b ${b}">${BADGE[b] || b}</span>`
+                  : "";
+                const expandable = more && more.body;
+                const bodyHtml = expandable
+                  ? `<div class="body" id="body-${i}"><div class="inner">${more.body}${more.src ? `<div class="src">source · ${more.src}</div>` : ""}</div></div>`
+                  : "";
+                const caret = expandable ? '<span class="caret">›</span>' : "";
+                const attrs = expandable
+                  ? `tabindex="0" role="button" aria-expanded="false" aria-controls="body-${i}" data-i="${i}"`
+                  : "";
+                const hidden =
+                  collapsible && i >= s.initial ? ' data-extra="1"' : "";
+                return `<div class="item${expandable ? " expandable" : ""}"${hidden} ${attrs}><div class="row"><div class="it">${t}${badge}${caret}</div><div class="d">${d}</div></div>${bodyHtml}</div>`;
+              })
+              .join("") +
+            "</div>";
+          if (collapsible) {
+            html += `<div class="showmore"><button id="showMoreBtn" tabindex="0">show all ${s.items.length} ›</button></div>`;
+          }
+        }
+        if (s.ext) {
+          html += renderExt(s.ext);
+        }
+        if (s.demo) {
+          html += `<div class="demo">${s.demo}</div>`;
+        }
+        main.innerHTML = html;
+        main.scrollTop = 0;
+        wireItems();
+        wireShowMore(s);
+      }
+      function renderExt(e) {
+        let h = '<div class="extbox">';
+        if (e.links || e.install) {
+          h += '<div class="extbtns">';
+          (e.links || []).forEach(([label, url, sub], i) => {
+            h += `<a class="extbtn${i > 0 ? " sub" : ""}" href="${url}" target="_blank" rel="noopener">${label}<span style="opacity:.7;font-weight:400">${sub}</span></a>`;
+          });
+          h += "</div>";
+        }
+        if (e.intro) {
+          h += e.intro;
+        }
+        if (e.install) {
+          h += `<p>Install from the terminal: <code>${e.install}</code></p>`;
+        }
+        if (e.doc) {
+          h += `<p class="src" style="margin-top:14px;font-size:11px;color:var(--muted)">more · ${e.doc}</p>`;
+        }
+        h += "</div>";
+        return h;
+      }
+      function toggleItem(el) {
+        const open = el.classList.toggle("open");
+        el.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      function wireItems() {
+        main.querySelectorAll(".item.expandable").forEach((el) => {
+          el.addEventListener("click", () => toggleItem(el));
+          el.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggleItem(el);
+            } else if (e.key === "Escape") {
+              if (el.classList.contains("open")) {
+                el.classList.remove("open");
+                el.setAttribute("aria-expanded", "false");
+              }
+            }
+          });
+        });
+      }
+      function wireShowMore(s) {
+        const btn = document.getElementById("showMoreBtn");
+        if (!btn) return;
+        let shown = false;
+        const apply = () => {
+          main.querySelectorAll(".item[data-extra]").forEach((el) => {
+            el.style.display = shown ? "" : "none";
+          });
+          btn.textContent = shown
+            ? "show less ‹"
+            : `show all ${s.items.length} ›`;
+        };
+        apply();
+        btn.addEventListener("click", () => {
+          shown = !shown;
+          apply();
+        });
+      }
+      /* global Escape: collapse any open tile */
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          main.querySelectorAll(".item.open").forEach((el) => {
+            el.classList.remove("open");
+            el.setAttribute("aria-expanded", "false");
+          });
+        }
+      });
+      function buildNav() {
+        const p = document.getElementById("nav-pillars"),
+          t = document.getElementById("nav-tools");
+        Object.entries(SECTIONS).forEach(([k, s]) => {
+          const b = document.createElement("button");
+          b.dataset.k = k;
+          b.innerHTML = `<span class="dot" style="background:${s.color}"></span>${s.nav}`;
+          b.onclick = () => render(k);
+          (s.group === "pillar" ? p : t).appendChild(b);
+        });
+      }
+      buildNav();
+      render("skills");
+    </script>
+  </body>
 </html>

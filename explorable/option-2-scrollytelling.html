@@ -1,223 +1,837 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="tokyo">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>dpm-agent-kit — A Walkthrough</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  /* ===== shared theme tokens (whole-site toggle target) ===== */
-  :root,[data-theme="tokyo"]{
-    --bg:#15161e; --panel:#1b1d29; --panel2:#191b25; --text:#c8d0f0; --muted:#6b73a0;
-    --line:#262a40; --accent:#9ece6a; --accent2:#7aa2f7; --cyan:#7dcfff; --magenta:#bb9af7;
-    --danger:#f7768e; --warn:#e0af68; --body:#a9b1d6;
-    --disp:'Sora',system-ui,sans-serif;
-    --mono:'IBM Plex Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
-    --r:6px;
-  }
-  [data-theme="brutalist"]{--bg:#fafafa;--panel:#ffffff;--panel2:#f2f2f2;--text:#0d0d0d;--muted:#5a5a5a;--line:#0d0d0d;--accent:#c81e00;--accent2:#0d0d0d;--cyan:#0a58ff;--magenta:#7a3cff;--danger:#c81e00;--warn:#9a5a00;--body:#2a2a2a;--disp:'Space Mono',monospace;--mono:'Space Mono',monospace;--r:0;}
-  *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:16px;line-height:1.6}
-  /* ---- top bar (shared chrome) ---- */
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 24px;border-bottom:1px solid var(--line);background:var(--panel2);position:sticky;top:0;z-index:40}
-  .topbar a.back{color:var(--muted);text-decoration:none;font-size:13px}
-  .xnav{display:flex;gap:14px;flex-wrap:wrap}
-  .xnav a{color:var(--muted);text-decoration:none;font-size:13px}
-  .xnav a:hover,.xnav a.on{color:var(--accent)}
-  .theme-pill{display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12px;color:var(--text);cursor:pointer}
-  .theme-pill .sw{width:11px;height:11px;border-radius:50%;background:var(--accent)}
-  /* ---- slim header ---- */
-  .head{position:relative;padding:34px 24px 30px;border-bottom:1px solid var(--line);text-align:center;overflow:hidden}
-  .head::after{content:"";position:absolute;inset:0;pointer-events:none;
-        background:radial-gradient(130% 90% at 80% -10%,rgba(158,206,106,.10),transparent 55%)}
-  .head h1{position:relative;font-family:var(--disp);font-size:clamp(22px,3.6vw,34px);margin:0 0 12px;font-weight:800;letter-spacing:-.01em}
-  .head h1 .g{color:var(--accent)} .head h1 .c{color:var(--cyan)}
-  .head p{position:relative;max-width:680px;margin:0 auto;color:var(--muted);font-size:clamp(14px,2vw,16px)}
-  .head .scroll{position:relative;margin-top:18px;color:var(--muted);font-size:13px;animation:bob 1.8s ease-in-out infinite}
-  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
-  .scrolly{display:grid;grid-template-columns:1fr 1fr;gap:0;max-width:1200px;margin:0 auto}
-  .graphic{position:sticky;top:117px;height:calc(100vh - 117px);display:flex;align-items:center;justify-content:center;padding:32px}
-  .card{position:relative;width:100%;max-width:460px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-        padding:28px;transition:border-color .4s;min-height:360px;display:flex;flex-direction:column;overflow:hidden}
-  .card::after{content:"";position:absolute;inset:0;pointer-events:none;
-        background:radial-gradient(120% 80% at 90% -10%,rgba(158,206,106,.06),transparent 55%)}
-  .card .num{font-family:var(--mono);font-size:12px;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
-  .card h3{font-family:var(--disp);font-size:24px;margin:8px 0 4px;font-weight:700;letter-spacing:-.01em}
-  .card .tag{color:var(--cyan);font-size:13px;margin-bottom:18px}
-  .card .viz{flex:1;display:flex;flex-direction:column;justify-content:center;font-size:14px}
-  /* ---- shared widget bits ---- */
-  .wgt-hint{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
-  .out{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;font-size:13px;color:var(--text);min-height:42px}
-  .out b{font-family:var(--disp)}
-  .row{display:flex;flex-wrap:wrap;gap:7px}
-  .tog{font-family:var(--mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);
-       padding:7px 11px;color:var(--text);cursor:pointer;transition:border-color .15s,background .15s}
-  .tog:hover{border-color:var(--accent)}
-  .tog.sel{border-color:var(--accent);background:rgba(158,206,106,.14);color:var(--accent)}
-  .tog.sel.bad{border-color:var(--danger);background:rgba(247,118,142,.14);color:var(--danger)}
-  .verdict{font-family:var(--disp);font-weight:700}
-  .verdict.block{color:var(--danger)} .verdict.allow{color:var(--accent)} .verdict.warn{color:var(--warn)}
-  .cmd{font-family:var(--mono)}
-  .switch{display:flex;gap:7px;margin-bottom:4px}
-  .switch .tog{flex:1;text-align:center}
-  .phaserow{display:flex;gap:6px;flex-wrap:wrap}
-  .phaserow .tog{flex:1;min-width:0;text-align:center}
-  .track{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-  .stepnode{flex:1;text-align:center;font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:var(--r);
-            padding:8px 4px;color:var(--muted);background:var(--panel2);transition:.2s}
-  .stepnode.done{border-color:var(--accent);color:var(--accent)}
-  .stepnode.cur{border-color:var(--cyan);color:var(--cyan);background:rgba(125,207,255,.12)}
-  .arrow{color:var(--muted);font-size:12px}
-  .stepbtns{display:flex;gap:8px;margin-top:6px}
-  .stepbtns .tog{flex:1;text-align:center}
-  /* ---- steps ---- */
-  .steps{padding:0}
-  .step{min-height:86vh;display:flex;flex-direction:column;justify-content:center;padding:40px 48px;
-        border-bottom:1px solid var(--line)}
-  .step .n{color:var(--accent);font-family:var(--mono);font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
-  .step h2{font-family:var(--disp);font-size:clamp(22px,3.5vw,32px);margin:0 0 16px;font-weight:700;letter-spacing:-.01em}
-  .step p{color:var(--text);max-width:540px} .step p.lede{color:var(--text)} .step p.body{color:var(--body)}
-  .step p code,.disc code{color:var(--cyan);background:var(--panel2);padding:1px 6px;border-radius:5px;font-family:var(--mono);font-size:.92em}
-  .step .why{margin-top:16px;padding:13px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);color:var(--muted);font-size:14px;max-width:540px}
-  .step .why b{color:var(--magenta);font-family:var(--disp)}
-  /* ---- per-pillar disclosure ---- */
-  .disc{margin-top:16px;max-width:560px}
-  .disc summary{cursor:pointer;list-style:none;font-family:var(--disp);font-weight:600;font-size:14px;color:var(--cyan);
-        border:1px solid var(--line);border-radius:var(--r);padding:11px 16px;background:var(--panel2);user-select:none;display:flex;justify-content:space-between;align-items:center}
-  .disc summary::-webkit-details-marker{display:none}
-  .disc summary .chev{transition:transform .2s;color:var(--muted)}
-  .disc[open] summary .chev{transform:rotate(90deg)}
-  .disc[open] summary{border-bottom-left-radius:0;border-bottom-right-radius:0}
-  .disc .body{border:1px solid var(--line);border-top:none;border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r);
-        padding:16px 18px;background:var(--panel);font-size:14px;color:var(--body)}
-  .disc .body p{margin:0 0 11px;max-width:none}
-  .disc .body p:last-child{margin-bottom:0}
-  .disc .where{font-size:12px;color:var(--muted);margin-bottom:11px}
-  .disc .where code{color:var(--accent)}
-  .disc pre{margin:11px 0;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);
-        padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;color:var(--text);line-height:1.5}
-  .disc pre .cm{color:var(--muted)}
-  /* ---- outro ---- */
-  .outro{position:relative;padding:56px 24px 30px;text-align:center;overflow:hidden;border-bottom:1px solid var(--line)}
-  .outro::after{content:"";position:absolute;inset:0;pointer-events:none;
-        background:radial-gradient(120% 80% at 50% 0%,rgba(158,206,106,.08),transparent 55%)}
-  .outro h2{position:relative;font-family:var(--disp);font-size:clamp(22px,4vw,34px);color:var(--accent);font-weight:800;letter-spacing:-.01em}
-  .outro p{position:relative;max-width:620px;margin:14px auto 0;color:var(--body)}
-  /* ---- end panel ---- */
-  .end{padding:48px 24px 64px;max-width:1040px;margin:0 auto}
-  .end h2{font-family:var(--disp);font-size:clamp(22px,3.6vw,30px);font-weight:800;letter-spacing:-.01em;text-align:center;margin:0 0 8px}
-  .end .sub{text-align:center;color:var(--muted);max-width:600px;margin:0 auto 30px;font-size:15px}
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-  .vcard{display:block;text-decoration:none;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-        padding:22px;color:var(--text);transition:border-color .2s,transform .12s}
-  .vcard:hover{border-color:var(--accent);transform:translateY(-2px)}
-  .vcard .vk{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
-  .vcard h3{font-family:var(--disp);font-size:19px;margin:8px 0 8px;font-weight:700;letter-spacing:-.01em;color:var(--cyan)}
-  .vcard p{margin:0;color:var(--body);font-size:13.5px}
-  .vcard .go{display:inline-block;margin-top:14px;color:var(--accent);font-size:13px}
-  .getkit{margin:34px auto 0;max-width:620px;text-align:center}
-  .getkit a.btn{display:inline-block;background:var(--accent);color:var(--bg);text-decoration:none;font-family:var(--disp);
-        font-weight:700;font-size:17px;padding:14px 30px;border-radius:var(--r);border:1px solid var(--accent)}
-  .getkit a.btn:hover{background:var(--bg);color:var(--accent)}
-  .getkit p{margin:14px 0 0;color:var(--muted);font-size:13.5px}
-  .getkit p code{color:var(--cyan);background:var(--panel2);padding:1px 6px;border-radius:5px}
-  .prog{position:fixed;top:0;left:0;height:3px;background:var(--accent);width:0;z-index:50;transition:width .1s}
-  @media(max-width:820px){.scrolly{grid-template-columns:1fr}
-    .graphic{position:static;height:auto;padding:20px}.step{min-height:auto;padding:30px 24px}
-    .cards{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
-<div class="prog" id="prog"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dpm-agent-kit — A Walkthrough</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===== shared theme tokens (whole-site toggle target) ===== */
+      :root,
+      [data-theme="tokyo"] {
+        --bg: #15161e;
+        --panel: #1b1d29;
+        --panel2: #191b25;
+        --text: #c8d0f0;
+        --muted: #6b73a0;
+        --line: #262a40;
+        --accent: #9ece6a;
+        --accent2: #7aa2f7;
+        --cyan: #7dcfff;
+        --magenta: #bb9af7;
+        --danger: #f7768e;
+        --warn: #e0af68;
+        --body: #a9b1d6;
+        --disp: "Sora", system-ui, sans-serif;
+        --body-font: "IBM Plex Sans", system-ui, sans-serif;
+        --mono:
+          "IBM Plex Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+        --r: 6px;
+      }
+      [data-theme="brutalist"] {
+        --bg: #fafafa;
+        --panel: #ffffff;
+        --panel2: #f2f2f2;
+        --text: #0d0d0d;
+        --muted: #5a5a5a;
+        --line: #0d0d0d;
+        --accent: #c81e00;
+        --accent2: #0d0d0d;
+        --cyan: #0a58ff;
+        --magenta: #7a3cff;
+        --danger: #c81e00;
+        --warn: #9a5a00;
+        --body: #2a2a2a;
+        --disp: "Space Mono", monospace;
+        --mono: "Space Mono", monospace;
+        --body-font: "Space Mono", monospace;
+        --r: 0;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--body-font);
+        font-size: 16px;
+        line-height: 1.6;
+      }
+      /* ---- top bar (shared chrome) ---- */
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 24px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel2);
+        position: sticky;
+        top: 0;
+        z-index: 40;
+      }
+      .topbar a.back {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .xnav {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .xnav a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .xnav a:hover,
+      .xnav a.on {
+        color: var(--accent);
+      }
+      .theme-pill {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 12px;
+        color: var(--text);
+        cursor: pointer;
+        font-family: var(--mono);
+      }
+      .theme-pill:hover {
+        border-color: var(--accent);
+      }
+      .theme-pill:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 2px var(--bg),
+          0 0 0 3px var(--accent);
+      }
+      .theme-pill .sw {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      /* ---- slim header ---- */
+      .head {
+        position: relative;
+        padding: 34px 24px 30px;
+        border-bottom: 1px solid var(--line);
+        text-align: center;
+        overflow: hidden;
+      }
+      .head::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          130% 90% at 80% -10%,
+          rgba(158, 206, 106, 0.1),
+          transparent 55%
+        );
+      }
+      .head h1 {
+        position: relative;
+        font-family: var(--disp);
+        font-size: clamp(22px, 3.6vw, 34px);
+        margin: 0 0 12px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      .head h1 .g {
+        color: var(--accent);
+      }
+      .head h1 .c {
+        color: var(--cyan);
+      }
+      .head p {
+        position: relative;
+        max-width: 680px;
+        margin: 0 auto;
+        color: var(--muted);
+        font-size: clamp(14px, 2vw, 16px);
+      }
+      .head .scroll {
+        position: relative;
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 13px;
+        animation: bob 1.8s ease-in-out infinite;
+      }
+      @keyframes bob {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(8px);
+        }
+      }
+      .scrolly {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .graphic {
+        position: sticky;
+        top: 117px;
+        height: calc(100vh - 117px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+      }
+      .card {
+        position: relative;
+        width: 100%;
+        max-width: 460px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 28px;
+        transition: border-color 0.4s;
+        min-height: 360px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          120% 80% at 90% -10%,
+          rgba(158, 206, 106, 0.06),
+          transparent 55%
+        );
+      }
+      .card .num {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 2px;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+      .card h3 {
+        font-family: var(--disp);
+        font-size: 24px;
+        margin: 8px 0 4px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .card .tag {
+        color: var(--cyan);
+        font-size: 13px;
+        margin-bottom: 18px;
+      }
+      .card .viz {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        font-size: 14px;
+      }
+      /* ---- shared widget bits ---- */
+      .wgt-hint {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+      }
+      .out {
+        margin-top: 14px;
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+        font-size: 13px;
+        color: var(--text);
+        min-height: 42px;
+      }
+      .out b {
+        font-family: var(--disp);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+      .tog {
+        font-family: var(--mono);
+        font-size: 12px;
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 7px 11px;
+        color: var(--text);
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .tog:hover {
+        border-color: var(--accent);
+      }
+      .tog.sel {
+        border-color: var(--accent);
+        background: rgba(158, 206, 106, 0.14);
+        color: var(--accent);
+      }
+      .tog.sel.bad {
+        border-color: var(--danger);
+        background: rgba(247, 118, 142, 0.14);
+        color: var(--danger);
+      }
+      .verdict {
+        font-family: var(--disp);
+        font-weight: 700;
+      }
+      .verdict.block {
+        color: var(--danger);
+      }
+      .verdict.allow {
+        color: var(--accent);
+      }
+      .verdict.warn {
+        color: var(--warn);
+      }
+      .cmd {
+        font-family: var(--mono);
+      }
+      .switch {
+        display: flex;
+        gap: 7px;
+        margin-bottom: 4px;
+      }
+      .switch .tog {
+        flex: 1;
+        text-align: center;
+      }
+      .phaserow {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .phaserow .tog {
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+      }
+      .track {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+      .stepnode {
+        flex: 1;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 11px;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 8px 4px;
+        color: var(--muted);
+        background: var(--panel2);
+        transition: 0.2s;
+      }
+      .stepnode.done {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .stepnode.cur {
+        border-color: var(--cyan);
+        color: var(--cyan);
+        background: rgba(125, 207, 255, 0.12);
+      }
+      .arrow {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .stepbtns {
+        display: flex;
+        gap: 8px;
+        margin-top: 6px;
+      }
+      .stepbtns .tog {
+        flex: 1;
+        text-align: center;
+      }
+      /* ---- steps ---- */
+      .steps {
+        padding: 0;
+      }
+      .step {
+        min-height: 86vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 40px 48px;
+        border-bottom: 1px solid var(--line);
+      }
+      .step .n {
+        color: var(--accent);
+        font-family: var(--mono);
+        font-size: 13px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .step h2 {
+        font-family: var(--disp);
+        font-size: clamp(22px, 3.5vw, 32px);
+        margin: 0 0 16px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .step p {
+        color: var(--text);
+        max-width: 540px;
+      }
+      .step p.lede {
+        color: var(--text);
+      }
+      .step p.body {
+        color: var(--body);
+      }
+      .step p code,
+      .disc code {
+        color: var(--cyan);
+        background: var(--panel2);
+        padding: 1px 6px;
+        border-radius: 5px;
+        font-family: var(--mono);
+        font-size: 0.92em;
+      }
+      .step .why {
+        margin-top: 16px;
+        padding: 13px 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        background: var(--panel2);
+        color: var(--muted);
+        font-size: 14px;
+        max-width: 540px;
+      }
+      .step .why b {
+        color: var(--magenta);
+        font-family: var(--disp);
+      }
+      /* ---- per-pillar disclosure ---- */
+      .disc {
+        margin-top: 16px;
+        max-width: 560px;
+      }
+      .disc summary {
+        cursor: pointer;
+        list-style: none;
+        font-family: var(--disp);
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--cyan);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 11px 16px;
+        background: var(--panel2);
+        user-select: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .disc summary::-webkit-details-marker {
+        display: none;
+      }
+      .disc summary .chev {
+        transition: transform 0.2s;
+        color: var(--muted);
+      }
+      .disc[open] summary .chev {
+        transform: rotate(90deg);
+      }
+      .disc[open] summary {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      .disc .body {
+        border: 1px solid var(--line);
+        border-top: none;
+        border-bottom-left-radius: var(--r);
+        border-bottom-right-radius: var(--r);
+        padding: 16px 18px;
+        background: var(--panel);
+        font-size: 14px;
+        color: var(--body);
+      }
+      .disc .body p {
+        margin: 0 0 11px;
+        max-width: none;
+      }
+      .disc .body p:last-child {
+        margin-bottom: 0;
+      }
+      .disc .where {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 11px;
+      }
+      .disc .where code {
+        color: var(--accent);
+      }
+      .disc pre {
+        margin: 11px 0;
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 12px 14px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--text);
+        line-height: 1.5;
+      }
+      .disc pre .cm {
+        color: var(--muted);
+      }
+      /* ---- outro ---- */
+      .outro {
+        position: relative;
+        padding: 56px 24px 30px;
+        text-align: center;
+        overflow: hidden;
+        border-bottom: 1px solid var(--line);
+      }
+      .outro::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          120% 80% at 50% 0%,
+          rgba(158, 206, 106, 0.08),
+          transparent 55%
+        );
+      }
+      .outro h2 {
+        position: relative;
+        font-family: var(--disp);
+        font-size: clamp(22px, 4vw, 34px);
+        color: var(--accent);
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      .outro p {
+        position: relative;
+        max-width: 620px;
+        margin: 14px auto 0;
+        color: var(--body);
+      }
+      /* ---- end panel ---- */
+      .end {
+        padding: 48px 24px 64px;
+        max-width: 1040px;
+        margin: 0 auto;
+      }
+      .end h2 {
+        font-family: var(--disp);
+        font-size: clamp(22px, 3.6vw, 30px);
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        text-align: center;
+        margin: 0 0 8px;
+      }
+      .end .sub {
+        text-align: center;
+        color: var(--muted);
+        max-width: 600px;
+        margin: 0 auto 30px;
+        font-size: 15px;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .vcard {
+        display: block;
+        text-decoration: none;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 22px;
+        color: var(--text);
+        transition:
+          border-color 0.2s,
+          transform 0.12s;
+      }
+      .vcard:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .vcard .vk {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .vcard h3 {
+        font-family: var(--disp);
+        font-size: 19px;
+        margin: 8px 0 8px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--cyan);
+      }
+      .vcard p {
+        margin: 0;
+        color: var(--body);
+        font-size: 13.5px;
+      }
+      .vcard .go {
+        display: inline-block;
+        margin-top: 14px;
+        color: var(--accent);
+        font-size: 13px;
+      }
+      .getkit {
+        margin: 34px auto 0;
+        max-width: 620px;
+        text-align: center;
+      }
+      .getkit a.btn {
+        display: inline-block;
+        background: var(--accent);
+        color: var(--bg);
+        text-decoration: none;
+        font-family: var(--disp);
+        font-weight: 700;
+        font-size: 17px;
+        padding: 14px 30px;
+        border-radius: var(--r);
+        border: 1px solid var(--accent);
+      }
+      .getkit a.btn:hover {
+        background: var(--bg);
+        color: var(--accent);
+      }
+      .getkit p {
+        margin: 14px 0 0;
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+      .getkit p code {
+        color: var(--cyan);
+        background: var(--panel2);
+        padding: 1px 6px;
+        border-radius: 5px;
+      }
+      .prog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: var(--accent);
+        width: 100%;
+        transform: scaleX(0);
+        transform-origin: left;
+        z-index: 50;
+        transition: transform 0.1s linear;
+      }
+      .vcard:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 2px var(--bg),
+          0 0 0 4px var(--accent);
+      }
+      .getkit a.btn:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 2px var(--bg),
+          0 0 0 4px var(--accent);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+        .head .scroll {
+          animation: none;
+        }
+      }
+      @media (max-width: 820px) {
+        .scrolly {
+          grid-template-columns: 1fr;
+        }
+        .graphic {
+          position: static;
+          height: auto;
+          padding: 20px;
+        }
+        .step {
+          min-height: auto;
+          padding: 30px 24px;
+        }
+        .cards {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="prog" id="prog"></div>
 
-<div class="topbar">
-  <a class="back" href="index.html">← intro</a>
-  <nav class="xnav">
-    <a class="on" href="option-2-scrollytelling.html">walkthrough</a>
-    <a href="option-1-node-map.html">map</a>
-    <a href="option-3-terminal.html">terminal</a>
-    <a href="option-4-dashboard.html">panel</a>
-      <a href="skills-library.html">library</a>
-    <a href="harness-map.html">harness</a>
-  </nav>
-  <button class="theme-pill" id="themeBtn"><span class="sw"></span><span id="theme-label">tokyo</span></button>
-</div>
-
-<header class="head">
-  <h1>You hired an assistant with <span class="c">no memory</span><br>and <span class="g">infinite willingness to act.</span></h1>
-  <p>First, the picture in plain terms. A "coding agent" is an AI you talk to in a terminal that can read your files, run commands, and edit code on its own. It is sharp and tireless, but it forgets everything the moment the chat ends, and it will do whatever you ask the instant you ask it. This kit is the small set of files that fixes both problems. Scroll through the five parts. Each one has a control you can poke.</p>
-  <div class="scroll">↓ scroll to walk through it</div>
-</header>
-
-<div class="scrolly">
-  <div class="graphic">
-    <div class="card" id="card">
-      <div class="num" id="c-num">Pillar 01</div>
-      <h3 id="c-title">CLAUDE.md</h3>
-      <div class="tag" id="c-tag">the standing contract</div>
-      <div class="viz" id="c-viz"></div>
+    <div class="topbar">
+      <a class="back" href="index.html">← intro</a>
+      <nav class="xnav">
+        <a class="on" href="option-2-scrollytelling.html">walkthrough</a>
+        <a href="option-1-node-map.html">map</a>
+        <a href="option-3-terminal.html">terminal</a>
+        <a href="option-4-dashboard.html">panel</a>
+        <a href="skills-library.html">library</a>
+        <a href="harness-map.html">harness</a>
+      </nav>
+      <button class="theme-pill" id="themeBtn" title="switch theme">
+        <span class="sw"></span><span id="theme-label">tokyo</span>
+      </button>
     </div>
-  </div>
-  <div class="steps" id="steps"></div>
-</div>
 
-<section class="outro">
-  <h2>Five parts, one loop.</h2>
-  <p>Standing instructions keep the assistant on-voice and honest. Guardrails make "infinite willingness" safe. Memory and a task file beat the forget-everything problem. Skills bottle your expertise so you teach a workflow once. The workflow is how you actually drive it: one long conversation, handed off cleanly, day after day.</p>
-</section>
+    <header class="head">
+      <h1>
+        You hired an assistant with <span class="c">no memory</span><br />and
+        <span class="g">infinite willingness to act.</span>
+      </h1>
+      <p>
+        First, the picture in plain terms. A "coding agent" is an AI you talk to
+        in a terminal that can read your files, run commands, and edit code on
+        its own. It is sharp and tireless, but it forgets everything the moment
+        the chat ends, and it will do whatever you ask the instant you ask it.
+        This kit is the small set of files that fixes both problems. Scroll
+        through the five parts. Each one has a control you can poke.
+      </p>
+      <div class="scroll">↓ scroll to walk through it</div>
+    </header>
 
-<section class="end">
-  <h2>You've seen the why — now go play.</h2>
-  <p class="sub">Three other views let you poke at the same kit from different angles. Open any of them.</p>
-  <div class="cards">
-    <a class="vcard" href="option-1-node-map.html">
-      <div class="vk">view · map</div>
-      <h3>Component map</h3>
-      <p>The five pillars and the tools around them as a clickable graph. Trace how each piece connects, then open any node's own page.</p>
-      <span class="go">explore the map →</span>
-    </a>
-    <a class="vcard" href="option-3-terminal.html">
-      <div class="vk">view · terminal</div>
-      <h3>Interactive terminal</h3>
-      <p>A pretend command line where you watch a hook block a dangerous command and the session boot from memory. Type and see what happens.</p>
-      <span class="go">open the terminal →</span>
-    </a>
-    <a class="vcard" href="option-4-dashboard.html">
-      <div class="vk">view · panel</div>
-      <h3>Control panel</h3>
-      <p>Every component laid out as toggles and readouts, so you can see the whole setup at a glance and flip pieces on and off.</p>
-      <span class="go">open the panel →</span>
-    </a>
-  </div>
-  <div class="getkit">
-    <a class="btn" href="../INSTALL.md">Get the kit →</a>
-    <p>Clone the repo and point an agent at <code>INSTALL.md</code> — it walks the setup for you.</p>
-  </div>
-</section>
+    <div class="scrolly">
+      <div class="graphic">
+        <div class="card" id="card">
+          <div class="num" id="c-num">Pillar 01</div>
+          <h3 id="c-title">CLAUDE.md</h3>
+          <div class="tag" id="c-tag">the standing contract</div>
+          <div class="viz" id="c-viz"></div>
+        </div>
+      </div>
+      <div class="steps" id="steps"></div>
+    </div>
 
-<script>
-/* ---------- theme toggle (cycle, persist, pill shows name) ---------- */
-const THEMES=['tokyo','brutalist'];
-let ti=Math.max(0,THEMES.indexOf(localStorage.getItem('dpmkit-theme')));
-function applyTheme(){document.documentElement.dataset.theme=THEMES[ti];
-  localStorage.setItem('dpmkit-theme',THEMES[ti]);
-  const l=document.getElementById('theme-label');if(l)l.textContent=THEMES[ti];}
-document.getElementById('themeBtn').onclick=()=>{ti=(ti+1)%THEMES.length;applyTheme();};
-applyTheme();
+    <section class="outro">
+      <h2>Five parts, one loop.</h2>
+      <p>
+        Standing instructions keep the assistant on-voice and honest. Guardrails
+        make "infinite willingness" safe. Memory and a task file beat the
+        forget-everything problem. Skills bottle your expertise so you teach a
+        workflow once. The workflow is how you actually drive it: one long
+        conversation, handed off cleanly, day after day.
+      </p>
+    </section>
 
-/* ---------- story steps ---------- */
-const STEPS=[
-  {num:'Pillar 01',title:'CLAUDE.md',tag:'the standing contract',
-   n:'Standing instructions',h:'Tell it how to behave, once.',
-   lede:'Because the assistant forgets everything between chats, you can\'t teach it your preferences by repeating yourself. Instead you write them down in one file it reads at the start of every conversation.',
-   body:'That file is <code>CLAUDE.md</code>. Think of it as the standing contract: how to talk, what never to make up, how to handle your files safely, and when to act on its own versus wait for you. Keep it short and put the rare, detailed stuff in sibling files it reads only when needed.',
-   why:'Most of the rules are <b>scar tissue</b>. Each one is there because its absence broke something once.',
-   disc:{title:'How the file actually works →',
-     where:'Lives at <code>~/.claude/CLAUDE.md</code> (applies everywhere) and/or a file named <code>CLAUDE.md</code> in a project folder (applies to that repo). The two get merged.',
-     html:`<p>It is plain markdown. You write rules in normal English under headings. The assistant loads the whole thing automatically every session, so you only state a preference once.</p>
+    <section class="end">
+      <h2>You've seen the why — now go play.</h2>
+      <p class="sub">
+        Three other views let you poke at the same kit from different angles.
+        Open any of them.
+      </p>
+      <div class="cards">
+        <a class="vcard" href="option-1-node-map.html">
+          <div class="vk">view · map</div>
+          <h3>Component map</h3>
+          <p>
+            The five pillars and the tools around them as a clickable graph.
+            Trace how each piece connects, then open any node's own page.
+          </p>
+          <span class="go">explore the map →</span>
+        </a>
+        <a class="vcard" href="option-3-terminal.html">
+          <div class="vk">view · terminal</div>
+          <h3>Interactive terminal</h3>
+          <p>
+            A pretend command line where you watch a hook block a dangerous
+            command and the session boot from memory. Type and see what happens.
+          </p>
+          <span class="go">open the terminal →</span>
+        </a>
+        <a class="vcard" href="option-4-dashboard.html">
+          <div class="vk">view · panel</div>
+          <h3>Control panel</h3>
+          <p>
+            Every component laid out as toggles and readouts, so you can see the
+            whole setup at a glance and flip pieces on and off.
+          </p>
+          <span class="go">open the panel →</span>
+        </a>
+      </div>
+      <div class="getkit">
+        <a class="btn" href="../INSTALL.md">Get the kit →</a>
+        <p>
+          Clone the repo and point an agent at <code>INSTALL.md</code> — it
+          walks the setup for you.
+        </p>
+      </div>
+    </section>
+
+    <script>
+      /* ---------- theme toggle (cycle, persist, pill shows name) ---------- */
+      const THEMES = ["tokyo", "brutalist"];
+      let ti = Math.max(
+        0,
+        THEMES.indexOf(localStorage.getItem("dpmkit-theme")),
+      );
+      function applyTheme() {
+        document.documentElement.dataset.theme = THEMES[ti];
+        localStorage.setItem("dpmkit-theme", THEMES[ti]);
+        const l = document.getElementById("theme-label");
+        if (l) l.textContent = THEMES[ti];
+      }
+      document.getElementById("themeBtn").onclick = () => {
+        ti = (ti + 1) % THEMES.length;
+        applyTheme();
+      };
+      applyTheme();
+
+      /* ---------- story steps ---------- */
+      const STEPS = [
+        {
+          num: "Pillar 01",
+          title: "CLAUDE.md",
+          tag: "the standing contract",
+          n: "Standing instructions",
+          h: "Tell it how to behave, once.",
+          lede: "Because the assistant forgets everything between chats, you can't teach it your preferences by repeating yourself. Instead you write them down in one file it reads at the start of every conversation.",
+          body: "That file is <code>CLAUDE.md</code>. Think of it as the standing contract: how to talk, what never to make up, how to handle your files safely, and when to act on its own versus wait for you. Keep it short and put the rare, detailed stuff in sibling files it reads only when needed.",
+          why: "Most of the rules are <b>scar tissue</b>. Each one is there because its absence broke something once.",
+          disc: {
+            title: "How the file actually works →",
+            where:
+              "Lives at <code>~/.claude/CLAUDE.md</code> (applies everywhere) and/or a file named <code>CLAUDE.md</code> in a project folder (applies to that repo). The two get merged.",
+            html: `<p>It is plain markdown. You write rules in normal English under headings. The assistant loads the whole thing automatically every session, so you only state a preference once.</p>
        <p>Starter rules worth having: a voice file to read before writing anything you'll send, a "never invent facts" rule, a file-safety rule (back up and write a new file, never overwrite), and a "when I say <em>plan</em>, only write a plan" rule.</p>
        <pre><span class="cm"># ~/.claude/CLAUDE.md</span>
 ## Plan means plan
@@ -228,17 +842,25 @@ with "do it" or "build it."
 ## Never fabricate
 If it's not in the source, say so and ask.
 A made-up number is worse than an admitted gap.</pre>
-       <p>Keep the main file lean. Push deep, situational detail into siblings like <code>~/.claude/CLAUDE-delegation.md</code> and reference them by name, so the always-loaded context stays small.</p>`},
-   widget:'claudemd'},
+       <p>Keep the main file lean. Push deep, situational detail into siblings like <code>~/.claude/CLAUDE-delegation.md</code> and reference them by name, so the always-loaded context stays small.</p>`,
+          },
+          widget: "claudemd",
+        },
 
-  {num:'Pillar 02',title:'Hooks',tag:'the guardrails',
-   n:'Guardrails',h:'Make "willing to act" safe.',
-   lede:'The assistant will run any command you (or a sneaky web page it read) ask it to, instantly. A "hook" is a tiny safety script that gets a veto right before a command runs.',
-   body:'Hooks check what the assistant is about to do and can <code>block</code> it. The kit uses them to stop secret leaks, stop uploads of your data to strange servers, and stop wipe-everything commands like <code>rm -rf ~</code>. Ordinary, reversible work runs untouched.',
-   why:'Once a password or key lands in the chat transcript, the only real fix is to <b>rotate it</b>. So the kit works to keep it out in the first place.',
-   disc:{title:'How the files actually work →',
-     where:'Live in <code>~/.claude/hooks/*.js</code> and are wired up in <code>~/.claude/settings.json</code> under the <code>hooks</code> key, bound to an event (like <code>PreToolUse</code>) and a tool (like <code>Bash</code>).',
-     html:`<p>Each hook is a dependency-free Node.js script. It reads the planned action as JSON on standard input, then either stays silent (allow), prints a block decision, or writes a warning. They fail open: a broken hook never blocks your work.</p>
+        {
+          num: "Pillar 02",
+          title: "Hooks",
+          tag: "the guardrails",
+          n: "Guardrails",
+          h: 'Make "willing to act" safe.',
+          lede: 'The assistant will run any command you (or a sneaky web page it read) ask it to, instantly. A "hook" is a tiny safety script that gets a veto right before a command runs.',
+          body: "Hooks check what the assistant is about to do and can <code>block</code> it. The kit uses them to stop secret leaks, stop uploads of your data to strange servers, and stop wipe-everything commands like <code>rm -rf ~</code>. Ordinary, reversible work runs untouched.",
+          why: "Once a password or key lands in the chat transcript, the only real fix is to <b>rotate it</b>. So the kit works to keep it out in the first place.",
+          disc: {
+            title: "How the files actually work →",
+            where:
+              "Live in <code>~/.claude/hooks/*.js</code> and are wired up in <code>~/.claude/settings.json</code> under the <code>hooks</code> key, bound to an event (like <code>PreToolUse</code>) and a tool (like <code>Bash</code>).",
+            html: `<p>Each hook is a dependency-free Node.js script. It reads the planned action as JSON on standard input, then either stays silent (allow), prints a block decision, or writes a warning. They fail open: a broken hook never blocks your work.</p>
        <p>The security model has named parts you can read in <code>templates/hooks/</code>: <code>check-secret-exposure.js</code> and <code>scan-output-for-secrets.js</code> (two tiers for secrets), <code>block-egress-exfil.js</code> (no uploads to un-approved hosts, no <code>curl | bash</code>), and <code>block-dangerous-bash.js</code> (no <code>rm -rf ~</code>, no <code>git push --force</code>).</p>
        <pre><span class="cm">// ~/.claude/hooks/block-dangerous-bash.js (sketch)</span>
 const ev = JSON.parse(fs.readFileSync(0,'utf8'));
@@ -247,17 +869,25 @@ if (/rm\s+-rf\s+(~|\/)\b/.test(cmd)) {
   console.log(JSON.stringify({decision:'block',
     reason:'Refusing an unrecoverable wipe.'}));
 }</pre>
-       <p>Design rule: high precision. Block only commands whose <em>primary purpose</em> is dangerous, so you never start ignoring the warnings.</p>`},
-   widget:'hooks'},
+       <p>Design rule: high precision. Block only commands whose <em>primary purpose</em> is dangerous, so you never start ignoring the warnings.</p>`,
+          },
+          widget: "hooks",
+        },
 
-  {num:'Pillar 03',title:'Memory',tag:'continuity',
-   n:'Continuity',h:'Stop the forget-everything problem.',
-   lede:'Two terms first. <em>Context</em> is everything the assistant can currently "see" — your messages, the files it opened, what it has done so far. <em>Compaction</em> is when that context gets too big and the chat auto-summarizes the old parts to make room, which loses detail.',
-   body:'Memory is a folder of small notes the assistant writes to itself and reloads in future chats, so it isn\'t a goldfish. Four kinds: <code>user</code> (who you are), <code>feedback</code> (how to work), <code>project</code> (current work), and <code>reference</code> (where things live). Save both your corrections and the approaches you blessed.',
-   why:'If you save only corrections, the assistant <b>drifts cautious</b> over time, forgetting the approaches that already worked and over-asking.',
-   disc:{title:'How the files actually work →',
-     where:'A memory folder of markdown files plus an index named <code>MEMORY.md</code>. <code>MEMORY.md</code> is the only one loaded every session, so it stays a thin index — one line per memory, each pointing at a detail file.',
-     html:`<p>Each fact gets its own file with a little frontmatter header (a <code>name</code>, a one-line <code>description</code> used to judge relevance later, and a <code>type</code>). The body holds the detail and is read only when relevant.</p>
+        {
+          num: "Pillar 03",
+          title: "Memory",
+          tag: "continuity",
+          n: "Continuity",
+          h: "Stop the forget-everything problem.",
+          lede: 'Two terms first. <em>Context</em> is everything the assistant can currently "see" — your messages, the files it opened, what it has done so far. <em>Compaction</em> is when that context gets too big and the chat auto-summarizes the old parts to make room, which loses detail.',
+          body: "Memory is a folder of small notes the assistant writes to itself and reloads in future chats, so it isn't a goldfish. Four kinds: <code>user</code> (who you are), <code>feedback</code> (how to work), <code>project</code> (current work), and <code>reference</code> (where things live). Save both your corrections and the approaches you blessed.",
+          why: "If you save only corrections, the assistant <b>drifts cautious</b> over time, forgetting the approaches that already worked and over-asking.",
+          disc: {
+            title: "How the files actually work →",
+            where:
+              "A memory folder of markdown files plus an index named <code>MEMORY.md</code>. <code>MEMORY.md</code> is the only one loaded every session, so it stays a thin index — one line per memory, each pointing at a detail file.",
+            html: `<p>Each fact gets its own file with a little frontmatter header (a <code>name</code>, a one-line <code>description</code> used to judge relevance later, and a <code>type</code>). The body holds the detail and is read only when relevant.</p>
        <pre><span class="cm"># MEMORY.md (the always-loaded index)</span>
 - [Backup before editing](feedback_file_safety.md) —
   never overwrite my files; back up + write a new one.
@@ -270,17 +900,25 @@ type: feedback
 ---
 Rule: back up the original, write to a NEW file.
 Why: an in-place save once destroyed unsaved edits.</pre>
-       <p>What stays out: anything re-derivable from the repo (code, paths, git history) and throwaway task state — that belongs in <code>CURRENT-TASK.md</code>. Memory is a snapshot in time, so before acting on a note that names a file, the assistant checks it still exists.</p>`},
-   widget:'memory'},
+       <p>What stays out: anything re-derivable from the repo (code, paths, git history) and throwaway task state — that belongs in <code>CURRENT-TASK.md</code>. Memory is a snapshot in time, so before acting on a note that names a file, the assistant checks it still exists.</p>`,
+          },
+          widget: "memory",
+        },
 
-  {num:'Pillar 04',title:'Skills',tag:'reusable expertise',
-   n:'Expertise on demand',h:'Teach it a workflow once.',
-   lede:'A "skill" is a markdown file that packages a repeatable workflow — research, reviewing a draft, a full build process. Its description acts as a trigger: the assistant reads it and reaches for the right skill on its own, or you summon one by typing a slash command.',
-   body:'The kit layers three: <code>superpowers</code> (a framework that walks any task through brainstorm → plan → execute → verify), <code>grill-me</code> (it interrogates a fuzzy idea until the holes show), and your own custom skills. Whenever you catch yourself re-explaining a workflow, make it a skill.',
-   why:'Turning a re-explained workflow into a skill is how the whole setup <b>compounds</b> over time.',
-   disc:{title:'How the files actually work →',
-     where:'Live as markdown files the harness reads (e.g. under <code>~/.claude/commands/*.md</code>, or shipped by a plugin). Custom ones in this kit are vendored in <code>templates/skills/</code>.',
-     html:`<p>A skill is just markdown with a frontmatter header. The <code>description</code> is the trigger string the assistant matches against your request; the body is the step-by-step instructions it then follows. You can also invoke one explicitly by typing <code>/name</code>.</p>
+        {
+          num: "Pillar 04",
+          title: "Skills",
+          tag: "reusable expertise",
+          n: "Expertise on demand",
+          h: "Teach it a workflow once.",
+          lede: 'A "skill" is a markdown file that packages a repeatable workflow — research, reviewing a draft, a full build process. Its description acts as a trigger: the assistant reads it and reaches for the right skill on its own, or you summon one by typing a slash command.',
+          body: "The kit layers three: <code>superpowers</code> (a framework that walks any task through brainstorm → plan → execute → verify), <code>grill-me</code> (it interrogates a fuzzy idea until the holes show), and your own custom skills. Whenever you catch yourself re-explaining a workflow, make it a skill.",
+          why: "Turning a re-explained workflow into a skill is how the whole setup <b>compounds</b> over time.",
+          disc: {
+            title: "How the files actually work →",
+            where:
+              "Live as markdown files the harness reads (e.g. under <code>~/.claude/commands/*.md</code>, or shipped by a plugin). Custom ones in this kit are vendored in <code>templates/skills/</code>.",
+            html: `<p>A skill is just markdown with a frontmatter header. The <code>description</code> is the trigger string the assistant matches against your request; the body is the step-by-step instructions it then follows. You can also invoke one explicitly by typing <code>/name</code>.</p>
        <pre><span class="cm"># ~/.claude/commands/deep-search.md</span>
 ---
 name: deep-search
@@ -291,17 +929,25 @@ description: Multi-step web research with
 1. Break the question into sub-questions.
 2. Dispatch parallel searches for each.
 3. Return a sourced synthesis with citations.</pre>
-       <p>The <code>superpowers</code> framework (Jesse Vincent / obra) is the backbone: its <code>brainstorming</code> skill hard-gates any code until you approve a design. The kit's <code>writing-skills</code> helps you author new ones from your own scar tissue.</p>`},
-   widget:'skills'},
+       <p>The <code>superpowers</code> framework (Jesse Vincent / obra) is the backbone: its <code>brainstorming</code> skill hard-gates any code until you approve a design. The kit's <code>writing-skills</code> helps you author new ones from your own scar tissue.</p>`,
+          },
+          widget: "skills",
+        },
 
-  {num:'Pillar 05',title:'Workflow',tag:'how you drive it',
-   n:'The operating rhythm',h:'Drive it like a long relay.',
-   lede:'You don\'t start a fresh chat for every task. You ride one long conversation per project, letting it compact as it goes. The trick to surviving compaction is a handoff file that holds the plan.',
-   body:'<code>CURRENT-TASK.md</code> is that handoff: the goal, the steps done, the steps left, and the exact next command. The <code>/rollover</code> skill writes a clean baton-pass at the end of a heavy session. For bigger jobs, delegate with the two-question test, then fan out parallel helper agents.',
-   why:'Continuity lives in the task file and memory, so <b>one long thread survives every compaction</b> instead of starting over.',
-   disc:{title:'How the files actually work →',
-     where:'<code>CURRENT-TASK.md</code> sits in your project root. The <code>session-primer.js</code> hook injects it at boot; the <code>/rollover</code> skill rewrites it at the end of a session.',
-     html:`<p>The handoff file is plain markdown you and the assistant both keep current. On any resume — even after a compaction — the assistant reads it first and continues from the remaining steps. You delete it when the task is done.</p>
+        {
+          num: "Pillar 05",
+          title: "Workflow",
+          tag: "how you drive it",
+          n: "The operating rhythm",
+          h: "Drive it like a long relay.",
+          lede: "You don't start a fresh chat for every task. You ride one long conversation per project, letting it compact as it goes. The trick to surviving compaction is a handoff file that holds the plan.",
+          body: "<code>CURRENT-TASK.md</code> is that handoff: the goal, the steps done, the steps left, and the exact next command. The <code>/rollover</code> skill writes a clean baton-pass at the end of a heavy session. For bigger jobs, delegate with the two-question test, then fan out parallel helper agents.",
+          why: "Continuity lives in the task file and memory, so <b>one long thread survives every compaction</b> instead of starting over.",
+          disc: {
+            title: "How the files actually work →",
+            where:
+              "<code>CURRENT-TASK.md</code> sits in your project root. The <code>session-primer.js</code> hook injects it at boot; the <code>/rollover</code> skill rewrites it at the end of a session.",
+            html: `<p>The handoff file is plain markdown you and the assistant both keep current. On any resume — even after a compaction — the assistant reads it first and continues from the remaining steps. You delete it when the task is done.</p>
        <pre><span class="cm"># CURRENT-TASK.md</span>
 ## Goal
 Add a dark-mode toggle to the settings page.
@@ -313,142 +959,248 @@ Add a dark-mode toggle to the settings page.
 ## Remaining
 - [ ] Persist choice to localStorage
 - [ ] Run: npm test -- settings</pre>
-       <p>Delegation uses the two-question test (in <code>CLAUDE-delegation.md</code>): hand work off only if you can brief a helper in one paragraph <em>and</em> verify the result without a judgment call. Parallel helper agents are for 3+ independent parts, never two writing the same file.</p>`},
-   widget:'workflow'},
-];
+       <p>Delegation uses the two-question test (in <code>CLAUDE-delegation.md</code>): hand work off only if you can brief a helper in one paragraph <em>and</em> verify the result without a judgment call. Parallel helper agents are for 3+ independent parts, never two writing the same file.</p>`,
+          },
+          widget: "workflow",
+        },
+      ];
 
-const stepsEl=document.getElementById('steps');
-STEPS.forEach((s,i)=>{const d=document.createElement('section');d.className='step';d.dataset.i=i;
-  d.innerHTML=`<div class="n">${s.n}</div><h2>${s.h}</h2>`+
-    `<p class="lede">${s.lede}</p><p class="body">${s.body}</p>`+
-    `<div class="why">${s.why}</div>`+
-    `<details class="disc"><summary>${s.disc.title}<span class="chev">›</span></summary>`+
-      `<div class="body"><p class="where">${s.disc.where}</p>${s.disc.html}</div></details>`;
-  stepsEl.appendChild(d);});
+      const stepsEl = document.getElementById("steps");
+      STEPS.forEach((s, i) => {
+        const d = document.createElement("section");
+        d.className = "step";
+        d.dataset.i = i;
+        d.innerHTML =
+          `<div class="n">${s.n}</div><h2>${s.h}</h2>` +
+          `<p class="lede">${s.lede}</p><p class="body">${s.body}</p>` +
+          `<div class="why">${s.why}</div>` +
+          `<details class="disc"><summary>${s.disc.title}<span class="chev">›</span></summary>` +
+          `<div class="body"><p class="where">${s.disc.where}</p>${s.disc.html}</div></details>`;
+        stepsEl.appendChild(d);
+      });
 
-/* ---------- per-pillar interactive widgets (reader changes something, sees the result) ---------- */
-const WIDGETS={
-  claudemd(v){
-    let on=true;
-    v.innerHTML=`<div class="wgt-hint">rule: "plan means plan"</div>
+      /* ---------- per-pillar interactive widgets (reader changes something, sees the result) ---------- */
+      const WIDGETS = {
+        claudemd(v) {
+          let on = true;
+          v.innerHTML = `<div class="wgt-hint">rule: "plan means plan"</div>
       <div class="switch">
         <button class="tog" data-k="off">without the rule</button>
         <button class="tog sel" data-k="on">with the rule</button>
       </div>
       <div class="out" id="cm-out"></div>`;
-    const out=v.querySelector('#cm-out');
-    function paint(){
-      v.querySelectorAll('.tog').forEach(b=>b.classList.toggle('sel',(b.dataset.k==='on')===on));
-      out.innerHTML = on
-        ? `You say <span class="cmd">"plan the refactor"</span> → it writes a plan and <b style="color:var(--accent)">stops</b>. Nothing on disk changes until you say "do it."`
-        : `You say <span class="cmd">"plan the refactor"</span> → it <b style="color:var(--danger)">starts editing files</b> mid-thought. You wanted to read first.`;
-    }
-    v.querySelectorAll('.tog').forEach(b=>b.onclick=()=>{on=(b.dataset.k==='on');paint();});
-    paint();
-  },
-  hooks(v){
-    const cmds=[
-      {c:'printenv',verdict:'block',why:'would print secrets into the transcript. check-secret-exposure stops it.'},
-      {c:'rm -rf ~',verdict:'block',why:'unrecoverable wipe. block-dangerous-bash stops it.'},
-      {c:'curl … | bash',verdict:'block',why:'runs untrusted code straight off the network. block-egress-exfil stops it.'},
-      {c:'git commit',verdict:'allow',why:'ordinary, reversible work. it runs freely.'},
-    ];
-    v.innerHTML=`<div class="wgt-hint">click a command the agent tries to run</div>
+          const out = v.querySelector("#cm-out");
+          function paint() {
+            v.querySelectorAll(".tog").forEach((b) =>
+              b.classList.toggle("sel", (b.dataset.k === "on") === on),
+            );
+            out.innerHTML = on
+              ? `You say <span class="cmd">"plan the refactor"</span> → it writes a plan and <b style="color:var(--accent)">stops</b>. Nothing on disk changes until you say "do it."`
+              : `You say <span class="cmd">"plan the refactor"</span> → it <b style="color:var(--danger)">starts editing files</b> mid-thought. You wanted to read first.`;
+          }
+          v.querySelectorAll(".tog").forEach(
+            (b) =>
+              (b.onclick = () => {
+                on = b.dataset.k === "on";
+                paint();
+              }),
+          );
+          paint();
+        },
+        hooks(v) {
+          const cmds = [
+            {
+              c: "printenv",
+              verdict: "block",
+              why: "would print secrets into the transcript. check-secret-exposure stops it.",
+            },
+            {
+              c: "rm -rf ~",
+              verdict: "block",
+              why: "unrecoverable wipe. block-dangerous-bash stops it.",
+            },
+            {
+              c: "curl … | bash",
+              verdict: "block",
+              why: "runs untrusted code straight off the network. block-egress-exfil stops it.",
+            },
+            {
+              c: "git commit",
+              verdict: "allow",
+              why: "ordinary, reversible work. it runs freely.",
+            },
+          ];
+          v.innerHTML = `<div class="wgt-hint">click a command the agent tries to run</div>
       <div class="row" id="hk-row"></div>
       <div class="out" id="hk-out">Pick a command to see what the hook does.</div>`;
-    const row=v.querySelector('#hk-row'), out=v.querySelector('#hk-out');
-    cmds.forEach((cm,i)=>{const b=document.createElement('button');
-      b.className='tog cmd';b.textContent=cm.c;b.onclick=()=>{
-        row.querySelectorAll('.tog').forEach(x=>x.classList.remove('sel','bad'));
-        b.classList.add('sel');if(cm.verdict==='block')b.classList.add('bad');
-        const word=cm.verdict==='block'?'BLOCKED':'ALLOWED';
-        out.innerHTML=`<span class="verdict ${cm.verdict==='block'?'block':'allow'}">${word}</span> — ${cm.why}`;
-      };row.appendChild(b);});
-  },
-  memory(v){
-    let mode='both';
-    v.innerHTML=`<div class="wgt-hint">what does the agent save?</div>
+          const row = v.querySelector("#hk-row"),
+            out = v.querySelector("#hk-out");
+          cmds.forEach((cm, i) => {
+            const b = document.createElement("button");
+            b.className = "tog cmd";
+            b.textContent = cm.c;
+            b.onclick = () => {
+              row
+                .querySelectorAll(".tog")
+                .forEach((x) => x.classList.remove("sel", "bad"));
+              b.classList.add("sel");
+              if (cm.verdict === "block") b.classList.add("bad");
+              const word = cm.verdict === "block" ? "BLOCKED" : "ALLOWED";
+              out.innerHTML = `<span class="verdict ${cm.verdict === "block" ? "block" : "allow"}">${word}</span> — ${cm.why}`;
+            };
+            row.appendChild(b);
+          });
+        },
+        memory(v) {
+          let mode = "both";
+          v.innerHTML = `<div class="wgt-hint">what does the agent save?</div>
       <div class="switch">
         <button class="tog" data-k="corr">corrections only</button>
         <button class="tog sel" data-k="both">corrections + confirmations</button>
       </div>
       <div class="out" id="mm-out"></div>`;
-    const out=v.querySelector('#mm-out');
-    function paint(){
-      v.querySelectorAll('.tog').forEach(b=>b.classList.toggle('sel',b.dataset.k===mode));
-      out.innerHTML = mode==='both'
-        ? `Outcome: <b style="color:var(--accent)">balanced.</b> It remembers what broke and what worked, so it keeps doing the good thing.`
-        : `Outcome: <b style="color:var(--warn)">drifts cautious.</b> Only failures get logged, so the agent slowly forgets approaches you blessed and over-asks.`;
-    }
-    v.querySelectorAll('.tog').forEach(b=>b.onclick=()=>{mode=b.dataset.k;paint();});
-    paint();
-  },
-  skills(v){
-    const phases=[
-      {k:'brainstorm',d:'Pins down intent and the design before any code. Hard-gates implementation until you approve.'},
-      {k:'plan',d:'Turns the agreed design into ordered, checkable steps with the exact commands to run.'},
-      {k:'execute',d:'Works the plan one step at a time, often handing independent parts to parallel sub-agents.'},
-      {k:'verify',d:'Runs the tests and shows the output before claiming anything is done. Evidence first.'},
-    ];
-    v.innerHTML=`<div class="wgt-hint">click a phase of the superpowers loop</div>
+          const out = v.querySelector("#mm-out");
+          function paint() {
+            v.querySelectorAll(".tog").forEach((b) =>
+              b.classList.toggle("sel", b.dataset.k === mode),
+            );
+            out.innerHTML =
+              mode === "both"
+                ? `Outcome: <b style="color:var(--accent)">balanced.</b> It remembers what broke and what worked, so it keeps doing the good thing.`
+                : `Outcome: <b style="color:var(--warn)">drifts cautious.</b> Only failures get logged, so the agent slowly forgets approaches you blessed and over-asks.`;
+          }
+          v.querySelectorAll(".tog").forEach(
+            (b) =>
+              (b.onclick = () => {
+                mode = b.dataset.k;
+                paint();
+              }),
+          );
+          paint();
+        },
+        skills(v) {
+          const phases = [
+            {
+              k: "brainstorm",
+              d: "Pins down intent and the design before any code. Hard-gates implementation until you approve.",
+            },
+            {
+              k: "plan",
+              d: "Turns the agreed design into ordered, checkable steps with the exact commands to run.",
+            },
+            {
+              k: "execute",
+              d: "Works the plan one step at a time, often handing independent parts to parallel sub-agents.",
+            },
+            {
+              k: "verify",
+              d: "Runs the tests and shows the output before claiming anything is done. Evidence first.",
+            },
+          ];
+          v.innerHTML = `<div class="wgt-hint">click a phase of the superpowers loop</div>
       <div class="phaserow" id="sk-row"></div>
       <div class="out" id="sk-out">brainstorm → plan → execute → verify. Pick one.</div>`;
-    const row=v.querySelector('#sk-row'), out=v.querySelector('#sk-out');
-    phases.forEach(p=>{const b=document.createElement('button');
-      b.className='tog';b.textContent=p.k;b.onclick=()=>{
-        row.querySelectorAll('.tog').forEach(x=>x.classList.remove('sel'));
-        b.classList.add('sel');out.innerHTML=`<b style="color:var(--accent)">${p.k}</b> — ${p.d}`;
-      };row.appendChild(b);});
-  },
-  workflow(v){
-    const stages=[
-      {k:'SessionStart',d:'The session-primer hook injects CURRENT-TASK.md and the memory index, so a fresh chat boots where the last one ended.'},
-      {k:'work',d:'You ride one long thread through compaction, updating CURRENT-TASK.md as you go so nothing is lost.'},
-      {k:'/rollover',d:'End-of-session ritual: gather diagnostics, write a clean baton-pass into the task file, seed memory with the session\'s lessons.'},
-    ];
-    let cur=0;
-    v.innerHTML=`<div class="wgt-hint">click through one session</div>
+          const row = v.querySelector("#sk-row"),
+            out = v.querySelector("#sk-out");
+          phases.forEach((p) => {
+            const b = document.createElement("button");
+            b.className = "tog";
+            b.textContent = p.k;
+            b.onclick = () => {
+              row
+                .querySelectorAll(".tog")
+                .forEach((x) => x.classList.remove("sel"));
+              b.classList.add("sel");
+              out.innerHTML = `<b style="color:var(--accent)">${p.k}</b> — ${p.d}`;
+            };
+            row.appendChild(b);
+          });
+        },
+        workflow(v) {
+          const stages = [
+            {
+              k: "SessionStart",
+              d: "The session-primer hook injects CURRENT-TASK.md and the memory index, so a fresh chat boots where the last one ended.",
+            },
+            {
+              k: "work",
+              d: "You ride one long thread through compaction, updating CURRENT-TASK.md as you go so nothing is lost.",
+            },
+            {
+              k: "/rollover",
+              d: "End-of-session ritual: gather diagnostics, write a clean baton-pass into the task file, seed memory with the session's lessons.",
+            },
+          ];
+          let cur = 0;
+          v.innerHTML = `<div class="wgt-hint">click through one session</div>
       <div class="track" id="wf-track"></div>
       <div class="stepbtns">
         <button class="tog" id="wf-prev">‹ back</button>
         <button class="tog" id="wf-next">next ›</button>
       </div>
       <div class="out" id="wf-out"></div>`;
-    const track=v.querySelector('#wf-track'), out=v.querySelector('#wf-out');
-    function paint(){
-      track.innerHTML='';
-      stages.forEach((s,i)=>{
-        const n=document.createElement('div');n.className='stepnode'+(i<cur?' done':'')+(i===cur?' cur':'');
-        n.textContent=s.k;track.appendChild(n);
-        if(i<stages.length-1){const a=document.createElement('span');a.className='arrow';a.textContent='→';track.appendChild(a);}
-      });
-      out.innerHTML=`<b style="color:var(--cyan)">${stages[cur].k}</b> — ${stages[cur].d}`;
-    }
-    v.querySelector('#wf-prev').onclick=()=>{cur=(cur-1+stages.length)%stages.length;paint();};
-    v.querySelector('#wf-next').onclick=()=>{cur=(cur+1)%stages.length;paint();};
-    paint();
-  },
-};
+          const track = v.querySelector("#wf-track"),
+            out = v.querySelector("#wf-out");
+          function paint() {
+            track.innerHTML = "";
+            stages.forEach((s, i) => {
+              const n = document.createElement("div");
+              n.className =
+                "stepnode" +
+                (i < cur ? " done" : "") +
+                (i === cur ? " cur" : "");
+              n.textContent = s.k;
+              track.appendChild(n);
+              if (i < stages.length - 1) {
+                const a = document.createElement("span");
+                a.className = "arrow";
+                a.textContent = "→";
+                track.appendChild(a);
+              }
+            });
+            out.innerHTML = `<b style="color:var(--cyan)">${stages[cur].k}</b> — ${stages[cur].d}`;
+          }
+          v.querySelector("#wf-prev").onclick = () => {
+            cur = (cur - 1 + stages.length) % stages.length;
+            paint();
+          };
+          v.querySelector("#wf-next").onclick = () => {
+            cur = (cur + 1) % stages.length;
+            paint();
+          };
+          paint();
+        },
+      };
 
-const card=document.getElementById('card');
-let curStep=-1;
-function render(i){
-  if(i===curStep)return; curStep=i;
-  const s=STEPS[i];
-  document.getElementById('c-num').textContent=s.num;
-  document.getElementById('c-title').textContent=s.title;
-  document.getElementById('c-tag').textContent=s.tag;
-  const v=document.getElementById('c-viz');
-  v.innerHTML='';
-  (WIDGETS[s.widget]||(()=>{}))(v);
-}
-render(0);
-const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting)render(+e.target.dataset.i);});},
-  {rootMargin:'-45% 0px -45% 0px',threshold:0});
-document.querySelectorAll('.step').forEach(s=>io.observe(s));
-const prog=document.getElementById('prog');
-addEventListener('scroll',()=>{const h=document.documentElement;
-  prog.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';});
-</script>
-</body>
+      const card = document.getElementById("card");
+      let curStep = -1;
+      function render(i) {
+        if (i === curStep) return;
+        curStep = i;
+        const s = STEPS[i];
+        document.getElementById("c-num").textContent = s.num;
+        document.getElementById("c-title").textContent = s.title;
+        document.getElementById("c-tag").textContent = s.tag;
+        const v = document.getElementById("c-viz");
+        v.innerHTML = "";
+        (WIDGETS[s.widget] || (() => {}))(v);
+      }
+      render(0);
+      const io = new IntersectionObserver(
+        (es) => {
+          es.forEach((e) => {
+            if (e.isIntersecting) render(+e.target.dataset.i);
+          });
+        },
+        { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
+      );
+      document.querySelectorAll(".step").forEach((s) => io.observe(s));
+      const prog = document.getElementById("prog");
+      addEventListener("scroll", () => {
+        const h = document.documentElement;
+        prog.style.transform =
+          "scaleX(" + h.scrollTop / (h.scrollHeight - h.clientHeight) + ")";
+      });
+    </script>
+  </body>
 </html>
